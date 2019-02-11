@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/search_messages"
+        android:icon="@drawable/ic_search"
+        android:iconTint="#fff"
+        android:title="Search messages"/>
+    <item android:id="@+id/show_files"
+        android:icon="@drawable/ic_file"
+        android:iconTint="#fff"
+        android:title="Show files"/>
+    <item android:id="@+id/goto_room"
+        android:icon="@drawable/ic_room"
+        android:iconTint="#fff"
+        android:title="Go to Room"/>
+</menu>

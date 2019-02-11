@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:id="@+id/adapter_messages_text_right_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical|right"
+        android:layout_alignParentRight="true"
+        android:visibility="gone">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/adapter_messages_text_right_content_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:layout_marginRight="72dp"
+            app:cardBackgroundColor="@color/colorBlue"
+            app:cardCornerRadius="7dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerInParent="true"
+            android:minWidth="84dp">
+
+            <TextView
+                android:id="@+id/adapter_messages_text_right_text_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="32dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:textColor="#fff"
+                android:textSize="16sp"
+                android:layout_margin="8dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="center"
+                android:paddingBottom="24dp"/>
+
+            <ImageView
+                android:id="@+id/adapter_messages_text_right_sign_image_view"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:padding="4dp"
+                android:src="@drawable/ic_done"
+                android:layout_gravity="bottom"
+                android:layout_marginLeft="4dp"
+                android:layout_marginBottom="4dp"
+                android:tint="#fff" />
+
+            <TextView
+                android:id="@+id/adapter_messages_text_right_time_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="16:43"
+                android:textColor="#fff"
+                android:layout_gravity="bottom|right"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/adapter_messages_text_right_avatar_image_view"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/selfie"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:layout_alignParentRight="true"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/adapter_messages_text_left_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentLeft="true"
+        android:visibility="gone">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/adapter_messages_text_left_content_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            app:cardBackgroundColor="@color/colorBlue"
+            app:cardCornerRadius="7dp"
+            android:layout_marginLeft="116dp"
+            android:layout_centerInParent="true"
+            android:minWidth="84dp">
+
+            <TextView
+                android:id="@+id/adapter_messages_text_left_text_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="32dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:textColor="#fff"
+                android:textSize="16sp"
+                android:layout_margin="8dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="center"
+                android:paddingBottom="24dp"/>
+
+            <TextView
+                android:id="@+id/adapter_messages_text_left_time_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="16:43"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@id/adapter_messages_left_content_container"
+                android:textColor="#fff"
+                android:layout_gravity="bottom|right"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/adapter_messages_text_left_avatar_image_view"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/selfie"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp" />
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/adapter_messages_text_center_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:layout_centerInParent="true"
+        android:textColor="#fff"
+        android:gravity="center"
+        android:textSize="16sp"/>
+
+</RelativeLayout>

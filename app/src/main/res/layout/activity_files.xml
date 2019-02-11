@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/colorBlackBlue"
+    tools:context=".activities.FilesActivity">
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/fragment_docs_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp"/>
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageButton
+                android:id="@+id/fragment_files_back_image_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_back"
+                android:tint="#fff"
+                android:background="@android:color/transparent"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Docs"
+                android:layout_marginLeft="56dp"
+                android:textColor="#fff"
+                android:textSize="20sp"/>
+
+        </FrameLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/fragment_docs_buttons_container"
+        android:layout_width="192dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal|bottom"
+        app:cardBackgroundColor="@color/colorBlackBlue3"
+        app:cardCornerRadius="14dp"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/fragment_docs_tab_bar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:tabIndicatorColor="#fff"/>
+
+    </androidx.cardview.widget.CardView>
+
+</FrameLayout>

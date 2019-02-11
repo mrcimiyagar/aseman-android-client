@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="kasper.android.pulse">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:name=".core.Core"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning"
+        tools:replace="android:allowBackup">
+        <activity android:name=".activities.TitleEditorActivity"/>
+        <activity android:name=".activities.BotStoreBotActivity" />
+        <activity
+            android:name=".activities.StartupActivity"
+            android:theme="@style/AppTheme.TransparentStatus">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".activities.HomeActivity" />
+        <activity
+            android:name=".activities.RegisterActivity"
+            android:theme="@style/AppTheme.TransparentStatus" />
+        <activity
+            android:name=".activities.RoomActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.CreateRoomActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.InvitesActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.SearchActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.ProfileActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.VideoPlayerActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.MusicPlayerActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.PhotoViewerActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.PickImageActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.FilesActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.DocsActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.AddBotToRoomActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.BotStoreActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.CreateComplexActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.ChatActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.ComplexProfileActivity"
+            android:theme="@style/AppTheme" />
+
+        <service
+            android:name=".services.NotificationsService"
+            android:stopWithTask="false" />
+        <service
+            android:name=".services.FilesService"
+            android:stopWithTask="false" />
+        <service
+            android:name=".services.LogoutService"
+            android:stopWithTask="false" />
+        <service
+            android:name=".services.MusicsService"
+            android:stopWithTask="false" />
+
+        <receiver android:name=".services.Startup">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="150771ddf9d9dff9613be1ba467da98fae3e364d" />
+
+        <activity android:name=".activities.CreateBotActivity" />
+        <activity android:name=".activities.BotProfileActivity" />
+
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="150771ddf9d9dff9613be1ba467da98fae3e364d" />
+
+        <activity android:name=".activities.BotsActivity" />
+        <activity android:name=".activities.WorkershipDataActivity" />
+    </application>
+
+</manifest>

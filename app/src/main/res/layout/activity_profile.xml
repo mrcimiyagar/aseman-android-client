@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue"
+    tools:context="kasper.android.pulse.activities.ProfileActivity">
+
+    <ImageView
+        android:id="@+id/activity_profile_avatar_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/selfie"
+        android:scaleType="centerCrop"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000"
+        android:alpha="0.25"/>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        app:cardCornerRadius="28dp"
+        app:cardBackgroundColor="@color/colorBlackBlue"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="88dp">
+        
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp">
+            
+            <TextView
+                android:id="@+id/activity_profile_title_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:text="Keyhan Mohammadi"
+                android:textColor="#fff"
+                android:textSize="20sp" />
+            
+        </FrameLayout>
+        
+    </androidx.cardview.widget.CardView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/connectFAB"
+        app:fabSize="normal"
+        android:src="@drawable/ic_connection"
+        android:tint="#fff"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_alignParentBottom="true"
+        android:onClick="onConnectBtnClicked"
+        app:backgroundTint="@color/colorBlue"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="88dp"
+        android:onClick="onConnectBtnClicked"
+        android:src="@drawable/ic_block"
+        android:tint="#fff"
+        app:backgroundTint="@color/colorBlue"
+        app:fabSize="normal"
+        android:visibility="gone"/>
+    
+    <androidx.cardview.widget.CardView
+        android:layout_width="84dp"
+        android:layout_height="56dp"
+        app:cardCornerRadius="28dp"
+        android:layout_marginLeft="-28dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/colorBlackBlue">
+
+        <ImageButton
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@android:color/transparent"
+            android:layout_gravity="right"
+            android:src="@drawable/ic_back"
+            android:tint="#fff"
+            android:onClick="onBackBtnClicked"/>
+
+    </androidx.cardview.widget.CardView>
+
+</RelativeLayout>

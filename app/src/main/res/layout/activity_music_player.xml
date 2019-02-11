@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue"
+    tools:context="kasper.android.pulse.activities.MusicPlayerActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="256dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentInsetStart="0dp"
+            app:contentInsetEnd="0dp"
+            app:layout_scrollFlags="scroll|enterAlways">
+
+            <com.google.android.material.appbar.CollapsingToolbarLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:layout_collapseMode="parallax">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_centerInParent="true"
+                        android:layout_marginLeft="32dp"
+                        android:layout_marginRight="32dp">
+
+                        <TextView
+                            android:id="@+id/activity_music_player_caption_text_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="24dp"
+                            android:textColor="#fff"
+                            android:textSize="25sp"
+                            android:text="Crestefallen 001"/>
+
+                        <SeekBar
+                            android:id="@+id/activity_music_player_progress_seek_bar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="48dp"/>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="72dp"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="12dp">
+
+                            <ImageButton
+                                android:id="@+id/activity_music_player_shuffle_image_button"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:background="@android:color/transparent"
+                                android:src="@drawable/ic_shuffle"
+                                android:scaleType="fitXY"
+                                android:padding="12dp"
+                                android:tint="#fff"
+                                android:onClick="onShuffleBtnClicked"/>
+
+                            <ImageButton
+                                android:id="@+id/activity_music_player_backward_image_button"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:background="@android:color/transparent"
+                                android:src="@drawable/ic_backward"
+                                android:scaleType="fitXY"
+                                android:padding="12dp"
+                                android:tint="#fff"
+                                android:onClick="onBackwardBtnClicked"/>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="64dp"
+                                android:layout_height="64dp"
+                                app:cardCornerRadius="36dp"
+                                app:cardBackgroundColor="@color/colorAccent">
+
+                                <ImageButton
+                                    android:id="@+id/activity_music_player_play_image_button"
+                                    android:layout_width="64dp"
+                                    android:layout_height="64dp"
+                                    android:background="@android:color/transparent"
+                                    android:src="@drawable/ic_play"
+                                    android:scaleType="fitXY"
+                                    android:padding="12dp"
+                                    android:tint="#fff"
+                                    android:onClick="onPlayBtnClicked"/>
+
+                            </androidx.cardview.widget.CardView>
+
+                            <ImageButton
+                                android:id="@+id/activity_music_player_forward_image_button"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:background="@android:color/transparent"
+                                android:src="@drawable/ic_forward"
+                                android:scaleType="fitXY"
+                                android:padding="12dp"
+                                android:tint="#fff"
+                                android:onClick="onForwardBtnClicked"/>
+
+                            <ImageButton
+                                android:id="@+id/activity_music_player_replay_image_button"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:background="@android:color/transparent"
+                                android:src="@drawable/ic_replay"
+                                android:scaleType="fitXY"
+                                android:padding="12dp"
+                                android:tint="#fff"
+                                android:onClick="onReplayBtnClicked"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </RelativeLayout>
+
+            </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/activity_music_player_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

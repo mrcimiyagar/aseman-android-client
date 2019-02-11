@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".activities.BotStoreBotActivity">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:contentInsetStart="0dp"
+                app:contentInsetEnd="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <ImageButton
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:src="@drawable/ic_back"
+                        android:tint="#fff"
+                        android:onClick="onBackBtnClicked"
+                        android:background="@android:color/transparent"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="112dp"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="32dp"
+                        android:layout_marginLeft="32dp">
+
+                        <de.hdodenhof.circleimageview.CircleImageView
+                            android:layout_width="112dp"
+                            android:layout_height="112dp"
+                            android:id="@+id/botAvatar"
+                            android:src="@drawable/selfie"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:id="@+id/botTitle"
+                            android:gravity="center"
+                            android:layout_marginLeft="16dp"
+                            android:text="[Bot Title]"
+                            android:textSize="22sp"
+                            android:textColor="#fff"
+                            android:layout_gravity="center_vertical"/>
+
+                    </LinearLayout>
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="32dp">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/botSubscribeContainer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentRight="true"
+                            android:layout_marginRight="32dp"
+                            app:cardBackgroundColor="@color/colorBlue"
+                            app:cardCornerRadius="8dp">
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="3dp"
+                                app:cardBackgroundColor="@color/colorBlackBlue3"
+                                app:cardCornerRadius="8dp">
+
+                                <Button
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Subscribe"
+                                    android:id="@+id/botSubscribe"
+                                    android:textAllCaps="false"
+                                    android:background="@android:color/transparent"
+                                    android:textColor="#fff"
+                                    android:textSize="20sp"
+                                    android:onClick="onSubscribeBtnClicked"
+                                    android:layout_marginLeft="8dp"
+                                    android:layout_marginRight="8dp"/>
+
+                            </androidx.cardview.widget.CardView>
+
+                        </androidx.cardview.widget.CardView>
+
+                    </RelativeLayout>
+
+                </LinearLayout>
+
+            </androidx.appcompat.widget.Toolbar>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <TextView
+            android:id="@+id/botDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#fff"
+            android:textSize="18sp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="32dp"
+            android:text="ffffffffffffffffffffffffffffffff\nffffffffffffffffffffffffffffffffff\nfffffffffffffffffffffffffffff\nffffffffffffffffffffffffffffffffffffffffff\nffffffffffffffffffffffffffffffffffffffff\nffffffffffffffffffffffffffffffffffffffffffffffffffffffff\nfffffffffffffffffffffffffff\nfffffffffffffffffffffffffffffffffffffffffff\nffffffffffffffffffffffff\nfffffffffffffffff\nffffffffffff"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="56dp"
+            android:background="@color/colorBlackBlue3">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/botScreenShot1"
+                    android:layout_width="168dp"
+                    android:layout_height="224dp"
+                    android:layout_marginLeft="8dp" />
+
+                <ImageView
+                    android:id="@+id/botScreenShot2"
+                    android:layout_width="168dp"
+                    android:layout_height="224dp"
+                    android:layout_marginLeft="8dp" />
+
+                <ImageView
+                    android:id="@+id/botScreenShot3"
+                    android:layout_width="168dp"
+                    android:layout_height="224dp"
+                    android:layout_marginLeft="8dp" />
+
+                <ImageView
+                    android:id="@+id/botScreenShot4"
+                    android:layout_width="168dp"
+                    android:layout_height="224dp"
+                    android:layout_marginLeft="8dp" />
+
+                <ImageView
+                    android:id="@+id/botScreenShot5"
+                    android:layout_width="168dp"
+                    android:layout_height="224dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"/>
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_room_container"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/fragment_room_background_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY"
+            android:visibility="visible"/>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:id="@+id/fragment_room_widget_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/activity_room_fixed_container"/>
+
+    </RelativeLayout>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="84dp"
+        android:layout_height="56dp"
+        app:cardCornerRadius="28dp"
+        android:layout_marginLeft="-28dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/colorBlackBlue3">
+
+        <ImageButton
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_back"
+            android:tint="#fff"
+            android:layout_marginLeft="28dp"
+            android:onClick="onBackBtnClicked"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        android:layout_alignParentBottom="true"
+        app:cardBackgroundColor="@color/colorBlackBlue3"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="16dp">
+
+        <LinearLayout
+            android:layout_width="168dp"
+            android:layout_height="56dp">
+
+            <ImageButton
+                android:id="@+id/roomFilesFAB"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_folder"
+                android:tint="#fff"
+                android:scaleType="fitXY"
+                android:padding="16dp"
+                android:background="@android:color/transparent"/>
+
+            <ImageButton
+                android:id="@+id/roomBotsFAB"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/bot"
+                android:tint="#fff"
+                android:scaleType="fitXY"
+                android:padding="16dp"
+                android:background="@android:color/transparent"/>
+
+            <ImageButton
+                android:id="@+id/roomMessagesFAB"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_message"
+                android:tint="#fff"
+                android:scaleType="fitXY"
+                android:padding="16dp"
+                android:background="@android:color/transparent"/>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</RelativeLayout>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="64dp"
+    android:layout_height="64dp">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/complexBGIV"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:src="@color/colorBlackBlue3"/>
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/complexIconIV"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:tint="#fff"/>
+
+</FrameLayout>

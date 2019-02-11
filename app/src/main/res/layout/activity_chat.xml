@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:app1="http://schemas.android.com/tools"
+    android:background="@android:color/transparent"
+    tools:context=".activities.ChatActivity">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/fragment_messages_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="56dp"
+        android:background="@color/colorBlackBlue"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/toBottomFAB"
+        app:backgroundTint="@color/colorBlue"
+        android:tint="#fff"
+        android:src="@drawable/ic_arrow_down"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="0dp"
+        android:layout_marginRight="16dp"
+        android:onClick="onToBottomFABClicked" />
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom"
+            app:contentInsetStart="0dp"
+            app:contentInsetEnd="0dp"
+            app:layout_collapseMode="pin">
+
+            <ImageButton
+                android:id="@+id/fragment_messages_back_image_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_back"
+                android:tint="#fff"
+                android:onClick="onBackBtnClicked"
+                android:background="@android:color/transparent"/>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <RelativeLayout
+                    android:id="@+id/mainContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@color/colorBlackBlue2"
+                    android:elevation="4dp"
+                    app1:targetApi="lollipop">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:textColor="#fff"
+                        android:text="Messages"
+                        android:textSize="20sp"/>
+
+                    <ImageButton
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_alignParentRight="true"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_more"
+                        android:tint="#fff"
+                        android:onClick="onOptionsBtnClicked"/>
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/searchContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@color/colorBlackBlue2"
+                    android:elevation="4dp"
+                    android:visibility="gone">
+
+                    <EditText
+                        android:id="@+id/searchET"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textColor="#fff"
+                        android:layout_marginRight="168dp"
+                        android:background="@android:color/transparent"
+                        android:hint="Search"
+                        android:textColorHint="#999"
+                        android:textSize="20sp"/>
+
+                    <TextView
+                        android:id="@+id/searchOccurrences"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginRight="112dp"
+                        android:textColor="#fff"
+                        android:textSize="18sp"
+                        android:text="0"
+                        android:gravity="center"/>
+
+                    <ImageButton
+                        android:id="@+id/searchUp"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_alignParentRight="true"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_arrow_up"
+                        android:tint="#fff"
+                        android:layout_marginRight="56dp"
+                        android:onClick="onSearchUpClicked"/>
+
+                    <ImageButton
+                        android:id="@+id/searchDown"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_alignParentRight="true"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_arrow_down"
+                        android:tint="#fff"
+                        android:onClick="onSearchDownClicked"/>
+
+                </RelativeLayout>
+
+            </FrameLayout>
+
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:cardCornerRadius="0dp"
+        app:cardBackgroundColor="@color/colorBlackBlue3"
+        app:cardElevation="6dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp">
+
+            <EditText
+                android:id="@+id/fragment_messages_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@android:color/transparent"
+                android:hint="Message"
+                android:paddingLeft="56dp"
+                android:paddingRight="56dp"
+                android:textColor="#fff"
+                android:textColorHint="#fff"/>
+
+            <ImageButton
+                android:id="@+id/fragment_messages_files_image_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_file"
+                android:tint="#fff"/>
+
+            <ImageButton
+                android:id="@+id/fragment_messages_send_image_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@android:color/transparent"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/ic_send"
+                android:tint="#fff" />
+
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

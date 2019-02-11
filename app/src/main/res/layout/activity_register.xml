@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue"
+    tools:context="kasper.android.pulse.activities.RegisterActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true"
+        android:paddingBottom="224dp">
+
+        <ImageView
+            android:layout_width="176dp"
+            android:layout_height="176dp"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/ic_cloud"
+            android:tint="@color/colorBlue"
+            android:layout_gravity="center_horizontal"/>
+
+        <TextView
+            android:layout_width="176dp"
+            android:layout_height="144dp"
+            android:text="Aseman Cloud"
+            android:textColor="@color/colorBlackBlue"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="-144dp"
+            android:gravity="center"
+            android:textSize="20sp"/>
+
+        <studio.carbonylgroup.textfieldboxes.TextFieldBoxes
+            android:id="@+id/text_field_boxes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:labelText="Email Address"
+            app:primaryColor="@color/colorBlue"
+            app:errorColor="@android:color/holo_red_light"
+            app:secondaryColor="@color/colorBlue"
+            app:iconSignifier="@drawable/ic_email"
+            app:counterColor="@color/colorBlue"
+            app:maxCharacters="64"
+            app:isResponsiveIconColor="true"
+            android:layout_marginTop="32dp"
+            android:layout_marginLeft="32dp"
+            android:layout_marginRight="32dp">
+
+            <studio.carbonylgroup.textfieldboxes.ExtendedEditText
+                android:id="@+id/activity_register_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="1"
+                android:maxLines="1"
+                android:inputType="textEmailAddress"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:textColor="#fff"/>
+
+        </studio.carbonylgroup.textfieldboxes.TextFieldBoxes>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:fabSize="normal"
+        android:src="@drawable/ic_done"
+        android:tint="#fff"
+        android:layout_centerHorizontal="true"
+        android:visibility="visible"
+        android:onClick="onOkBtnClicked"
+        app:backgroundTint="@color/colorBlue"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="16dp"
+        android:layout_marginRight="16dp" />
+
+</RelativeLayout>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.BotProfileActivity"
+    android:background="@color/colorBlackBlue">
+    
+    <ImageView
+        android:id="@+id/botProfileAvatarIV"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/selfie"
+        android:scaleType="centerCrop"/>
+    
+    <androidx.cardview.widget.CardView
+        android:layout_width="84dp"
+        android:layout_height="56dp"
+        app:cardCornerRadius="28dp"
+        app:cardBackgroundColor="@color/colorBlackBlue"
+        android:layout_marginLeft="-28dp"
+        android:layout_marginTop="16dp">
+
+        <ImageButton
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_back"
+            android:tint="#fff"
+            android:layout_marginLeft="28dp"
+            android:onClick="onBackBtnClicked"
+            android:background="@android:color/transparent"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/botProfileTokenContainer"
+        android:layout_width="match_parent"
+        android:layout_height="112dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="88dp"
+        app:cardCornerRadius="28dp"
+        app:cardBackgroundColor="@color/colorBlackBlue">
+
+        <TextView
+            android:id="@+id/botProfileTokenTV"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="16dp"
+            android:text="token_token_token_token_token_token_token_token_token_token_token_token_token"
+            android:textColor="#fff"
+            android:textSize="16sp"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        app:cardCornerRadius="28dp"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="@color/colorBlackBlue">
+
+        <TextView
+            android:id="@+id/botProfileNameTV"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="#fff"
+            android:textSize="20sp"
+            android:text="Google Map Bot"
+            android:layout_marginRight="28dp"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/botProfileSubscribeFAB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:fabSize="normal"
+        android:src="@drawable/ic_connection"
+        android:tint="#fff"
+        app:backgroundTint="@color/colorBlue"
+        android:layout_gravity="bottom|right"
+        android:onClick="onSubscribeBtnClicked"
+        android:layout_margin="16dp"/>
+    
+</FrameLayout>

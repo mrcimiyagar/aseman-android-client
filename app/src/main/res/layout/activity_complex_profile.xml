@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlue">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorBlackBlue"
+        tools:context="kasper.android.pulse.activities.ComplexProfileActivity">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/complexProfileAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="144dp">
+
+            <com.google.android.material.appbar.CollapsingToolbarLayout
+                android:id="@+id/collapsingToolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed">
+
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    app:layout_collapseMode="pin"/>
+
+                <kasper.android.pulse.components.SmoothCollapsingToolbarLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left|center_vertical"
+                    android:minHeight="?attr/actionBarSize"
+                    app:sctl_avatar_id="@+id/complexProfileAvatarIV"
+                    app:sctl_collapsed_avatarSize="40dp"
+                    app:sctl_collapsed_offsetX="72dp"
+                    app:sctl_collapsed_offsetY="0dp"
+                    app:sctl_collapsed_subtitleTextSize="15.5sp"
+                    app:sctl_collapsed_titleTextSize="17sp"
+                    app:sctl_expanded_avatarSize="64dp"
+                    app:sctl_expanded_offsetX="32dp"
+                    app:sctl_expanded_offsetY="16dp"
+                    app:sctl_expanded_subtitleTextSize="18sp"
+                    app:sctl_expanded_titleTextSize="20sp"
+                    app:sctl_subtitle_id="@+id/complexProfileSubTitleTV"
+                    app:sctl_title_id="@+id/complexProfileTitleTV">
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/complexProfileAvatarIV"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:scaleType="centerCrop"
+                        android:src="@color/colorBlackBlue"
+                        android:onClick="onAvatarImageClicked"
+                        android:layout_gravity="center_vertical"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginLeft="16dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/complexProfileTitleTV"
+                            android:text="Title"
+                            android:textColor="#fff"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/complexProfileSubTitleTV"
+                            android:text="Subtitle"
+                            android:textColor="@color/colorBlue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                </kasper.android.pulse.components.SmoothCollapsingToolbarLayout>
+
+            </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/complexProfileRoomsRV"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/editFAB"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_anchorGravity="bottom|right|end"
+            app:layout_anchor="@id/collapsingToolbar"
+            android:layout_marginRight="16dp"
+            android:src="@drawable/ic_edit"
+            app:tint="#fff"
+            android:onClick="onEditTitleBtnClicked"/>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+</FrameLayout>

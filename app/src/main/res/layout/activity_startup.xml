@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_centerInParent="true"
+    tools:context="kasper.android.pulse.activities.StartupActivity">
+
+    <ImageView
+        android:layout_width="176dp"
+        android:layout_height="176dp"
+        android:src="@drawable/ic_cloud"
+        android:tint="@color/colorBlue"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorBlue"
+        android:textSize="20sp"
+        android:text="@string/app_name"
+        android:textStyle="bold"/>
+
+    <ProgressBar
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:progressTint="@color/colorBlue"
+        android:layout_marginTop="16dp"/>
+
+</LinearLayout>

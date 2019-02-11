@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue"
+    tools:context="kasper.android.pulse.activities.CreateRoomActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentInsetStart="0dp"
+            app:contentInsetEnd="0dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="56dp"
+                    android:text="Create new room..."
+                    android:gravity="center_vertical"
+                    android:textSize="20sp"
+                    android:textColor="#fff"/>
+
+                <ImageButton
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_back"
+                    android:onClick="onBackBtnClicked"/>
+
+            </RelativeLayout>
+
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="56dp"
+        android:orientation="horizontal"
+        android:gravity="bottom">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/activity_create_room_avatar_image_view"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:src="@color/colorBlackBlue3"
+            android:layout_marginTop="32dp"
+            android:layout_marginLeft="32dp"
+            android:onClick="onPickAvatarBtnClicked"/>
+
+        <EditText
+            android:id="@+id/activity_create_room_name_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="32dp"
+            android:hint="Room name"
+            android:paddingLeft="16dp"
+            android:textColorHint="#fff"
+            android:textColor="#fff"
+            android:backgroundTint="#fff"/>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:fabSize="normal"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        app:backgroundTint="@color/colorBlue"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_done"
+        android:onClick="onOkBtnClicked"
+        android:tint="#fff"/>
+
+    <FrameLayout
+        android:id="@+id/page_add_room_loading_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="6dp"
+        android:background="#6000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:cardCornerRadius="2dp"
+            app:cardBackgroundColor="@color/colorBlackBlue3">
+
+            <com.mikhaellopez.circularprogressbar.CircularProgressBar
+                android:id="@+id/page_add_room_progress_bar"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                app:cpb_background_progressbar_color="#000"
+                app:cpb_background_progressbar_width="2dp"
+                app:cpb_progressbar_color="@color/colorPrimary"
+                app:cpb_progressbar_width="4dp"
+                app:cpb_progress="0" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_gravity="center_vertical"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:layout_marginLeft="80dp"
+                android:layout_marginRight="16dp"
+                android:textColor="#fff"
+                android:textSize="20sp"
+                android:text="Uploading Photo..."/>
+
+        </androidx.cardview.widget.CardView>
+
+    </FrameLayout>
+
+</RelativeLayout>

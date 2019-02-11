@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/adapter_videos_main_layout"
+    android:layout_width="144dp"
+    android:layout_height="144dp"
+    android:gravity="center_horizontal">
+
+    <RelativeLayout
+        android:id="@+id/adapter_videos_icon_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/adapter_videos_icon_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY"
+            android:padding="0dp"/>
+
+        <eightbitlab.com.blurview.BlurView
+            android:id="@+id/adapter_videos_blur_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <ImageView
+            android:id="@+id/adapter_videos_play_image_view"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_play"
+            android:padding="32dp"
+            android:tint="#fff"
+            android:scaleType="fitCenter"
+            android:layout_centerInParent="true"/>
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY"
+            app:srcCompat="@drawable/dark_to_light_gradient"/>
+
+        <ImageView
+            android:id="@+id/adapter_videos_download_image_button"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_download"
+            android:layout_centerInParent="true"
+            android:tint="#fff"/>
+
+        <FrameLayout
+            android:id="@+id/adapter_videos_loading_container"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_centerInParent="true"
+            android:visibility="gone">
+
+            <com.mikhaellopez.circularprogressbar.CircularProgressBar
+                android:id="@+id/adapter_videos_loading_progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:cpb_progressbar_width="3dp"
+                android:layout_margin="8dp"
+                app:cpb_progressbar_color="#fff"
+                app:cpb_progress="50"
+                app:cpb_background_progressbar_width="3dp"
+                app:cpb_background_progressbar_color="@color/colorBlue"/>
+
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/adapter_videos_title_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#fff"
+            android:gravity="center"
+            android:textSize="15sp"
+            android:text="Loading..."
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_alignParentBottom="true"
+            android:paddingBottom="8dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="32dp"/>
+
+    </RelativeLayout>
+
+</RelativeLayout>

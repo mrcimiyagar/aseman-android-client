@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="96dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/colorBlackBlue3">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="32dp"
+        android:src="@color/colorBlackBlue"/>
+
+    <ImageView
+        android:id="@+id/adapter_audios_play_image_view"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="32dp"
+        android:src="@drawable/ic_play"
+        android:tint="@color/colorBlue"
+        android:padding="8dp"/>
+
+    <ImageView
+        android:id="@+id/adapter_audios_download_image_button"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_download"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="32dp"
+        android:tint="@color/colorBlue"/>
+
+    <FrameLayout
+        android:id="@+id/adapter_audios_loading_container"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="32dp"
+        android:visibility="gone">
+
+        <com.mikhaellopez.circularprogressbar.CircularProgressBar
+            android:id="@+id/adapter_audios_loading_progress_bar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"
+            app:cpb_progressbar_width="3dp"
+            app:cpb_progressbar_color="#fff"
+            app:cpb_progress="50"
+            app:cpb_background_progressbar_width="3dp"
+            app:cpb_background_progressbar_color="@color/colorBlue"/>
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/adapter_audios_title_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|left"
+        android:layout_marginLeft="112dp"
+        android:layout_marginRight="16dp"
+        android:ellipsize="end"
+        android:text="hello"
+        android:textColor="#fff"
+        android:lines="1"
+        android:textSize="25sp"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0.25dp"
+        android:background="#fff"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_alignParentBottom="true"/>
+
+</RelativeLayout>
