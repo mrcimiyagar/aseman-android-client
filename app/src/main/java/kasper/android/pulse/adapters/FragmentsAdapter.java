@@ -3,15 +3,16 @@ package kasper.android.pulse.adapters;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import kasper.android.pulse.fragments.BaseFragment;;
 
 import java.util.List;
 
 public class FragmentsAdapter extends FragmentStatePagerAdapter {
 
-    private List<Fragment> fragments;
+    private List<BaseFragment> fragments;
 
-    public FragmentsAdapter(FragmentManager fm, List<Fragment> fragments) {
+    public FragmentsAdapter(FragmentManager fm, List<BaseFragment> fragments) {
         super(fm);
         this.fragments = fragments;
     }

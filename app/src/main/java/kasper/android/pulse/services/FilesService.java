@@ -18,6 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
@@ -25,6 +26,7 @@ import kasper.android.pulse.models.extras.FileRequestBody;
 import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.retrofit.FileHandler;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import okhttp3.Call;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -152,13 +154,19 @@ public class FilesService extends IntentService {
                                 Response response = call.execute();
                                 if (response.body() != null) {
                                     String result = response.body().string();
-                                    Log.d("Aseman", "File Upload : " + result);
+                                    Log.d("Aseman", "File Uploaded : " + result);
                                     JSONObject mainJO = new JSONObject(result);
                                     if (mainJO.getString("status").equals("success")) {
-                                        uploading.getUploadListener().fileUploaded(
-                                                mainJO.getJSONObject("file").getLong("fileId"),
-                                                mainJO.has("fileUsage") ? mainJO.getJSONObject
-                                                        ("fileUsage").getLong("fileUsageId") : -1);
+                                        Core.getInstance().bus().post(new UiThreadRequested(() -> {
+                                            try {
+                                                uploading.getUploadListener().fileUploaded(
+                                                        mainJO.getJSONObject("file").getLong("fileId"),
+                                                        mainJO.has("fileUsage") ? mainJO.getJSONObject
+                                                                ("fileUsage").getLong("fileUsageId") : -1);
+                                            } catch (Exception ex) {
+                                                ex.printStackTrace();
+                                            }
+                                        }));
                                     }
                                 }
                             } catch (Exception ex) {
@@ -170,28 +178,29 @@ public class FilesService extends IntentService {
 
                 }
             });
-            downloaderThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        while (true) {
-                            Downloading downloading = downloadingFiles.take();
-                            currentDownloadingFile = downloading.getFile();
-                            skipDownload = false;
-                            FileHandler fileHandler = NetworkHelper.getRetrofit().create(FileHandler.class);
-                            retrofit2.Call<ResponseBody> call = fileHandler.downloadFile(downloading.getFile().getFileId());
-                            ResponseBody body = call.execute().body();
-                            try {
+            downloaderThread = new Thread(() -> {
+                try {
+                    while (true) {
+                        Downloading downloading = downloadingFiles.take();
+                        currentDownloadingFile = downloading.getFile();
+                        skipDownload = false;
+                        FileHandler fileHandler = NetworkHelper.getRetrofit().create(FileHandler.class);
+                        retrofit2.Call<ResponseBody> call = fileHandler.downloadFile(downloading.getFile().getFileId());
+                        ResponseBody body = call.execute().body();
+                        try {
+                            if (body != null) {
                                 writeResponseBodyToDisk(body, downloading.getFile().getFileId(), downloading);
-                                downloading.getDownloadListener().fileDownloaded();
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                                downloading.getDownloadListener().downloadFailed();
                             }
+                            Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                    downloading.getDownloadListener().fileDownloaded()));
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                    downloading.getDownloadListener().downloadFailed()));
                         }
-                    } catch (Exception ignored) {
-                        ignored.printStackTrace();
                     }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             });
             uploaderThread.start();

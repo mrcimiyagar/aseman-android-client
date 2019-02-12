@@ -3,7 +3,6 @@ package kasper.android.pulse.activities;
 import android.content.Intent;
 import android.os.Environment;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Pair;
@@ -23,16 +22,15 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RobotHandler;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class CreateBotActivity extends AppCompatActivity {
 
@@ -89,8 +87,8 @@ public class CreateBotActivity extends AppCompatActivity {
                 Entities.Photo file = (Entities.Photo) pair.first;
                 if (selectedImageFile != null && selectedImageFile.exists()) {
                     NetworkHelper.uploadFile(file, -1, -1, selectedImageFile.getPath(),
-                            progress -> GraphicHelper.runOnUiThread(() ->
-                                    progressBar.setProgress(progress)), (OnFileUploadListener) (fileId, fileUsageId) -> {
+                            progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                    progressBar.setProgress(progress))), (OnFileUploadListener) (fileId, fileUsageId) -> {
                                 File sourceFile = new File(selectedImageFile.getPath());
                                 File destFile = new File(new File(Environment
                                         .getExternalStorageDirectory(), DatabaseHelper.StorageDir), fileId + "");

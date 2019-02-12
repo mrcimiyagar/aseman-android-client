@@ -2,18 +2,16 @@ package kasper.android.pulse.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
+import com.anadeainc.rxbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,167 +20,141 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ChatActivity;
-import kasper.android.pulse.callbacks.ui.ContactListener;
-import kasper.android.pulse.callbacks.ui.MessageListener;
-import kasper.android.pulse.callbacks.ui.RoomListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.rxbus.notifications.ContactCreated;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.MessageSending;
+import kasper.android.pulse.rxbus.notifications.MessageSent;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
+import kasper.android.pulse.rxbus.notifications.RoomRemoved;
+import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 
 public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private AppCompatActivity activity;
     private final List<Entities.Room> rooms;
-    private MessageListener messageListener;
-    private RoomListener roomListener;
-    private ContactListener contactListener;
     private Hashtable<Long, Entities.Message> sendingMessages;
+    private RecyclerView peopleRV;
 
     public HomeAdapter(AppCompatActivity activity, List<Entities.Room> rooms) {
         this.activity = activity;
         this.rooms = rooms;
         this.sendingMessages = new Hashtable<>();
+        Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
-
-        this.messageListener = new MessageListener() {
-            @Override
-            public void messageReceived(Entities.Message message, Entities.MessageLocal messageLocal) {
-                GraphicHelper.runOnUiThread(() -> {
-                    int counter = 0;
-                    for (Entities.Room room : rooms) {
-                        if (message.getRoom().getRoomId() == room.getRoomId()) {
-                            room.setLastAction(message);
-                            notifyItemChanged(counter + 2);
-                            rooms.add(0, room);
-                            rooms.remove(counter + 1);
-                            notifyItemMoved(counter, 0);
-                            break;
-                        }
-                        counter++;
-                    }
-                });
-            }
-
-            @Override
-            public void messageDeleted(Entities.Message message) {
-
-            }
-
-            @Override
-            public void messageSending(Entities.Message message, Entities.MessageLocal messageLocal) {
-                GraphicHelper.runOnUiThread(() -> {
-                    int counter = 0;
-                    for (Entities.Room room : rooms) {
-                        if (message.getRoom().getRoomId() == room.getRoomId()) {
-                            sendingMessages.put(message.getMessageId(), message.clone());
-                            room.setLastAction(message);
-                            notifyItemChanged(counter + 2);
-                            rooms.add(0, room);
-                            rooms.remove(counter);
-                            notifyItemMoved(counter + 2, 2);
-                            break;
-                        }
-                        counter++;
-                    }
-                });
-            }
-
-            @Override
-            public void messageSent(long localMessageId, long onlineMessageId) {
-                GraphicHelper.runOnUiThread(() -> {
-                    Entities.Message message = sendingMessages.remove(localMessageId);
-                    message.setMessageId(onlineMessageId);
-                    int counter = 0;
-                    for (Entities.Room room : rooms) {
-                        if (message.getRoom().getRoomId() == room.getRoomId()) {
-                            room.setLastAction(message);
-                            notifyItemChanged(counter + 2);
-                            rooms.add(0, room);
-                            rooms.remove(counter);
-                            notifyItemMoved(counter + 2, 2);
-                            break;
-                        }
-                        counter++;
-                    }
-                });
-            }
-        };
-        GraphicHelper.addMessageListener(this.messageListener);
-
-        roomListener = new RoomListener() {
-            @Override
-            public void roomCreated(long complexId, Entities.Room room) {
-                GraphicHelper.runOnUiThread(() -> addRoom(room));
-            }
-
-            @Override
-            public void roomsCreated(long complexId, List<Entities.Room> rooms) {
-                for (Entities.Room room : rooms) {
-                    roomCreated(complexId, room);
-                }
-            }
-
-            @Override
-            public void roomRemoved(Entities.Room room) {
-                GraphicHelper.runOnUiThread(() -> removeRoom(room));
-            }
-
-            @Override
-            public void updateRoomLastMessage(long roomId, Entities.Message message) {
-
-            }
-        };
-        GraphicHelper.addRoomListener(roomListener);
-
-        contactListener = contact ->
-                GraphicHelper.runOnUiThread(() -> {
-                    addContact(contact);
-                    addRoom(contact.getComplex().getRooms().get(0));
-                });
-        GraphicHelper.addContactListener(contactListener);
     }
 
-    private void addRoom(Entities.Room room) {
-        GraphicHelper.runOnUiThread(() -> {
-            boolean exists = false;
-            for (Entities.Room r : rooms) {
-                if (r.getRoomId() == room.getRoomId()) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
+    public void dispose() {
+        if (peopleRV != null && peopleRV.getAdapter() != null)
+            ((ActiveNowAdapter) peopleRV.getAdapter()).dispose();
+        Core.getInstance().bus().unregister(this);
+    }
+
+    @Subscribe
+    public void onMessageReceived(MessageReceived messageReceived) {
+        Entities.Message message = messageReceived.getMessage();
+        int counter = 0;
+        for (Entities.Room room : rooms) {
+            if (message.getRoom().getRoomId() == room.getRoomId()) {
+                room.setLastAction(message);
+                notifyItemChanged(counter + 2);
                 rooms.add(0, room);
-                GraphicHelper.runOnUiThread(() -> notifyItemInserted(0));
+                rooms.remove(counter + 1);
+                notifyItemMoved(counter, 0);
+                break;
             }
-        });
-    }
-
-    private void removeRoom(Entities.Room room) {
-        GraphicHelper.runOnUiThread(() -> {
-            int counter = 0;
-            for (Entities.Room r : rooms) {
-                if (r.getRoomId() == room.getRoomId()) {
-                    final int index = counter;
-                    rooms.remove(index);
-                    GraphicHelper.runOnUiThread(
-                            () -> notifyItemRemoved(index + 2));
-                    break;
-                }
-                counter++;
-            }
-        });
-    }
-
-    private void addContact(Entities.Contact contact) {
-        if (peopleRV != null) {
-            ((ActiveNowAdapter) Objects.requireNonNull(peopleRV.getAdapter())).addContact(contact);
+            counter++;
         }
     }
 
-    private RecyclerView peopleRV;
+    @Subscribe
+    public void onMessageSending(MessageSending messageSending) {
+        Entities.Message message = messageSending.getMessage();
+        int counter = 0;
+        for (Entities.Room room : rooms) {
+            if (message.getRoom().getRoomId() == room.getRoomId()) {
+                sendingMessages.put(message.getMessageId(), message.clone());
+                room.setLastAction(message);
+                notifyItemChanged(counter + 2);
+                rooms.add(0, room);
+                rooms.remove(counter);
+                notifyItemMoved(counter + 2, 2);
+                break;
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onMessageSent(MessageSent messageSent) {
+        long localMessageId = messageSent.getLocalMessageId();
+        long onlineMessageId = messageSent.getOnlineMessageId();
+        Entities.Message message = sendingMessages.remove(localMessageId);
+        message.setMessageId(onlineMessageId);
+        int counter = 0;
+        for (Entities.Room room : rooms) {
+            if (message.getRoom().getRoomId() == room.getRoomId()) {
+                room.setLastAction(message);
+                notifyItemChanged(counter + 2);
+                rooms.add(0, room);
+                rooms.remove(counter);
+                notifyItemMoved(counter + 2, 2);
+                break;
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onRoomCreated(RoomCreated roomCreated) {
+        addRoom(roomCreated.getRoom());
+    }
+
+    @Subscribe
+    public void onRoomsCreated(RoomsCreated roomsCreated) {
+        for (Entities.Room room : rooms) {
+            onRoomCreated(new RoomCreated(roomsCreated.getComplexId(), room));
+        }
+    }
+
+    @Subscribe
+    public void onRoomRemoved(RoomRemoved roomRemoved) {
+        removeRoom(roomRemoved.getRoom());
+    }
+
+    @Subscribe
+    public void onContactCreated(ContactCreated contactCreated) {
+        addRoom(contactCreated.getContact().getComplex().getRooms().get(0));
+    }
+
+    private void addRoom(Entities.Room room) {
+        boolean exists = false;
+        for (Entities.Room r : rooms) {
+            if (r.getRoomId() == room.getRoomId()) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            rooms.add(0, room);
+            notifyItemInserted(0);
+        }
+    }
+
+    private void removeRoom(Entities.Room room) {
+        int counter = 0;
+        for (Entities.Room r : rooms) {
+            if (r.getRoomId() == room.getRoomId()) {
+                rooms.remove(counter);
+                notifyItemRemoved(counter + 2);
+                break;
+            }
+            counter++;
+        }
+    }
 
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {

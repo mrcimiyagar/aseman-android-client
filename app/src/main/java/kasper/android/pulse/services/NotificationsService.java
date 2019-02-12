@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import android.util.Log;
@@ -18,14 +17,11 @@ import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
 
-import java.util.Objects;
-
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.RoomActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.callbacks.ui.FileListener;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
 import kasper.android.pulse.models.entities.Entities;
@@ -33,11 +29,12 @@ import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.models.notifications.Notifications;
 import kasper.android.pulse.retrofit.NotifHandler;
+import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
+import kasper.android.pulse.rxbus.notifications.ContactCreated;
+import kasper.android.pulse.rxbus.notifications.FileReceived;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
-import static kasper.android.pulse.helpers.GraphicHelper.runOnUiThread;
 
 public class NotificationsService extends IntentService {
 
@@ -112,7 +109,7 @@ public class NotificationsService extends IntentService {
 
         connection.onClosed(exception -> new Thread(() -> {
             try {
-                GraphicHelper.getConnectionListener().reconnecting();
+                Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Reconnecting));
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -152,7 +149,7 @@ public class NotificationsService extends IntentService {
         }).start();
 
         try {
-            GraphicHelper.getConnectionListener().connected();
+            Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connected));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -199,10 +196,10 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received BotView Init notification");
         if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
-            runOnUiThread(() -> {
+            Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 if (PulseHelper.getPulseViewTable().containsKey(notif.getBotId()))
                     PulseHelper.getPulseViewTable().get(notif.getBotId()).buildUi(notif.getViewData());
-            });
+            }));
 
         notifyServerNotifReceived(notif.getNotificationId());
     }
@@ -211,10 +208,10 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received BotView Update notification");
         if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
-            runOnUiThread(() -> {
+            Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 if (PulseHelper.getPulseViewTable().containsKey(notif.getBotId()))
                     PulseHelper.getPulseViewTable().get(notif.getBotId()).updateUi(notif.getUpdateData());
-            });
+            }));
 
         notifyServerNotifReceived(notif.getNotificationId());
     }
@@ -223,10 +220,10 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received BotView Animation notification");
         if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
-            runOnUiThread(() -> {
+            Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 if (PulseHelper.getPulseViewTable().containsKey(notif.getBotId()))
                     PulseHelper.getPulseViewTable().get(notif.getBotId()).animateUi(notif.getAnimData());
-            });
+            }));
 
         notifyServerNotifReceived(notif.getNotificationId());
     }
@@ -235,10 +232,10 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received BotView RunCommands notification");
         if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
-            runOnUiThread(() -> {
+            Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 if (PulseHelper.getPulseViewTable().containsKey(notif.getBotId()))
                     PulseHelper.getPulseViewTable().get(notif.getBotId()).runCommands(notif.getCommandsData());
-            });
+            }));
 
         notifyServerNotifReceived(notif.getNotificationId());
     }
@@ -250,12 +247,8 @@ public class NotificationsService extends IntentService {
         DatabaseHelper.notifyUserCreated(ccn.getContact().getUser());
         DatabaseHelper.notifyUserCreated(ccn.getContact().getPeer());
         DatabaseHelper.notifyContactCreated(ccn.getContact());
-        runOnUiThread(() -> {
-            try {
-                Log.d("Aseman", NetworkHelper.getMapper().writeValueAsString(ccn.getContact()));
-                GraphicHelper.getContactListener().contactCreated(ccn.getContact());
-            } catch (Exception ignored) { }
-        });
+        Core.getInstance().bus().post(new UiThreadRequested(() ->
+                Core.getInstance().bus().post(new ContactCreated(ccn.getContact()))));
 
         notifyServerNotifReceived(ccn.getNotificationId());
     }
@@ -264,19 +257,12 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received text message notification");
         final Entities.TextMessage message = mcn.getMessage();
         DatabaseHelper.notifyTextMessageReceived(message);
-        runOnUiThread(() -> {
-            try {
-                GraphicHelper.getRoomListener().updateRoomLastMessage(mcn.getMessage().getRoomId(), message);
-            } catch (Exception ignored) { }
-        });
-        runOnUiThread(() -> {
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            try {
-                GraphicHelper.getMessageListener().messageReceived(message, messageLocal);
-            } catch (Exception ignored) { }
-        });
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+        }));
         showMessageNotification(message, message.getText());
 
         notifyServerNotifReceived(mcn.getNotificationId());
@@ -286,27 +272,18 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received photo message notification");
         final Entities.PhotoMessage message = mcn.getMessage();
         DatabaseHelper.notifyPhotoMessageReceived(message);
-        runOnUiThread(() -> {
-            try {
-                GraphicHelper.getRoomListener().updateRoomLastMessage(mcn.getMessage().getRoomId(), message);
-            } catch (Exception ignored) { }
-        });
-        GraphicHelper.runOnUiThread(() -> {
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
             Entities.FileLocal fileLocal = new Entities.FileLocal();
             fileLocal.setFileId(message.getPhoto().getFileId());
             fileLocal.setPath("");
             fileLocal.setProgress(0);
             fileLocal.setTransferring(false);
-            for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                fileListener.fileReceived(DocTypes.Photo, message.getPhoto(), fileLocal);
-            }
+            Core.getInstance().bus().post(new FileReceived(DocTypes.Photo, message.getPhoto(), fileLocal));
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            try {
-                GraphicHelper.getMessageListener().messageReceived(message, messageLocal);
-            } catch (Exception ignored) { }
-        });
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+        }));
         showMessageNotification(message, "Photo");
 
         notifyServerNotifReceived(mcn.getNotificationId());
@@ -316,27 +293,18 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received audio message notification");
         final Entities.AudioMessage message = mcn.getMessage();
         DatabaseHelper.notifyAudioMessageReceived(message);
-        GraphicHelper.runOnUiThread(() -> {
-            try {
-                GraphicHelper.getRoomListener().updateRoomLastMessage(mcn.getMessage().getRoomId(), message);
-            } catch (Exception ignored) { }
-        });
-        GraphicHelper.runOnUiThread(() -> {
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
             Entities.FileLocal fileLocal = new Entities.FileLocal();
             fileLocal.setFileId(message.getAudio().getFileId());
             fileLocal.setPath("");
             fileLocal.setProgress(0);
             fileLocal.setTransferring(false);
-            for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                fileListener.fileReceived(DocTypes.Audio, message.getAudio(), fileLocal);
-            }
+            Core.getInstance().bus().post(new FileReceived(DocTypes.Audio, message.getAudio(), fileLocal));
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            try {
-                GraphicHelper.getMessageListener().messageReceived(message, messageLocal);
-            } catch (Exception ignored) { }
-        });
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+        }));
         showMessageNotification(message, "Audio");
 
         notifyServerNotifReceived(mcn.getNotificationId());
@@ -346,27 +314,18 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received video message notification");
         final Entities.VideoMessage message = mcn.getMessage();
         DatabaseHelper.notifyVideoMessageReceived(message);
-        GraphicHelper.runOnUiThread(() -> {
-            try {
-                GraphicHelper.getRoomListener().updateRoomLastMessage(mcn.getMessage().getRoomId(), message);
-            } catch (Exception ignored) { }
-        });
-        GraphicHelper.runOnUiThread(() -> {
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
             Entities.FileLocal fileLocal = new Entities.FileLocal();
             fileLocal.setFileId(message.getVideo().getFileId());
             fileLocal.setPath("");
             fileLocal.setProgress(0);
             fileLocal.setTransferring(false);
-            for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                fileListener.fileReceived(DocTypes.Video, message.getVideo(), fileLocal);
-            }
+            Core.getInstance().bus().post(new FileReceived(DocTypes.Video, message.getVideo(), fileLocal));
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            try {
-                GraphicHelper.getMessageListener().messageReceived(message, messageLocal);
-            } catch (Exception ignored) { }
-        });
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+        }));
         showMessageNotification(message, "Video");
 
         notifyServerNotifReceived(mcn.getNotificationId());
@@ -376,29 +335,18 @@ public class NotificationsService extends IntentService {
         Log.d("Aseman", "Received service message notification");
         final Entities.ServiceMessage message = mcn.getMessage();
         DatabaseHelper.notifyServiceMessageReceived(message);
-        GraphicHelper.runOnUiThread(() -> {
-            try {
-                GraphicHelper.getRoomListener().updateRoomLastMessage(mcn.getMessage().getRoomId(), message);
-            } catch (Exception ignored) { }
-        });
-        GraphicHelper.runOnUiThread(() -> {
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            try {
-                GraphicHelper.getMessageListener().messageReceived(message, messageLocal);
-            } catch (Exception ignored) { }
-        });
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+        }));
         showMessageNotification(message, message.getText());
 
         notifyServerNotifReceived(mcn.getNotificationId());
     }
 
     private void showMessageNotification(Entities.Message message, String text) {
-        try {
-            Log.d("Aseman", NetworkHelper.getMapper().writeValueAsString(message));
-        } catch (Exception ignored) { }
-
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, "default")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(message.getRoom().getComplex().getTitle() + ":" + message.getRoom().getTitle())
@@ -431,19 +379,11 @@ public class NotificationsService extends IntentService {
         Call<Packet> call = NetworkHelper.getRetrofit().create(NotifHandler.class).notifyNotifReceived(packet);
         NetworkHelper.requestServer(call, new ServerCallback() {
             @Override
-            public void onRequestSuccess(Packet packet) {
-
-            }
-
+            public void onRequestSuccess(Packet packet) { }
             @Override
-            public void onServerFailure() {
-
-            }
-
+            public void onServerFailure() { }
             @Override
-            public void onConnectionFailure() {
-
-            }
+            public void onConnectionFailure() { }
         });
     }
 }

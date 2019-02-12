@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
+import com.anadeainc.rxbus.Subscribe;
 
 import java.util.List;
 
@@ -16,12 +16,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ProfileActivity;
-import kasper.android.pulse.callbacks.ui.ProfileListener;
 import kasper.android.pulse.core.Core;
-import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.rxbus.notifications.ContactCreated;
+import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
 
 public class ActiveNowAdapter extends RecyclerView.Adapter<ActiveNowAdapter.ActiveItem> {
 
@@ -31,42 +30,32 @@ public class ActiveNowAdapter extends RecyclerView.Adapter<ActiveNowAdapter.Acti
     public ActiveNowAdapter(AppCompatActivity activity, List<Entities.User> users) {
         this.activity = activity;
         this.users = users;
+        Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
-        GraphicHelper.addProfileListener(new ProfileListener() {
-            @Override
-            public void profileUpdated(Entities.User user) {
-                GraphicHelper.runOnUiThread(() -> {
-                    int counter = 0;
-                    for (Entities.User u : users) {
-                        if (u.getBaseUserId() == user.getBaseUserId()) {
-                            u.setTitle(user.getTitle());
-                            u.setAvatar(user.getAvatar());
-                            notifyItemChanged(counter);
-                            break;
-                        }
-                        counter++;
-                    }
-                });
-            }
-
-            @Override
-            public void profileUpdated(Entities.Complex complex) {
-
-            }
-
-            @Override
-            public void profileUpdated(Entities.Room room) {
-
-            }
-
-            @Override
-            public void profileUpdated(Entities.Bot bot) {
-
-            }
-        });
     }
 
-    public void addContact(Entities.Contact contact) {
+    public void dispose() {
+        Core.getInstance().bus().unregister(this);
+    }
+
+    @Subscribe
+    public void onProfileUpdated(UserProfileUpdated profileUpdated) {
+        Entities.User user = profileUpdated.getUser();
+        int counter = 0;
+        for (Entities.User u : users) {
+            if (u.getBaseUserId() == user.getBaseUserId()) {
+                u.setTitle(user.getTitle());
+                u.setAvatar(user.getAvatar());
+                notifyItemChanged(counter);
+                break;
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onContactCreated(ContactCreated contactCreated) {
+        Entities.Contact contact = contactCreated.getContact();
         this.users.add(1, contact.getPeer());
         this.notifyItemInserted(1);
     }

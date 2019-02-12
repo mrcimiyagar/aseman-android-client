@@ -4,13 +4,14 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+
+import com.anadeainc.rxbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.callbacks.ui.DesktopListener;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
@@ -27,10 +28,11 @@ import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
+import kasper.android.pulse.rxbus.notifications.WorkerAdded;
+import kasper.android.pulse.rxbus.notifications.WorkerRemoved;
+import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 import kasper.android.pulseframework.components.PulseView;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class RoomActivity extends AppCompatActivity {
 
@@ -48,12 +50,12 @@ public class RoomActivity extends AppCompatActivity {
     private List<Entities.Bot> bots;
     private Hashtable<Long, PulseView> pulseTable;
 
-    private DesktopListener desktopListener;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_room);
+
+Core.getInstance().bus().register(this);
 
         workerships = new ArrayList<>();
         bots = new ArrayList<>();
@@ -81,7 +83,7 @@ public class RoomActivity extends AppCompatActivity {
         for (Entities.Bot bot : bots) {
             PulseHelper.getPulseViewTable().remove(bot.getBaseUserId());
         }
-        GraphicHelper.getDesktopListeners().remove(desktopListener);
+        Core.getInstance().bus().unregister(this);
         super.onDestroy();
     }
 
@@ -91,40 +93,38 @@ public class RoomActivity extends AppCompatActivity {
         backgroundView.setBackgroundResource(0);
         backgroundView.setBackgroundColor(Color.TRANSPARENT);
         initListeners();
-
-        desktopListener = new DesktopListener() {
-            @Override
-            public void workerAdded(Entities.Workership workership) {
-                workerships.add(workership);
-                insertNewPulseView(workership);
-            }
-
-            @Override
-            public void workerUpdated(Entities.Workership workership) {
-                for (int counter = 0; counter < workerships.size(); counter++) {
-                    if (workership.getBotId() == workerships.get(counter).getBotId()) {
-                        workerships.set(counter, workership);
-                        break;
-                    }
-                }
-                updateExistingPulseViewDimensions(workership);
-            }
-
-            @Override
-            public void workerRemoved(Entities.Workership workership) {
-                for (int counter = 0; counter < workerships.size(); counter++) {
-                    if (workership.getBotId() == workerships.get(counter).getBotId()) {
-                        workerships.remove(counter);
-                        break;
-                    }
-                }
-                removeExistingPulseView(workership);
-
-            }
-        };
-        GraphicHelper.addDesktopListener(desktopListener);
-
         loadBots();
+    }
+
+    @Subscribe
+    public void onWorkerAdded(WorkerAdded workerAdded) {
+        Entities.Workership workership = workerAdded.getWorkership();
+        workerships.add(workership);
+        insertNewPulseView(workership);
+    }
+
+    @Subscribe
+    public void onWorkerUpdated(WorkerUpdated workerUpdated) {
+        Entities.Workership workership = workerUpdated.getWorkership();
+        for (int counter = 0; counter < workerships.size(); counter++) {
+            if (workership.getBotId() == workerships.get(counter).getBotId()) {
+                workerships.set(counter, workership);
+                break;
+            }
+        }
+        updateExistingPulseViewDimensions(workership);
+    }
+
+    @Subscribe
+    public void onWorkerRemoved(WorkerRemoved workerRemoved) {
+        Entities.Workership workership = workerRemoved.getWorkership();
+        for (int counter = 0; counter < workerships.size(); counter++) {
+            if (workership.getBotId() == workerships.get(counter).getBotId()) {
+                workerships.remove(counter);
+                break;
+            }
+        }
+        removeExistingPulseView(workership);
     }
 
     private void initViews() {

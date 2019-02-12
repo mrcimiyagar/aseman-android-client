@@ -32,6 +32,7 @@ import kasper.android.pulse.callbacks.middleware.OnComplexSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnRoomsSyncListener;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.extras.LinearDecoration;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
@@ -40,6 +41,7 @@ import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
+import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
 import retrofit2.Call;
 
 public class ComplexProfileActivity extends AppCompatActivity {
@@ -103,6 +105,13 @@ public class ComplexProfileActivity extends AppCompatActivity {
             @Override
             public void syncFailed() { }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (roomsRV.getAdapter() != null)
+            ((ComplexProfileAdapter) roomsRV.getAdapter()).dispose();
+        super.onDestroy();
     }
 
     @SuppressLint("SetTextI18n")
@@ -245,7 +254,7 @@ public class ComplexProfileActivity extends AppCompatActivity {
                     DatabaseHelper.notifyComplexCreated(complex);
                     titleTV.setText(complex.getTitle());
                     NetworkHelper.loadUserAvatar(complex.getAvatar(), avatarIV);
-                    GraphicHelper.getProfileListener().profileUpdated(complex);
+                    Core.getInstance().bus().post(new ComplexProfileUpdated(complex));
                 }
 
                 @Override

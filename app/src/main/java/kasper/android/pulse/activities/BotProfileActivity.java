@@ -20,7 +20,6 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.GlideApp;
 
 public class BotProfileActivity extends AppCompatActivity {
 

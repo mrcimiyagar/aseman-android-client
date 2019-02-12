@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Pair;
 import android.view.View;
@@ -22,17 +21,16 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.callbacks.ui.RoomListener;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RoomHandler;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class CreateRoomActivity extends AppCompatActivity {
 
@@ -108,8 +106,8 @@ public class CreateRoomActivity extends AppCompatActivity {
                         Entities.Photo file = (Entities.Photo) pair.first;
                         if (selectedImageFile != null && selectedImageFile.exists()) {
                             NetworkHelper.uploadFile(file, complexId, -1, selectedImageFile.getPath(),
-                                    progress -> GraphicHelper.runOnUiThread(() ->
-                                            progressBar.setProgress(progress)),
+                                    progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                            progressBar.setProgress(progress))),
                                     (OnFileUploadListener) (fileId, fileUsageId) -> {
                                         File sourceFile = new File(selectedImageFile.getPath());
                                         File destFile = new File(new File(Environment
@@ -120,7 +118,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                                         } catch (Exception ex) {
                                             ex.printStackTrace();
                                         }
-                                        GraphicHelper.runOnUiThread(() -> {
+                                        Core.getInstance().bus().post(new UiThreadRequested(() -> {
                                             loadingView.setVisibility(View.GONE);
                                             Packet packet2 = new Packet();
                                             room.setAvatar(fileId);
@@ -132,7 +130,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                                                 @Override
                                                 public void onRequestSuccess(Packet packet) {
                                                     DatabaseHelper.updateRoom(room);
-                                                    GraphicHelper.getRoomListener().roomCreated(complexId, room);
+                                                    Core.getInstance().bus().post(new RoomCreated(complexId, room));
                                                     finish();
                                                 }
 
@@ -146,15 +144,11 @@ public class CreateRoomActivity extends AppCompatActivity {
                                                     Toast.makeText(CreateRoomActivity.this, "Room profile update failure", Toast.LENGTH_SHORT).show();
                                                 }
                                             });
-                                        });
+                                        }));
                                     });
                         } else {
-                            GraphicHelper.runOnUiThread(() -> {
-                                for (RoomListener roomListener : GraphicHelper.getRoomListeners()) {
-                                    roomListener.roomCreated(complexId, room);
-                                }
-                                finish();
-                            });
+                            Core.getInstance().bus().post(new RoomCreated(complexId, room));
+                            finish();
                         }
                     }
 

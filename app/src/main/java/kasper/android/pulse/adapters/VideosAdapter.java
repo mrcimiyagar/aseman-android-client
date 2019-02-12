@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.anadeainc.rxbus.Subscribe;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
@@ -43,7 +44,16 @@ import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.rxbus.notifications.FileDownloadCancelled;
+import kasper.android.pulse.rxbus.notifications.FileDownloaded;
+import kasper.android.pulse.rxbus.notifications.FileDownloading;
+import kasper.android.pulse.rxbus.notifications.FileReceived;
+import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
+import kasper.android.pulse.rxbus.notifications.FileUploadCancelled;
+import kasper.android.pulse.rxbus.notifications.FileUploaded;
+import kasper.android.pulse.rxbus.notifications.FileUploading;
 
+import static kasper.android.pulse.models.extras.DocTypes.Video;
 import static kasper.android.pulse.models.extras.DocTypes.Video;
 
 public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.Holder> {
@@ -63,147 +73,111 @@ public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.Holder> {
         this.roomId = roomId;
         this.blockSize = blockSize;
         this.selectCallback = selectCallback;
-
-        GraphicHelper.addFileListener(new FileListener() {
-            @Override
-            public void fileUploaded(DocTypes docType, long localFileId, long onlineFileId) {
-                try {
-                    if (docType == Video) {
-                        Entities.FileLocal fileLocal = fileLocals.remove(localFileId);
-                        fileLocal.setFileId(onlineFileId);
-                        fileLocal.setTransferring(false);
-                        fileLocals.put(onlineFileId, fileLocal);
-                        int counter = 0;
-                        for (Entities.File f : docs) {
-                            if (f.getFileId() == (localFileId)) {
-                                f.setFileId(onlineFileId);
-                                notifyItemChanged(counter);
-                            }
-                            counter++;
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileUploading(DocTypes docTypes, Entities.File file, Entities.FileLocal fileLocal) {
-                try {
-                    if (docTypes == Video) {
-                        docs.add((Entities.Video) file.clone());
-                        fileLocals.put(fileLocal.getFileId(), fileLocal.clone());
-                        notifyItemInserted(fileLocals.size() - 1);
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileUploadCancelled(DocTypes docType, long localFileId) {
-                try {
-                    if (docType == Video) {
-                        synchronized (docs) {
-                            int counter = 0;
-                            for (Entities.File doc : docs) {
-                                if (doc.getFileId() == (localFileId)) {
-                                    break;
-                                }
-                                counter++;
-                            }
-                            docs.remove(counter);
-                            notifyItemRemoved(counter);
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileDownloaded(DocTypes docType, long localFileId) {
-                try {
-                    if (docType == Video) {
-                        synchronized (docs) {
-                            int counter = 0;
-                            for (Entities.File doc : docs) {
-                                if (doc.getFileId() == (localFileId)) {
-                                    Entities.FileLocal fileLocal = fileLocals.get(doc.getFileId());
-                                    fileLocal.setTransferring(false);
-                                    notifyItemChanged(counter);
-                                    break;
-                                }
-                                counter++;
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileDownloading(DocTypes docType, Entities.File file) {
-
-            }
-
-            @Override
-            public void fileDownloadCancelled(DocTypes docType, long fileId) {
-                try {
-                    if (docType == Video) {
-                        int counter = 0;
-                        for (Entities.File doc : docs) {
-                            if (doc.getFileId() == (fileId)) {
-                                fileLocals.get(doc.getFileId()).setTransferring(false);
-                                notifyItemChanged(counter);
-                                break;
-                            }
-                            counter++;
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileTransferProgressed(DocTypes docType, long fileId, int progress) {
-                try {
-                    if (docType == Video) {
-                        synchronized (docs) {
-                            int counter = 0;
-                            for (Entities.File doc : docs) {
-                                if (doc.getFileId() == (fileId)) {
-                                    Entities.FileLocal fileLocal = fileLocals.get(doc.getFileId());
-                                    fileLocal.setProgress(progress);
-                                    notifyItemChanged(counter);
-                                    break;
-                                }
-                                counter++;
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileReceived(DocTypes docType, Entities.File file, Entities.FileLocal fileLocal) {
-                try {
-                    if (docType == Video) {
-                        docs.add((Entities.Video) file.clone());
-                        fileLocals.put(fileLocal.getFileId(), fileLocal.clone());
-                        notifyItemInserted(fileLocals.size() - 1);
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
+        Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
+    }
+
+    public void dispose() {
+        Core.getInstance().bus().unregister(this);
+    }
+
+    @Subscribe
+    public void onFileReceived(FileReceived fileReceived) {
+        if (fileReceived.getDocType() == Video) {
+            docs.add((Entities.Video) fileReceived.getFile().clone());
+            fileLocals.put(fileReceived.getFileLocal().getFileId(), fileReceived.getFileLocal().clone());
+            notifyItemInserted(fileLocals.size() - 1);
+        }
+    }
+
+    @Subscribe
+    public void onFileTransferProgressed(FileTransferProgressed progressed) {
+        if (progressed.getDocType() == Video) {
+            int counter = 0;
+            for (Entities.File doc : docs) {
+                if (doc.getFileId() == progressed.getFileId()) {
+                    Entities.FileLocal fileLocal = fileLocals.get(doc.getFileId());
+                    fileLocal.setProgress(progressed.getProgress());
+                    notifyItemChanged(counter);
+                    break;
+                }
+                counter++;
+            }
+        }
+    }
+
+    @Subscribe
+    public void onFileDownloadCancelled(FileDownloadCancelled cancelled) {
+        if (cancelled.getDocType() == Video) {
+            int counter = 0;
+            for (Entities.File doc : docs) {
+                if (doc.getFileId() == cancelled.getFileId()) {
+                    fileLocals.get(doc.getFileId()).setTransferring(false);
+                    notifyItemChanged(counter);
+                    break;
+                }
+                counter++;
+            }
+        }
+    }
+
+    @Subscribe
+    public void onFileDownloaded(FileDownloaded downloaded) {
+        if (downloaded.getDocType() == Video) {
+            int counter = 0;
+            for (Entities.File doc : docs) {
+                if (doc.getFileId() == downloaded.getFileId()) {
+                    Entities.FileLocal fileLocal = fileLocals.get(doc.getFileId());
+                    fileLocal.setTransferring(false);
+                    notifyItemChanged(counter);
+                    break;
+                }
+                counter++;
+            }
+        }
+    }
+
+    @Subscribe
+    public void onFileUploading(FileUploading uploading) {
+        if (uploading.getDocType() == Video) {
+            docs.add((Entities.Video) uploading.getFile().clone());
+            fileLocals.put(uploading.getFileLocal().getFileId(), uploading.getFileLocal().clone());
+            notifyItemInserted(docs.size() - 1);
+        }
+    }
+
+    @Subscribe
+    public void onFileUploaded(FileUploaded uploaded) {
+        if (uploaded.getDocType() == Video) {
+            Entities.FileLocal fileLocal = fileLocals.remove(uploaded.getLocalFileId());
+            fileLocal.setFileId(uploaded.getOnlineFileId());
+            fileLocal.setTransferring(false);
+            fileLocals.put(uploaded.getOnlineFileId(), fileLocal);
+            int counter = 0;
+            for (Entities.File f : docs) {
+                if (f.getFileId() == uploaded.getLocalFileId()) {
+                    f.setFileId(uploaded.getOnlineFileId());
+                    notifyItemChanged(counter);
+                }
+                counter++;
+            }
+        }
+    }
+
+    public void onFileUploadCancelled(FileUploadCancelled cancelled) {
+        if (cancelled.getDocType() == Video) {
+            synchronized (docs) {
+                int counter = 0;
+                for (Entities.File doc : docs) {
+                    if (doc.getFileId() == cancelled.getLocalFileId()) {
+                        break;
+                    }
+                    counter++;
+                }
+                docs.remove(counter);
+                notifyItemRemoved(counter);
+            }
+        }
     }
 
     @NonNull
@@ -265,20 +239,18 @@ public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.Holder> {
                                     public void onPermissionsChecked(MultiplePermissionsReport report) {
                                         if (report.areAllPermissionsGranted()) {
                                             DatabaseHelper.notifyFileDownloading(doc.getFileId());
-                                            for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                                fileListener.fileDownloading(Video, doc);
-                                            }
+                                            Core.getInstance().bus().post(new FileDownloading(Video, doc));
                                             NetworkHelper.downloadFile(doc, roomId
                                                     , progress -> {
                                                         DatabaseHelper.notifyFileTransferProgressed(doc.getFileId(), progress);
                                                         activity.runOnUiThread(() ->
-                                                                GraphicHelper.getFileListener().fileTransferProgressed(Video, doc.getFileId(), progress));
+                                                                Core.getInstance().bus().post(new FileTransferProgressed(Video, doc.getFileId(), progress)));
                                                     }, new OnFileDownloadListener() {
                                                         @Override
                                                         public void fileDownloaded() {
                                                             DatabaseHelper.notifyFileDownloaded(doc.getFileId());
                                                             activity.runOnUiThread(() ->
-                                                                    GraphicHelper.getFileListener().fileDownloaded(Video, doc.getFileId()));
+                                                                    Core.getInstance().bus().post(new FileDownloaded(Video, doc.getFileId())));
                                                         }
 
                                                         @Override

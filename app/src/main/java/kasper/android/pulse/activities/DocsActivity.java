@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +20,7 @@ import java.util.List;
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.FragmentsAdapter;
 import kasper.android.pulse.callbacks.ui.OnDocSelectListener;
+import kasper.android.pulse.fragments.BaseFragment;
 import kasper.android.pulse.fragments.DocFragment;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
@@ -51,6 +51,9 @@ public class DocsActivity extends AppCompatActivity {
         buttonsContainer = findViewById(R.id.fragment_docs_buttons_container);
         docsTL = findViewById(R.id.fragment_docs_tab_bar);
         backBTN = findViewById(R.id.fragment_files_back_image_button);
+
+        docsVP.setOffscreenPageLimit(3);
+
         backBTN.setOnClickListener(v -> onBackPressed());
         RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener() {
             @Override
@@ -74,7 +77,7 @@ public class DocsActivity extends AppCompatActivity {
                         .putExtra("room_id", roomId)
                         .putExtra("start_file_id", file.getFileId()));
         final long id = CallbackHelper.register(selectListener);
-        List<Fragment> fragments = new ArrayList<>();
+        List<BaseFragment> fragments = new ArrayList<>();
         fragments.add(DocFragment.instantiate(roomId, "PHOTO", id, scrollCallbackId));
         fragments.add(DocFragment.instantiate(roomId, "AUDIO", id, scrollCallbackId));
         fragments.add(DocFragment.instantiate(roomId, "VIDEO", id, scrollCallbackId));

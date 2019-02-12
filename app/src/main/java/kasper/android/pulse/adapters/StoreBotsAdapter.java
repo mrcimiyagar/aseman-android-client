@@ -17,7 +17,6 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.activities.BotStoreBotActivity;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.GlideApp;
 
 public class StoreBotsAdapter extends RecyclerView.Adapter<StoreBotsAdapter.BotVH> {
 

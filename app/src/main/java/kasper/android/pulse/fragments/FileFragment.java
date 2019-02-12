@@ -25,7 +25,7 @@ import kasper.android.pulse.tasks.DocsLoadTask;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FileFragment extends Fragment {
+public class FileFragment extends BaseFragment {
 
     private String docType;
     private long selectCallbackId;
@@ -50,21 +50,22 @@ public class FileFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        docType = getArguments().getString("doc-type");
-        selectCallbackId = getArguments().getLong("select-callback");
-        scrollCallbackId = getArguments().getLong("scroll-callback");
+        if (getArguments() != null) {
+            if (getArguments().containsKey("doc-type"))
+                docType = getArguments().getString("doc-type");
+            if (getArguments().containsKey("select-callback"))
+                selectCallbackId = getArguments().getLong("select-callback");
+            if (getArguments().containsKey("scroll-callback"))
+                scrollCallbackId = getArguments().getLong("scroll-callback");
+        }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View contentView = inflater.inflate(R.layout.fragment_doc, container, false);
         docsRV = contentView.findViewById(R.id.fragment_doc_recycler_view);
-        final OnFileSelectListener fileSelectListener = new OnFileSelectListener() {
-            @Override
-            public void fileSelected(String path, DocTypes docType) {
+        final OnFileSelectListener fileSelectListener = (path, docType) ->
                 CallbackHelper.invoke(selectCallbackId, 0, path, docType);
-            }
-        };
         docsRV.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -74,12 +75,8 @@ public class FileFragment extends Fragment {
         });
         docsRV.setLayoutManager(new GridLayoutManager(getActivity(), 3, RecyclerView.VERTICAL, false));
         final int blockSize = getResources().getDisplayMetrics().widthPixels / 3;
-        new DocsLoadTask(getActivity(), docType, new OnDocsLoadedListener() {
-            @Override
-            public void docsLoaded(List<Doc> docs) {
-                docsRV.setAdapter(new FilesAdapter(docs, blockSize, fileSelectListener));
-            }
-        }).execute();
+        new DocsLoadTask(getActivity(), docType, docs ->
+                docsRV.setAdapter(new FilesAdapter(docs, blockSize, fileSelectListener))).execute();
         return contentView;
     }
 }

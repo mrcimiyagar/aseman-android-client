@@ -2,9 +2,12 @@ package kasper.android.pulse.core;
 
 import android.app.Application;
 
+import com.anadeainc.rxbus.Bus;
+import com.anadeainc.rxbus.BusProvider;
 import com.crashlytics.android.Crashlytics;
 
 import io.fabric.sdk.android.Fabric;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
@@ -34,5 +37,9 @@ public class Core extends Application {
         GraphicHelper.setup(this);
         DatabaseHelper.setup();
         NetworkHelper.setup();
+    }
+
+    public Bus bus() {
+        return BusProvider.getInstance();
     }
 }

@@ -4,11 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.anadeainc.rxbus.Subscribe;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 
 import java.io.File;
@@ -26,6 +22,10 @@ import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
@@ -33,15 +33,22 @@ import kasper.android.pulse.activities.MusicPlayerActivity;
 import kasper.android.pulse.activities.PhotoViewerActivity;
 import kasper.android.pulse.activities.VideoPlayerActivity;
 import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
-import kasper.android.pulse.callbacks.ui.FileListener;
-import kasper.android.pulse.callbacks.ui.MessageListener;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.GlideApp;
-import kasper.android.pulse.models.extras.ProgressListener;
+import kasper.android.pulse.rxbus.notifications.FileDownloadCancelled;
+import kasper.android.pulse.rxbus.notifications.FileDownloaded;
+import kasper.android.pulse.rxbus.notifications.FileReceived;
+import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
+import kasper.android.pulse.rxbus.notifications.FileUploadCancelled;
+import kasper.android.pulse.rxbus.notifications.FileUploaded;
+import kasper.android.pulse.rxbus.notifications.FileUploading;
+import kasper.android.pulse.rxbus.notifications.MessageDeleted;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.MessageSending;
+import kasper.android.pulse.rxbus.notifications.MessageSent;
 
 import static kasper.android.pulse.models.extras.DocTypes.Audio;
 import static kasper.android.pulse.models.extras.DocTypes.Photo;
@@ -67,225 +74,193 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.messages = ms;
         this.messageLocals = mls;
         this.fileLocals = fls;
-        this.myId = DatabaseHelper.getSingleSession().getBaseUserId();
-        GraphicHelper.addFileListener(new FileListener() {
-            @Override
-            public void fileUploaded(DocTypes docType, long localFileId, long onlineFileId) {
-                try {
-                    Entities.FileLocal fileLocal = fileLocals.get(localFileId);
-                    fileLocal.setFileId(onlineFileId);
-                    fileLocal.setTransferring(false);
-                    fileLocals.put(onlineFileId, fileLocal);
-                    fileLocals.remove(localFileId);
-                    int counter = 0;
-                    for (Entities.Message message : messages) {
-                        if (message instanceof Entities.PhotoMessage && ((Entities.PhotoMessage) message).getPhoto().getFileId() == localFileId) {
-                            ((Entities.PhotoMessage) message).getPhoto().setFileId(onlineFileId);
-                            notifyItemChanged(counter);
-                        } else if (message instanceof Entities.AudioMessage && ((Entities.AudioMessage) message).getAudio().getFileId() == localFileId) {
-                            ((Entities.AudioMessage) message).getAudio().setFileId(onlineFileId);
-                            notifyItemChanged(counter);
-                        } else if (message instanceof Entities.VideoMessage && ((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
-                            ((Entities.VideoMessage) message).getVideo().setFileId(onlineFileId);
-                            notifyItemChanged(counter);
-                        }
-                        counter++;
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileUploading(DocTypes docTypes, Entities.File file, Entities.FileLocal fileLocal) {
-                try {
-                    fileLocals.put(fileLocal.getFileId(), fileLocal.clone());
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileUploadCancelled(DocTypes docType, long localFileId) {
-                try {
-                    MessagesAdapter.this.fileLocals.remove(localFileId);
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileDownloaded(DocTypes docType, long localFileId) {
-                try {
-                    int counter = 0;
-                    for (Entities.Message message : messages) {
-                        if (message instanceof Entities.PhotoMessage) {
-                            if (((Entities.PhotoMessage) message).getPhoto().getFileId() == localFileId) {
-                                Entities.FileLocal fileLocal = fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId());
-                                fileLocal.setTransferring(false);
-                                notifyItemChanged(counter);
-                            }
-                        } else if (message instanceof Entities.AudioMessage) {
-                            if (((Entities.AudioMessage) message).getAudio().getFileId() == localFileId) {
-                                Entities.FileLocal fileLocal = fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId());
-                                fileLocal.setTransferring(false);
-                                notifyItemChanged(counter);
-                            }
-                        } else if (message instanceof Entities.VideoMessage) {
-                            if (((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
-                                Entities.FileLocal fileLocal = fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId());
-                                fileLocal.setTransferring(false);
-                                notifyItemChanged(counter);
-                            }
-                        }
-                        counter++;
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileDownloading(DocTypes docType, Entities.File file) {
-
-            }
-
-            @Override
-            public void fileDownloadCancelled(DocTypes docType, long fileId) {
-                try {
-                    int counter = 0;
-                    for (Entities.Message message : messages) {
-                        if (message instanceof Entities.PhotoMessage) {
-                            if (((Entities.PhotoMessage) message).getPhoto().getFileId() == fileId) {
-                                fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId()).setTransferring(false);
-                                notifyItemChanged(counter);
-                            }
-                        } else if (message instanceof Entities.AudioMessage) {
-                            if (((Entities.AudioMessage) message).getAudio().getFileId() == fileId) {
-                                fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId()).setTransferring(false);
-                                notifyItemChanged(counter);
-                            }
-                        } else if (message instanceof Entities.VideoMessage) {
-                            if (((Entities.VideoMessage) message).getVideo().getFileId() == fileId) {
-                                fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId()).setTransferring(false);
-                                notifyItemChanged(counter);
-                            }
-                        }
-                        counter++;
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileTransferProgressed(DocTypes docType, long fileId, int progress) {
-                try {
-                    int counter = 0;
-                    for (Entities.Message message : messages) {
-                        if (message instanceof Entities.PhotoMessage) {
-                            if (((Entities.PhotoMessage) message).getPhoto().getFileId() == fileId) {
-                                Entities.FileLocal fileLocal = fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId());
-                                fileLocal.setProgress(progress);
-                                notifyItemChanged(counter);
-                            }
-                        } else if (message instanceof Entities.AudioMessage) {
-                            if (((Entities.AudioMessage) message).getAudio().getFileId() == fileId) {
-                                Entities.FileLocal fileLocal = fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId());
-                                fileLocal.setProgress(progress);
-                                notifyItemChanged(counter);
-                            }
-                        } else if (message instanceof Entities.VideoMessage) {
-                            if (((Entities.VideoMessage) message).getVideo().getFileId() == fileId) {
-                                Entities.FileLocal fileLocal = fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId());
-                                fileLocal.setProgress(progress);
-                                notifyItemChanged(counter);
-                            }
-                        }
-                        counter++;
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void fileReceived(DocTypes docType, Entities.File file, Entities.FileLocal fileLocal) {
-                try {
-                    fileLocals.put(fileLocal.getFileId(), fileLocal.clone());
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-        });
-
-        GraphicHelper.addMessageListener(new MessageListener() {
-            @Override
-            public void messageReceived(Entities.Message message, Entities.MessageLocal messageLocal) {
-                try {
-                    messages.add(message);
-                    messageLocals.put(messageLocal.getMessageId(), messageLocal);
-                    notifyItemInserted(messages.size() - 1);
-                    if (messages.size() >= 2) {
-                        notifyItemChanged(messages.size() - 2);
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void messageDeleted(Entities.Message message) {
-                try {
-                    for (int counter = 0; counter < messages.size(); counter++) {
-                        if (messages.get(counter).getMessageId() == message.getMessageId()) {
-                            messages.remove(counter);
-                            notifyItemRemoved(counter);
-                        }
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void messageSending(Entities.Message message, Entities.MessageLocal messageLocal) {
-                try {
-                    messages.add(message);
-                    messageLocals.put(messageLocal.getMessageId(), messageLocal);
-                    notifyItemInserted(messages.size() - 1);
-                    if (messages.size() >= 2) {
-                        notifyItemChanged(messages.size() - 2);
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-
-            @Override
-            public void messageSent(long localMessageId, long onlineMessageId) {
-                try {
-                    Entities.MessageLocal messageLocal = messageLocals.get(localMessageId);
-                    messageLocal.setMessageId(onlineMessageId);
-                    messageLocal.setSent(true);
-                    messageLocals.put(messageLocal.getMessageId(), messageLocal);
-                    messageLocals.remove(localMessageId);
-                    int counter = 0;
-                    for (Entities.Message message : messages) {
-                        if (message.getMessageId() == localMessageId) {
-                            message.setMessageId(onlineMessageId);
-                            notifyItemChanged(counter);
-                            break;
-                        }
-                        counter++;
-                    }
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
-            }
-        });
-
+        Entities.Session session = DatabaseHelper.getSingleSession();
+        if (session != null)
+            this.myId = session.getBaseUserId();
+        Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
+    }
+
+    public void dispose() {
+        Core.getInstance().bus().unregister(this);
+    }
+
+    @Subscribe
+    public void onFileReceived(FileReceived fileReceived) {
+        fileLocals.put(fileReceived.getFileLocal().getFileId(), fileReceived.getFileLocal().clone());
+    }
+
+    @Subscribe
+    public void onFileTransferProgressed(FileTransferProgressed progressed) {
+        int progress = progressed.getProgress();
+        long fileId = progressed.getFileId();
+        int counter = 0;
+        for (Entities.Message message : messages) {
+            if (message instanceof Entities.PhotoMessage) {
+                if (((Entities.PhotoMessage) message).getPhoto().getFileId() == fileId) {
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId());
+                    fileLocal.setProgress(progress);
+                    notifyItemChanged(counter);
+                }
+            } else if (message instanceof Entities.AudioMessage) {
+                if (((Entities.AudioMessage) message).getAudio().getFileId() == fileId) {
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId());
+                    fileLocal.setProgress(progress);
+                    notifyItemChanged(counter);
+                }
+            } else if (message instanceof Entities.VideoMessage) {
+                if (((Entities.VideoMessage) message).getVideo().getFileId() == fileId) {
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId());
+                    fileLocal.setProgress(progress);
+                    notifyItemChanged(counter);
+                }
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onFileDownloadCancelled(FileDownloadCancelled cancelled) {
+        long fileId = cancelled.getFileId();
+        int counter = 0;
+        for (Entities.Message message : messages) {
+            if (message instanceof Entities.PhotoMessage) {
+                if (((Entities.PhotoMessage) message).getPhoto().getFileId() == fileId) {
+                    fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId()).setTransferring(false);
+                    notifyItemChanged(counter);
+                }
+            } else if (message instanceof Entities.AudioMessage) {
+                if (((Entities.AudioMessage) message).getAudio().getFileId() == fileId) {
+                    fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId()).setTransferring(false);
+                    notifyItemChanged(counter);
+                }
+            } else if (message instanceof Entities.VideoMessage) {
+                if (((Entities.VideoMessage) message).getVideo().getFileId() == fileId) {
+                    fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId()).setTransferring(false);
+                    notifyItemChanged(counter);
+                }
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onFileDownloaded(FileDownloaded downloaded) {
+        long localFileId = downloaded.getFileId();
+        int counter = 0;
+        for (Entities.Message message : messages) {
+            if (message instanceof Entities.PhotoMessage) {
+                if (((Entities.PhotoMessage) message).getPhoto().getFileId() == localFileId) {
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId());
+                    fileLocal.setTransferring(false);
+                    notifyItemChanged(counter);
+                }
+            } else if (message instanceof Entities.AudioMessage) {
+                if (((Entities.AudioMessage) message).getAudio().getFileId() == localFileId) {
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId());
+                    fileLocal.setTransferring(false);
+                    notifyItemChanged(counter);
+                }
+            } else if (message instanceof Entities.VideoMessage) {
+                if (((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId());
+                    fileLocal.setTransferring(false);
+                    notifyItemChanged(counter);
+                }
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onFileUploading(FileUploading uploading) {
+        fileLocals.put(uploading.getFileLocal().getFileId(), uploading.getFileLocal().clone());
+    }
+
+    @Subscribe
+    public void onFileUploaded(FileUploaded uploaded) {
+        long onlineFileId = uploaded.getOnlineFileId();
+        long localFileId = uploaded.getLocalFileId();
+        Entities.FileLocal fileLocal = fileLocals.get(localFileId);
+        fileLocal.setFileId(onlineFileId);
+        fileLocal.setTransferring(false);
+        fileLocals.put(onlineFileId, fileLocal);
+        fileLocals.remove(localFileId);
+        int counter = 0;
+        for (Entities.Message message : messages) {
+            if (message instanceof Entities.PhotoMessage && ((Entities.PhotoMessage) message).getPhoto().getFileId() == localFileId) {
+                ((Entities.PhotoMessage) message).getPhoto().setFileId(onlineFileId);
+                notifyItemChanged(counter);
+            } else if (message instanceof Entities.AudioMessage && ((Entities.AudioMessage) message).getAudio().getFileId() == localFileId) {
+                ((Entities.AudioMessage) message).getAudio().setFileId(onlineFileId);
+                notifyItemChanged(counter);
+            } else if (message instanceof Entities.VideoMessage && ((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
+                ((Entities.VideoMessage) message).getVideo().setFileId(onlineFileId);
+                notifyItemChanged(counter);
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onFileUploadCancelled(FileUploadCancelled cancelled) {
+        MessagesAdapter.this.fileLocals.remove(cancelled.getLocalFileId());
+    }
+
+    @Subscribe
+    public void onMessageReceived(MessageReceived messageReceived) {
+        Entities.Message message = messageReceived.getMessage();
+        Entities.MessageLocal messageLocal = messageReceived.getMessageLocal();
+        messages.add(message);
+        messageLocals.put(messageLocal.getMessageId(), messageLocal);
+        notifyItemInserted(messages.size() - 1);
+        if (messages.size() >= 2) {
+            notifyItemChanged(messages.size() - 2);
+        }
+    }
+
+    @Subscribe
+    public void onMessageDeleted(MessageDeleted messageDeleted) {
+        Entities.Message message = messageDeleted.getMessage();
+        for (int counter = 0; counter < messages.size(); counter++) {
+            if (messages.get(counter).getMessageId() == message.getMessageId()) {
+                messages.remove(counter);
+                notifyItemRemoved(counter);
+                break;
+            }
+        }
+    }
+
+    @Subscribe
+    public void onMessageSending(MessageSending messageSending) {
+        Entities.Message message = messageSending.getMessage();
+        Entities.MessageLocal messageLocal = messageSending.getMessageLocal();
+        messages.add(message);
+        messageLocals.put(messageLocal.getMessageId(), messageLocal);
+        notifyItemInserted(messages.size() - 1);
+        if (messages.size() >= 2) {
+            notifyItemChanged(messages.size() - 2);
+        }
+    }
+
+    @Subscribe
+    public void onMessageSent(MessageSent messageSent) {
+        long localMessageId = messageSent.getLocalMessageId();
+        long onlineMessageId = messageSent.getOnlineMessageId();
+        Entities.MessageLocal messageLocal = messageLocals.get(localMessageId);
+        messageLocal.setMessageId(onlineMessageId);
+        messageLocal.setSent(true);
+        messageLocals.put(onlineMessageId, messageLocal);
+        messageLocals.remove(localMessageId);
+        int counter = 0;
+        for (Entities.Message message : messages) {
+            if (message.getMessageId() == localMessageId || message.getMessageId() == onlineMessageId) {
+                message.setMessageId(onlineMessageId);
+                notifyItemChanged(counter);
+                break;
+            }
+            counter++;
+        }
     }
 
     @NonNull
@@ -468,22 +443,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         filePath = NetworkHelper.createFileLink(message.getPhoto().getFileId());
                     }
                     GlideApp.with(activity).load(filePath).into(holder.imageIV);
-                    holder.loadingCancelBTN.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (fileLocal.getPath().length() > 0) {
-                                NetworkHelper.cancelUploadFile(message.getPhoto().getFileId());
-                                DatabaseHelper.deletePhotoMessage(message.getMessageId());
-                                for (MessageListener messageListener : GraphicHelper.getMessageListeners()) {
-                                    messageListener.messageDeleted(message);
-                                }
-                            } else {
-                                NetworkHelper.cancelDownloadFile(message.getPhoto().getFileId());
-                                DatabaseHelper.notifyFileDownloadCancelled(message.getPhoto().getFileId());
-                                for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                    fileListener.fileDownloadCancelled(Photo, message.getPhoto().getFileId());
-                                }
-                            }
+                    holder.loadingCancelBTN.setOnClickListener(v -> {
+                        if (fileLocal.getPath().length() > 0) {
+                            NetworkHelper.cancelUploadFile(message.getPhoto().getFileId());
+                            DatabaseHelper.deletePhotoMessage(message.getMessageId());
+                            Core.getInstance().bus().post(new MessageDeleted(message));
+                        } else {
+                            NetworkHelper.cancelDownloadFile(message.getPhoto().getFileId());
+                            DatabaseHelper.notifyFileDownloadCancelled(message.getPhoto().getFileId());
+                            Core.getInstance().bus().post(new FileDownloadCancelled(Photo, message.getPhoto().getFileId()));
                         }
                     });
                 } else {
@@ -497,46 +465,26 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     if (!new File(filePath).exists()) {
                         holder.blurView.setVisibility(View.VISIBLE);
                         holder.downloadBTN.setVisibility(View.VISIBLE);
-                        holder.downloadBTN.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                DatabaseHelper.notifyFileDownloading(message.getPhoto().getFileId());
-                                fileLocal.setTransferring(true);
-                                notifyItemChanged(holder.getAdapterPosition());
-                                NetworkHelper.downloadFile(message.getPhoto(), message.getRoomId()
-                                        , new ProgressListener() {
-                                            @Override
-                                            public void transferred(final int progress) {
-                                                DatabaseHelper.notifyFileTransferProgressed(message.getPhoto().getFileId(), progress);
-                                                activity.runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                                            fileListener.fileTransferProgressed(Photo, message.getPhoto().getFileId(), progress);
-                                                        }
-                                                    }
-                                                });
-                                            }
-                                        }, new OnFileDownloadListener() {
-                                            @Override
-                                            public void fileDownloaded() {
-                                                DatabaseHelper.notifyFileDownloaded(message.getPhoto().getFileId());
-                                                activity.runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                                            fileListener.fileDownloaded(Photo, message.getPhoto().getFileId());
-                                                        }
-                                                    }
-                                                });
-                                            }
+                        holder.downloadBTN.setOnClickListener(v -> {
+                            DatabaseHelper.notifyFileDownloading(message.getPhoto().getFileId());
+                            fileLocal.setTransferring(true);
+                            notifyItemChanged(holder.getAdapterPosition());
+                            NetworkHelper.downloadFile(message.getPhoto(), message.getRoomId()
+                                    , progress -> {
+                                        DatabaseHelper.notifyFileTransferProgressed(message.getPhoto().getFileId(), progress);
+                                        activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileTransferProgressed(Photo, message.getPhoto().getFileId(), progress)));
+                                    }, new OnFileDownloadListener() {
+                                        @Override
+                                        public void fileDownloaded() {
+                                            DatabaseHelper.notifyFileDownloaded(message.getPhoto().getFileId());
+                                            activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileDownloaded(Photo, message.getPhoto().getFileId())));
+                                        }
 
-                                            @Override
-                                            public void downloadFailed() {
+                                        @Override
+                                        public void downloadFailed() {
 
-                                            }
-                                        });
-                            }
+                                        }
+                                    });
                         });
                         GlideApp.with(activity).load(NetworkHelper.createFileLink(message.getPhoto()
                                 .getFileId())).into(holder.imageIV);
@@ -544,15 +492,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         holder.blurView.setVisibility(View.GONE);
                         holder.downloadBTN.setVisibility(View.GONE);
                         GlideApp.with(activity).load(filePath).into(holder.imageIV);
-                        holder.imageIV.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Pair<View, String> picture = Pair.create((View) holder.imageIV, "photo");
-                                ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(activity, picture);
-                                Intent intent = new Intent(activity, PhotoViewerActivity.class);
-                                intent.putExtra("fileId", message.getPhoto().getFileId());
-                                activity.startActivity(intent, options.toBundle());
-                            }
+                        holder.imageIV.setOnClickListener(v -> {
+                            Pair<View, String> picture = Pair.create(holder.imageIV, "photo");
+                            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(activity, picture);
+                            Intent intent = new Intent(activity, PhotoViewerActivity.class);
+                            intent.putExtra("fileId", message.getPhoto().getFileId());
+                            activity.startActivity(intent, options.toBundle());
                         });
                     }
                 }
@@ -590,22 +535,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     holder.downloadBTN.setVisibility(View.GONE);
                     holder.playBTN.setVisibility(View.GONE);
                     holder.loadingPB.setProgress(fileLocal.getProgress());
-                    holder.loadingCancelBTN.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (fileLocal.getPath().length() > 0) {
-                                NetworkHelper.cancelUploadFile(message.getAudio().getFileId());
-                                DatabaseHelper.deleteAudioMessage(message.getMessageId());
-                                for (MessageListener messageListener : GraphicHelper.getMessageListeners()) {
-                                    messageListener.messageDeleted(message);
-                                }
-                            } else {
-                                NetworkHelper.cancelDownloadFile(message.getAudio().getFileId());
-                                DatabaseHelper.notifyFileDownloadCancelled(message.getAudio().getFileId());
-                                for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                    fileListener.fileDownloadCancelled(Audio, message.getAudio().getFileId());
-                                }
-                            }
+                    holder.loadingCancelBTN.setOnClickListener(v -> {
+                        if (fileLocal.getPath().length() > 0) {
+                            NetworkHelper.cancelUploadFile(message.getAudio().getFileId());
+                            DatabaseHelper.deleteAudioMessage(message.getMessageId());
+                            Core.getInstance().bus().post(new MessageDeleted(message));
+                        } else {
+                            NetworkHelper.cancelDownloadFile(message.getAudio().getFileId());
+                            DatabaseHelper.notifyFileDownloadCancelled(message.getAudio().getFileId());
+                            Core.getInstance().bus().post(new FileDownloadCancelled(Audio, message.getAudio().getFileId()));
                         }
                     });
                 } else {
@@ -619,61 +557,37 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     if (!new File(filePath).exists()) {
                         holder.downloadBTN.setVisibility(View.VISIBLE);
                         holder.playBTN.setVisibility(View.GONE);
-                        holder.downloadBTN.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                DatabaseHelper.notifyFileDownloading(message.getAudio().getFileId());
-                                fileLocal.setTransferring(true);
-                                notifyItemChanged(holder.getAdapterPosition());
-                                DatabaseHelper.notifyFileDownloading(message.getAudio().getFileId());
-                                fileLocal.setTransferring(true);
-                                notifyItemChanged(holder.getAdapterPosition());
-                                NetworkHelper.downloadFile(message.getAudio(), message.getRoomId()
-                                        , new ProgressListener() {
-                                            @Override
-                                            public void transferred(final int progress) {
-                                                DatabaseHelper.notifyFileTransferProgressed(message.getAudio().getFileId(), progress);
-                                                activity.runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                                            fileListener.fileTransferProgressed(Audio, message.getAudio().getFileId(), progress);
-                                                        }
-                                                    }
-                                                });
-                                            }
-                                        }, new OnFileDownloadListener() {
-                                            @Override
-                                            public void fileDownloaded() {
-                                                DatabaseHelper.notifyFileDownloaded(message.getAudio().getFileId());
-                                                activity.runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                                            fileListener.fileDownloaded(Audio, message.getAudio().getFileId());
-                                                        }
-                                                    }
-                                                });
-                                            }
+                        holder.downloadBTN.setOnClickListener(v -> {
+                            DatabaseHelper.notifyFileDownloading(message.getAudio().getFileId());
+                            fileLocal.setTransferring(true);
+                            notifyItemChanged(holder.getAdapterPosition());
+                            DatabaseHelper.notifyFileDownloading(message.getAudio().getFileId());
+                            fileLocal.setTransferring(true);
+                            notifyItemChanged(holder.getAdapterPosition());
+                            NetworkHelper.downloadFile(message.getAudio(), message.getRoomId()
+                                    , progress -> {
+                                        DatabaseHelper.notifyFileTransferProgressed(message.getAudio().getFileId(), progress);
+                                        activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileTransferProgressed(Audio, message.getAudio().getFileId(), progress)));
+                                    }, new OnFileDownloadListener() {
+                                        @Override
+                                        public void fileDownloaded() {
+                                            DatabaseHelper.notifyFileDownloaded(message.getAudio().getFileId());
+                                            activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileDownloaded(Audio, message.getAudio().getFileId())));
+                                        }
 
-                                            @Override
-                                            public void downloadFailed() {
+                                        @Override
+                                        public void downloadFailed() {
 
-                                            }
-                                        });
-                            }
+                                        }
+                                    });
                         });
                     } else {
                         holder.downloadBTN.setVisibility(View.GONE);
                         holder.playBTN.setVisibility(View.VISIBLE);
-                        holder.playBTN.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
+                        holder.playBTN.setOnClickListener(v ->
                                 activity.startActivity(new Intent(activity, MusicPlayerActivity.class)
-                                        .putExtra("audio", message.getAudio())
-                                        .putExtra("room-id", message.getRoomId()));
-                            }
-                        });
+                                .putExtra("audio", message.getAudio())
+                                .putExtra("room-id", message.getRoomId())));
                     }
                 }
             }
@@ -724,22 +638,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         filePath = NetworkHelper.createFileLink(message.getVideo().getFileId());
                     }
                     GlideApp.with(activity).load(filePath).into(holder.imageIV);
-                    holder.loadingCancelBTN.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (fileLocal.getPath().length() > 0) {
-                                NetworkHelper.cancelUploadFile(message.getVideo().getFileId());
-                                DatabaseHelper.deleteVideoMessage(message.getMessageId());
-                                for (MessageListener messageListener : GraphicHelper.getMessageListeners()) {
-                                    messageListener.messageDeleted(message);
-                                }
-                            } else {
-                                NetworkHelper.cancelDownloadFile(message.getVideo().getFileId());
-                                DatabaseHelper.notifyFileDownloadCancelled(message.getVideo().getFileId());
-                                for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                    fileListener.fileDownloadCancelled(Video, message.getVideo().getFileId());
-                                }
-                            }
+                    holder.loadingCancelBTN.setOnClickListener(v -> {
+                        if (fileLocal.getPath().length() > 0) {
+                            NetworkHelper.cancelUploadFile(message.getVideo().getFileId());
+                            DatabaseHelper.deleteVideoMessage(message.getMessageId());
+                            Core.getInstance().bus().post(new MessageDeleted(message));
+                        } else {
+                            NetworkHelper.cancelDownloadFile(message.getVideo().getFileId());
+                            DatabaseHelper.notifyFileDownloadCancelled(message.getVideo().getFileId());
+                            Core.getInstance().bus().post(new FileDownloadCancelled(Video, message.getVideo().getFileId()));
                         }
                     });
                 } else {
@@ -756,59 +663,35 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         holder.playBTN.setVisibility(View.GONE);
                         GlideApp.with(activity).load(NetworkHelper
                                 .createFileLink(message.getVideo().getFileId())).into(holder.imageIV);
-                        holder.downloadBTN.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                DatabaseHelper.notifyFileDownloading(message.getVideo().getFileId());
-                                fileLocal.setTransferring(true);
-                                notifyItemChanged(holder.getAdapterPosition());
-                                NetworkHelper.downloadFile(message.getVideo(), message.getRoomId()
-                                        , new ProgressListener() {
-                                            @Override
-                                            public void transferred(final int progress) {
-                                                DatabaseHelper.notifyFileTransferProgressed(message.getVideo().getFileId(), progress);
-                                                activity.runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                                            fileListener.fileTransferProgressed(Video, message.getVideo().getFileId(), progress);
-                                                        }
-                                                    }
-                                                });
-                                            }
-                                        }, new OnFileDownloadListener() {
-                                            @Override
-                                            public void fileDownloaded() {
-                                                DatabaseHelper.notifyFileDownloaded(message.getVideo().getFileId());
-                                                activity.runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        for (FileListener fileListener : GraphicHelper.getFileListeners()) {
-                                                            fileListener.fileDownloaded(Video, message.getVideo().getFileId());
-                                                        }
-                                                    }
-                                                });
-                                            }
+                        holder.downloadBTN.setOnClickListener(v -> {
+                            DatabaseHelper.notifyFileDownloading(message.getVideo().getFileId());
+                            fileLocal.setTransferring(true);
+                            notifyItemChanged(holder.getAdapterPosition());
+                            NetworkHelper.downloadFile(message.getVideo(), message.getRoomId()
+                                    , progress -> {
+                                        DatabaseHelper.notifyFileTransferProgressed(message.getVideo().getFileId(), progress);
+                                        activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileTransferProgressed(Video, message.getVideo().getFileId(), progress)));
+                                    }, new OnFileDownloadListener() {
+                                        @Override
+                                        public void fileDownloaded() {
+                                            DatabaseHelper.notifyFileDownloaded(message.getVideo().getFileId());
+                                            activity.runOnUiThread(() ->
+                                                    Core.getInstance().bus().post(new FileDownloaded(Video, message.getVideo().getFileId())));
+                                        }
+                                        @Override
+                                        public void downloadFailed() {
 
-                                            @Override
-                                            public void downloadFailed() {
-
-                                            }
-                                        });
-                            }
+                                        }
+                                    });
                         });
                     } else {
                         holder.blurView.setVisibility(View.GONE);
                         holder.downloadBTN.setVisibility(View.GONE);
                         holder.playBTN.setVisibility(View.VISIBLE);
                         GlideApp.with(activity).load(filePath).into(holder.imageIV);
-                        holder.playBTN.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
+                        holder.playBTN.setOnClickListener(v ->
                                 activity.startActivity(new Intent(activity, VideoPlayerActivity.class)
-                                        .putExtra("video-path", filePath));
-                            }
-                        });
+                                .putExtra("video-path", filePath)));
                     }
                 }
             }

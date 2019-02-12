@@ -46,13 +46,10 @@ public class HumansAdapter extends RecyclerView.Adapter<HumansAdapter.HumanVH> {
         holder.nameTV.setText(user.getTitle());
         GlideApp.with(activity).load(NetworkHelper
                 .createFileLink(user.getAvatar())).into(holder.avatarIV);
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DatabaseHelper.notifyUserCreated(user);
-                activity.startActivity(new Intent(activity, ProfileActivity.class)
-                        .putExtra("user-id", user.getBaseUserId()));
-            }
+        holder.itemView.setOnClickListener(v -> {
+            DatabaseHelper.notifyUserCreated(user);
+            activity.startActivity(new Intent(activity, ProfileActivity.class)
+                    .putExtra("user-id", user.getBaseUserId()));
         });
     }
 

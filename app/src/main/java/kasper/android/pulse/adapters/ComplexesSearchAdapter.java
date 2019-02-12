@@ -41,13 +41,10 @@ public class ComplexesSearchAdapter extends RecyclerView.Adapter<ComplexesSearch
         final Entities.Complex complex = this.complexes.get(position);
         holder.nameTV.setText(complex.getTitle());
         NetworkHelper.loadComplexAvatar(complex.getAvatar(), holder.avatarIV);
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (DatabaseHelper.isComplexInDatabase(complex.getComplexId())) {
-                    activity.startActivity(new Intent(activity, ComplexProfileActivity.class)
-                            .putExtra("complex-id", complex.getComplexId()));
-                }
+        holder.itemView.setOnClickListener(view -> {
+            if (DatabaseHelper.isComplexInDatabase(complex.getComplexId())) {
+                activity.startActivity(new Intent(activity, ComplexProfileActivity.class)
+                        .putExtra("complex-id", complex.getComplexId()));
             }
         });
     }

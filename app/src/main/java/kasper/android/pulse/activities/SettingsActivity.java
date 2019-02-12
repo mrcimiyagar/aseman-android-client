@@ -25,6 +25,7 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnMeSyncListener;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
@@ -32,6 +33,7 @@ import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.UserHandler;
+import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
 import retrofit2.Call;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -209,7 +211,7 @@ public class SettingsActivity extends AppCompatActivity {
                     DatabaseHelper.updateMe(me);
                     titleTV.setText(me.getTitle());
                     NetworkHelper.loadUserAvatar(me.getAvatar(), avatarIV);
-                    GraphicHelper.getProfileListener().profileUpdated(me);
+                    Core.getInstance().bus().post(new UserProfileUpdated(me));
                 }
 
                 @Override

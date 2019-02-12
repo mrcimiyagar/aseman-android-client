@@ -26,6 +26,7 @@ import androidx.viewpager.widget.ViewPager;
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.FragmentsAdapter;
 import kasper.android.pulse.callbacks.ui.OnFileSelectListener;
+import kasper.android.pulse.fragments.BaseFragment;
 import kasper.android.pulse.fragments.FileFragment;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
@@ -77,6 +78,8 @@ public class FilesActivity extends AppCompatActivity {
         buttonsContainer = findViewById(R.id.fragment_docs_buttons_container);
         backBTN = findViewById(R.id.fragment_files_back_image_button);
 
+        docsVP.setOffscreenPageLimit(3);
+
         backBTN.setOnClickListener(v -> onBackPressed());
 
         RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener() {
@@ -100,7 +103,7 @@ public class FilesActivity extends AppCompatActivity {
             finish();
         };
         long selectCallback = CallbackHelper.register(selectListener);
-        List<Fragment> fragments = new ArrayList<>();
+        List<BaseFragment> fragments = new ArrayList<>();
         fragments.add(FileFragment.instantiate("PHOTO", selectCallback, scrollCallbackId));
         fragments.add(FileFragment.instantiate("AUDIO", selectCallback, scrollCallbackId));
         fragments.add(FileFragment.instantiate("VIDEO", selectCallback, scrollCallbackId));

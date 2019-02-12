@@ -14,17 +14,15 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ContactHandler;
+import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -124,7 +122,7 @@ public class ProfileActivity extends AppCompatActivity {
                                     .getRooms().get(0));
                             DatabaseHelper.notifyContactCreated(packet.getContact());
                             DatabaseHelper.notifyServiceMessageReceived(packet.getServiceMessage());
-                            GraphicHelper.getContactListener().contactCreated(packet.getContact());
+                            Core.getInstance().bus().post(new ContactCreated(packet.getContact()));
                             connectFAB.setImageResource(R.drawable.ic_message);
                             ProfileActivity.this.startActivity(new Intent(ProfileActivity
                                     .this, RoomActivity.class)

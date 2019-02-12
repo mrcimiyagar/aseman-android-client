@@ -1,6 +1,8 @@
 package kasper.android.pulse.fragments;
 
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -28,12 +30,14 @@ import kasper.android.pulse.models.entities.Entities;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class DocFragment extends Fragment {
+public class DocFragment extends BaseFragment {
 
     private long roomId;
     private String docType;
     private long selectCallbackId;
     private long scrollCallbackId;
+
+    private RecyclerView docsRV;
 
     public static DocFragment instantiate(long roomId, String docType, long selectCallbackId, long scrollCallbackId) {
         DocFragment docFragment = new DocFragment();
@@ -49,29 +53,43 @@ public class DocFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        roomId = getArguments().getLong("room_id");
-        docType = getArguments().getString("doc_type");
-        selectCallbackId = getArguments().getLong("select-callback");
-        scrollCallbackId = getArguments().getLong("scroll-callback");
+        if (getArguments() != null) {
+            if (getArguments().containsKey("room_id"))
+                roomId = getArguments().getLong("room_id");
+            if (getArguments().containsKey("doc_type"))
+                docType = getArguments().getString("doc_type");
+            if (getArguments().containsKey("select-callback"))
+                selectCallbackId = getArguments().getLong("select-callback");
+            if (getArguments().containsKey("scroll-callback"))
+                scrollCallbackId = getArguments().getLong("scroll-callback");
+        }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public void onDestroy() {
+        if (docsRV.getAdapter() != null) {
+            if (docsRV.getAdapter() instanceof PhotosAdapter)
+                ((PhotosAdapter) docsRV.getAdapter()).dispose();
+            else if (docsRV.getAdapter() instanceof AudiosAdapter)
+                ((AudiosAdapter) docsRV.getAdapter()).dispose();
+            else if (docsRV.getAdapter() instanceof VideosAdapter)
+                ((VideosAdapter) docsRV.getAdapter()).dispose();
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View contentView = inflater.inflate(R.layout.fragment_doc, container, false);
 
-        OnDocSelectListener selectCallback = new OnDocSelectListener() {
-            @Override
-            public void docLongClicked(Entities.File file) {
-                CallbackHelper.invoke(selectCallbackId, 0, file);
-            }
-        };
+        OnDocSelectListener selectCallback = file -> CallbackHelper.invoke(selectCallbackId, 0, file);
 
-        RecyclerView docsRV = contentView.findViewById(R.id.fragment_doc_recycler_view);
+        docsRV = contentView.findViewById(R.id.fragment_doc_recycler_view);
 
         docsRV.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 CallbackHelper.invoke(scrollCallbackId, 1, recyclerView, dx, dy);
             }
@@ -83,7 +101,6 @@ public class DocFragment extends Fragment {
                         , RecyclerView.VERTICAL, false));
                 Pair<List<Entities.Photo>, Hashtable<Long, Entities.FileLocal>> files =
                         DatabaseHelper.getPhotos(roomId);
-                Hashtable<Long, Entities.FileLocal> fileLocals = files.second;
                 int blockSize = getResources().getDisplayMetrics().widthPixels / 3;
                 docsRV.setAdapter(new PhotosAdapter((AppCompatActivity) getActivity()
                         , files.first, files.second, roomId, blockSize, selectCallback));
@@ -94,7 +111,6 @@ public class DocFragment extends Fragment {
                         , RecyclerView.VERTICAL, false));
                 Pair<List<Entities.Audio>, Hashtable<Long, Entities.FileLocal>> files =
                         DatabaseHelper.getAudios(roomId);
-                Hashtable<Long, Entities.FileLocal> fileLocals = files.second;
                 docsRV.setAdapter(new AudiosAdapter((AppCompatActivity) getActivity()
                         , files.first, files.second, roomId, selectCallback));
                 break;
@@ -104,7 +120,6 @@ public class DocFragment extends Fragment {
                         , RecyclerView.VERTICAL, false));
                 Pair<List<Entities.Video>, Hashtable<Long, Entities.FileLocal>> files =
                         DatabaseHelper.getVideos(roomId);
-                Hashtable<Long, Entities.FileLocal> fileLocals = files.second;
                 int blockSize = getResources().getDisplayMetrics().widthPixels / 3;
                 docsRV.setAdapter(new VideosAdapter((AppCompatActivity) getActivity()
                         , files.first, files.second, roomId, blockSize, selectCallback));

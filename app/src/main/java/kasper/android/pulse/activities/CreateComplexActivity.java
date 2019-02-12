@@ -4,10 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
@@ -24,19 +22,18 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.callbacks.ui.ComplexListener;
-import kasper.android.pulse.callbacks.ui.RoomListener;
 import kasper.android.pulse.components.OneClickFAB;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
+import kasper.android.pulse.rxbus.notifications.ComplexCreated;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class CreateComplexActivity extends AppCompatActivity {
 
@@ -105,8 +102,8 @@ public class CreateComplexActivity extends AppCompatActivity {
                                 , 56, 56);
                         Entities.File file = pair.first;
                         NetworkHelper.uploadFile(file, -1, -1, selectedImageFile.getPath(),
-                                progress -> GraphicHelper.runOnUiThread(() ->
-                                        progressBar.setProgress(progress))
+                                progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                    progressBar.setProgress(progress)))
                                 , (OnFileUploadListener) (fileId, fileUsageId) -> {
                                     File sourceFile = new File(selectedImageFile.getPath());
                                     File destFile = new File(new File(Environment
@@ -117,7 +114,7 @@ public class CreateComplexActivity extends AppCompatActivity {
                                     } catch (Exception ex) {
                                         ex.printStackTrace();
                                     }
-                                    GraphicHelper.runOnUiThread(() -> {
+                                    Core.getInstance().bus().post(new UiThreadRequested(() -> {
                                         loadingView.setVisibility(View.GONE);
                                         complex.setAvatar(fileId);
                                         Packet packet2 = new Packet();
@@ -128,10 +125,10 @@ public class CreateComplexActivity extends AppCompatActivity {
                                             @Override
                                             public void onRequestSuccess(Packet packet) {
                                                 DatabaseHelper.updateComplex(complex);
-                                                GraphicHelper.getComplexListener().notifyComplexCreated(complex);
+                                                Core.getInstance().bus().post(new ComplexCreated(complex));
                                                 Entities.Room room = complex.getRooms().get(0);
                                                 room.setComplex(complex);
-                                                GraphicHelper.getRoomListener().roomCreated(complex.getComplexId(), room);
+                                                Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
                                                 finish();
                                             }
 
@@ -145,19 +142,15 @@ public class CreateComplexActivity extends AppCompatActivity {
                                                 Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
                                             }
                                         });
-                                    });
+                                    }));
                                 });
                     } else {
-                        GraphicHelper.runOnUiThread(() -> {
-                            for (ComplexListener complexListener : GraphicHelper.getComplexListeners()) {
-                                complexListener.notifyComplexCreated(complex);
-                            }
+                        Core.getInstance().bus().post(new UiThreadRequested(() -> {
+                            Core.getInstance().bus().post(new ComplexCreated(complex));
                             Entities.Room room = complex.getRooms().get(0);
-                            for (RoomListener roomListener : GraphicHelper.getRoomListeners()) {
-                                roomListener.roomCreated(complex.getComplexId(), room);
-                            }
+                            Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
                             finish();
-                        });
+                        }));
                     }
                 }
 

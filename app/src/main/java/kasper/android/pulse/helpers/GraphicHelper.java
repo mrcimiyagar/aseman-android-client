@@ -14,6 +14,7 @@ import kasper.android.pulse.callbacks.ui.MessageListener;
 import kasper.android.pulse.callbacks.ui.ProfileListener;
 import kasper.android.pulse.callbacks.ui.RoomListener;
 import kasper.android.pulse.callbacks.ui.UiThreadListener;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.DocTypes;
 
@@ -23,22 +24,7 @@ import kasper.android.pulse.models.extras.DocTypes;
 
 public class GraphicHelper {
 
-    private static float density;
-    public static float getDensity() {
-        return density;
-    }
-
-    private static int screenWidth;
-    public static int getScreenWidth() {
-        return screenWidth;
-    }
-
-    private static int screenHeight;
-    public static int getScreenHeight() {
-        return screenHeight;
-    }
-
-    private static List<FileListener> fileListeners;
+    /*private static List<FileListener> fileListeners;
     public static List<FileListener> getFileListeners() {
         return fileListeners;
     }
@@ -468,27 +454,36 @@ public class GraphicHelper {
                 });
             }
         };
-    }
+    }*/
 
     public static void setup(Context context) {
-        density = context.getResources().getDisplayMetrics().density;
-        screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-        screenHeight = context.getResources().getDisplayMetrics().heightPixels;
-        fileListeners = new ArrayList<>();
+        /*fileListeners = new ArrayList<>();
         messageListeners = new ArrayList<>();
         complexListeners = new ArrayList<>();
         roomListeners = new ArrayList<>();
         contactListeners = new ArrayList<>();
         connectionListeners = new ArrayList<>();
         profileListeners = new ArrayList<>();
-        desktopListeners = new ArrayList<>();
+        desktopListeners = new ArrayList<>();*/
     }
 
     public static int dpToPx(float dp) {
-        return (int)(dp * density);
+        return (int)(dp * Core.getInstance().getResources().getDisplayMetrics().density);
     }
 
     public static int pxToDp(float px) {
-        return (int)(px / density);
+        return (int)(px / Core.getInstance().getResources().getDisplayMetrics().density);
+    }
+
+    public static float getDensity() {
+        return Core.getInstance().getResources().getDisplayMetrics().density;
+    }
+
+    public static int getScreenWidth() {
+        return Core.getInstance().getResources().getDisplayMetrics().widthPixels;
+    }
+
+    public static int getScreenHeight() {
+        return Core.getInstance().getResources().getDisplayMetrics().heightPixels;
     }
 }

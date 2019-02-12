@@ -40,15 +40,11 @@ public class BotsSimpleAdapter extends RecyclerView.Adapter<BotsSimpleAdapter.Bo
         final Entities.Bot bot = this.bots.get(position);
         holder.titleTV.setText(bot.getTitle());
         NetworkHelper.loadBotAvatar(bot.getAvatar(), holder.avatarIV);
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        holder.itemView.setOnClickListener(view ->
                 activity.startActivity(new Intent(activity, BotProfileActivity.class)
                         .putExtra("bot_id", bot.getBaseUserId())
                         .putExtra("token", bot.getSessions().get(0).getSessionId() + " " +
-                                bot.getBotSecret().getToken()));
-            }
-        });
+                                bot.getBotSecret().getToken())));
     }
 
     @Override

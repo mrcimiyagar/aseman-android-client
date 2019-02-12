@@ -8,9 +8,12 @@ import android.widget.ImageView;
 
 import com.bogdwellers.pinchtozoom.ImageMatrixTouchHandler;
 
+import java.io.File;
+
 import kasper.android.pulse.R;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
 
 public class PhotoViewerActivity extends AppCompatActivity {
@@ -29,7 +32,8 @@ public class PhotoViewerActivity extends AppCompatActivity {
 
         final ImageView photoIV = findViewById(R.id.activity_photo_viewer_image_view);
         photoIV.setOnTouchListener(new ImageMatrixTouchHandler(this));
-        if (DatabaseHelper.getFileById(fileId) == null) {
+        File file = new File(DatabaseHelper.getFilePath(fileId));
+        if (!file.exists()) {
             GlideApp.with(this).load(NetworkHelper.createFileLink(fileId)).into(photoIV);
         } else {
             GlideApp.with(this).load(DatabaseHelper.getFilePath(fileId)).into(photoIV);

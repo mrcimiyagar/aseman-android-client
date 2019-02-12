@@ -1,10 +1,11 @@
 package kasper.android.pulse.models.extras;
 
-import android.util.Log;
-
 import java.io.File;
 import java.io.IOException;
 
+import androidx.annotation.NonNull;
+import kasper.android.pulse.core.Core;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.internal.Util;
@@ -39,7 +40,7 @@ public class FileRequestBody extends RequestBody {
     }
 
     @Override
-    public void writeTo(BufferedSink sink) throws IOException {
+    public void writeTo(@NonNull BufferedSink sink) throws IOException {
         Source source = null;
         try {
             source = Okio.source(file);
@@ -49,7 +50,9 @@ public class FileRequestBody extends RequestBody {
             while ((read = source.read(sink.buffer(), SEGMENT_SIZE)) != -1) {
                 total += read;
                 sink.flush();
-                this.listener.transferred((int)(total * 100 / fileSize));
+                long finalTotal = total;
+                Core.getInstance().bus().post(new UiThreadRequested(() ->
+                        listener.transferred((int)(finalTotal * 100 / fileSize))));
             }
         } finally {
             Util.closeQuietly(source);

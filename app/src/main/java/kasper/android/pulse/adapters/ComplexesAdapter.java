@@ -2,14 +2,12 @@ package kasper.android.pulse.adapters;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Toast;
 
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.anadeainc.rxbus.Subscribe;
 
 import java.util.List;
 
@@ -19,12 +17,17 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnComplexSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.callbacks.ui.OnComplexIconClickListener;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.GlideApp;
+import kasper.android.pulse.rxbus.notifications.ComplexCreated;
+import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
+import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
+import kasper.android.pulse.rxbus.notifications.ContactCreated;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 
 public class ComplexesAdapter extends RecyclerView.Adapter<ComplexesAdapter.ComplexVH> {
 
@@ -38,7 +41,12 @@ public class ComplexesAdapter extends RecyclerView.Adapter<ComplexesAdapter.Comp
         this.complexes = complexes;
         this.callback = callback;
         this.addComplexClicked = addComplexClicked;
+        Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
+    }
+
+    public void dispose() {
+        Core.getInstance().bus().unregister(this);
     }
 
     @NonNull
@@ -52,12 +60,7 @@ public class ComplexesAdapter extends RecyclerView.Adapter<ComplexesAdapter.Comp
         if (position == complexes.size()) {
             holder.iconIV.setImageResource(R.drawable.ic_add);
             holder.iconIV.setPadding(GraphicHelper.dpToPx(8), GraphicHelper.dpToPx(8), GraphicHelper.dpToPx(8), GraphicHelper.dpToPx(8));
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    addComplexClicked.run();
-                }
-            });
+            holder.itemView.setOnClickListener(view -> addComplexClicked.run());
         } else {
             final Entities.Complex complex = this.complexes.get(position);
             if (complex.getTitle().length() == 0) {
@@ -99,52 +102,69 @@ public class ComplexesAdapter extends RecyclerView.Adapter<ComplexesAdapter.Comp
         return this.complexes.size() + 1;
     }
 
-    public void addComplex(Entities.Complex complex) {
-        GraphicHelper.runOnUiThread(() -> {
-            boolean exists = false;
-            for (Entities.Complex c : complexes) {
-                if (c.getComplexId() == complex.getComplexId()) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
-                complexes.add(complex);
-                notifyItemInserted(complexes.size() - 1);
-            }
-        });
+    @Subscribe
+    public void onComplexCreated(ComplexCreated complexCreated) {
+        addComplex(complexCreated.getComplex());
     }
 
-    public void updateComplex(Entities.Complex complex) {
-        GraphicHelper.runOnUiThread(() -> {
-            int counter = 0;
-            for (Entities.Complex c : complexes) {
-                if (c.getComplexId() == complex.getComplexId()) {
-                    complexes.set(counter, complex);
-                    notifyItemChanged(counter);
-                    break;
-                }
-                counter++;
-            }
-        });
+    @Subscribe
+    public void onContactCreated(ContactCreated contactCreated) {
+        Entities.Complex complex = contactCreated.getContact().getComplex();
+        Entities.Room room = complex.getRooms().get(0);
+        room.setComplex(complex);
+        addComplex(complex);
     }
 
-    public void removeComplex(long complexId) {
-        GraphicHelper.runOnUiThread(() -> {
-            int counter = 0;
-            boolean found = false;
-            for (Entities.Complex complex : complexes) {
-                if (complex.getComplexId() == complexId) {
-                    found = true;
-                    break;
-                }
-                counter++;
+    @Subscribe
+    public void onProfileUpdated(ComplexProfileUpdated profileUpdated) {
+        updateComplex(profileUpdated.getComplex());
+    }
+
+    @Subscribe
+    public void onComplexRemoved(ComplexRemoved complexRemoved) {
+        removeComplex(complexRemoved.getComplexId());
+    }
+
+    private void addComplex(Entities.Complex complex) {
+        boolean exists = false;
+        for (Entities.Complex c : complexes) {
+            if (c.getComplexId() == complex.getComplexId()) {
+                exists = true;
+                break;
             }
-            if (found) {
-                complexes.remove(counter);
-                notifyItemRemoved(counter);
+        }
+        if (!exists) {
+            complexes.add(complex);
+            notifyItemInserted(complexes.size() - 1);
+        }
+    }
+
+    private void updateComplex(Entities.Complex complex) {
+        int counter = 0;
+        for (Entities.Complex c : complexes) {
+            if (c.getComplexId() == complex.getComplexId()) {
+                complexes.set(counter, complex);
+                notifyItemChanged(counter);
+                break;
             }
-        });
+            counter++;
+        }
+    }
+
+    private void removeComplex(long complexId) {
+        int counter = 0;
+        boolean found = false;
+        for (Entities.Complex complex : complexes) {
+            if (complex.getComplexId() == complexId) {
+                found = true;
+                break;
+            }
+            counter++;
+        }
+        if (found) {
+            complexes.remove(counter);
+            notifyItemRemoved(counter);
+        }
     }
 
     class ComplexVH extends RecyclerView.ViewHolder {

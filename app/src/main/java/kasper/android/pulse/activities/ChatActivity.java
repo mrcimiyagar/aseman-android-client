@@ -16,11 +16,11 @@ import android.os.Bundle;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Pair;
 import android.view.MenuInflater;
 import android.view.View;
@@ -31,12 +31,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.anadeainc.rxbus.Subscribe;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ListIterator;
@@ -46,6 +46,7 @@ import kasper.android.pulse.adapters.MessagesAdapter;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.callbacks.ui.OnFileSelectListener;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.extras.LinearDecoration;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.DatabaseHelper;
@@ -56,6 +57,13 @@ import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.ProgressListener;
 import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
+import kasper.android.pulse.rxbus.notifications.FileUploaded;
+import kasper.android.pulse.rxbus.notifications.FileUploading;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.MessageSending;
+import kasper.android.pulse.rxbus.notifications.MessageSent;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
 
 public class ChatActivity extends AppCompatActivity {
@@ -92,6 +100,8 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        Core.getInstance().bus().register(this);
+
         if (getIntent().getExtras() != null) {
             if (getIntent().getExtras().containsKey("complex_id"))
                 complexId = getIntent().getExtras().getLong("complex_id");
@@ -119,15 +129,63 @@ public class ChatActivity extends AppCompatActivity {
             new Handler().postDelayed(() -> {
                 if (chatRV.getAdapter() != null) {
                     int pos = ((MessagesAdapter) chatRV.getAdapter()).findFilePosition(startFileId);
-                    chatRV.smoothScrollToPosition(pos);
+                    scrollChatToPosition(pos);
                 }
             }, 1000);
         }
     }
 
     @Override
+    protected void onDestroy() {
+        if (chatRV.getAdapter() != null)
+            ((MessagesAdapter) chatRV.getAdapter()).dispose();
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
+    }
+
+    @Override
     public void onBackPressed() {
         super.onBackPressed();
+    }
+
+    @Subscribe
+    public void onMessageReceived(MessageReceived messageReceived) {
+        if (chatRV.getLayoutManager() != null) {
+            if (((LinearLayoutManager) chatRV.getLayoutManager()).findLastVisibleItemPosition() > messages.size() - 3) {
+                scrollChatToPosition(messages.size() - 1);
+            }
+        }
+    }
+
+    @Subscribe
+    public void onMessageSending(MessageSending messageSending) {
+        if (chatRV.getLayoutManager() != null) {
+            if (((LinearLayoutManager) chatRV.getLayoutManager()).findLastVisibleItemPosition() > messages.size() - 3) {
+                scrollChatToPosition(messages.size() - 1);
+            }
+        }
+    }
+
+    @Subscribe
+    public void onMessageSent(MessageSent messageSent) {
+        for (Entities.Message message : messages) {
+            if (message.getMessageId() == messageSent.getLocalMessageId()) {
+                message.setMessageId(messageSent.getOnlineMessageId());
+                break;
+            }
+        }
+    }
+
+    private void scrollChatToPosition(int position) {
+        if (chatRV.getLayoutManager() != null) {
+            RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(this) {
+                @Override protected int getVerticalSnapPreference() {
+                    return LinearSmoothScroller.SNAP_TO_START;
+                }
+            };
+            smoothScroller.setTargetPosition(position);
+            chatRV.getLayoutManager().startSmoothScroll(smoothScroller);
+        }
     }
 
     private void initViews() {
@@ -178,7 +236,7 @@ public class ChatActivity extends AppCompatActivity {
             final Entities.Message message = pair.first;
             final Entities.MessageLocal messageLocal = pair.second;
             final long messageLocalId = message.getMessageId();
-            GraphicHelper.getMessageListener().messageSending(message, messageLocal);
+            Core.getInstance().bus().post(new MessageSending(message, messageLocal));
             final Packet packet = new Packet();
             Entities.Complex complex = new Entities.Complex();
             complex.setComplexId(complexId);
@@ -194,7 +252,7 @@ public class ChatActivity extends AppCompatActivity {
                 public void onRequestSuccess(Packet packet) {
                     final Entities.TextMessage msg = packet.getTextMessage();
                     DatabaseHelper.notifyTextMessageSent(messageLocalId, msg.getMessageId(), msg.getTime());
-                    GraphicHelper.getMessageListener().messageSent(messageLocalId, msg.getMessageId());
+                    Core.getInstance().bus().post(new MessageSent(messageLocalId, msg.getMessageId()));
                 }
 
                 @Override
@@ -262,15 +320,15 @@ public class ChatActivity extends AppCompatActivity {
                 final Entities.Message finalMessage = message;
                 final Entities.MessageLocal finalMessageLocal = messageLocal;
 
-                GraphicHelper.getFileListener().fileUploading(docType, file, fileLocal);
-                GraphicHelper.getMessageListener().messageSending(message, messageLocal);
+                Core.getInstance().bus().post(new FileUploading(docType, file, fileLocal));
+                Core.getInstance().bus().post(new MessageSending(message, messageLocal));
 
                 ProgressListener progressListener = progress -> {
                     if (finalFile != null) {
                         DatabaseHelper.notifyFileTransferProgressed(finalFile.getFileId(), progress);
-                        GraphicHelper.runOnUiThread(() ->
-                                GraphicHelper.getFileListener().fileTransferProgressed(docType
-                                        , finalFile.getFileId(), progress));
+                        Core.getInstance().bus().post(new UiThreadRequested(() ->
+                            Core.getInstance().bus().post(new FileTransferProgressed(docType
+                                        , finalFile.getFileId(), progress))));
                     }
                 };
 
@@ -285,8 +343,8 @@ public class ChatActivity extends AppCompatActivity {
                             DatabaseHelper.notifyVideoUploaded(localFileId, fileId);
                         }
                         DatabaseHelper.notifyUpdateMessageAfterFileUpload(finalMessage.getMessageId(), fileId, fileUsageId);
-                        GraphicHelper.runOnUiThread(() -> {
-                            GraphicHelper.getFileListener().fileUploaded(docType, localFileId, fileId);
+                        Core.getInstance().bus().post(new UiThreadRequested(() -> {
+                            Core.getInstance().bus().post(new FileUploaded(docType, localFileId, fileId));
                             Packet packet = new Packet();
                             Entities.Complex complex = new Entities.Complex();
                             complex.setComplexId(complexId);
@@ -316,7 +374,7 @@ public class ChatActivity extends AppCompatActivity {
                                         time = packet.getVideoMessage().getTime();
                                         DatabaseHelper.notifyVideoMessageSent(finalMessageLocal.getMessageId(), messageId, time);
                                     }
-                                    GraphicHelper.getMessageListener().messageSent(finalMessageLocal.getMessageId(), messageId);
+                                    Core.getInstance().bus().post(new MessageSent(finalMessageLocal.getMessageId(), messageId));
                                 }
 
                                 @Override
@@ -329,7 +387,7 @@ public class ChatActivity extends AppCompatActivity {
                                     Toast.makeText(ChatActivity.this, "Message delivery failure", Toast.LENGTH_SHORT).show();
                                 }
                             });
-                        });
+                        }));
                     }
                 };
 
@@ -397,7 +455,7 @@ public class ChatActivity extends AppCompatActivity {
             if (!integers.isEmpty() && chatRV.getAdapter() != null) {
                 int last = searchIterator.previous();
                 currentSearchIndex = last;
-                chatRV.smoothScrollToPosition(last);
+                scrollChatToPosition(last);
             }
             updateButtonEnabled();
         }
@@ -422,7 +480,7 @@ public class ChatActivity extends AppCompatActivity {
             currentSearchIndex = current;
             searchCounter--;
             if (chatRV.getAdapter() != null)
-                chatRV.smoothScrollToPosition(current);
+                scrollChatToPosition(current);
             updateButtonEnabled();
         }
     }
@@ -437,7 +495,7 @@ public class ChatActivity extends AppCompatActivity {
             currentSearchIndex = current;
             searchCounter++;
             if (chatRV.getAdapter() != null)
-                chatRV.smoothScrollToPosition(current);
+                scrollChatToPosition(current);
             updateButtonEnabled();
         }
     }
@@ -457,7 +515,7 @@ public class ChatActivity extends AppCompatActivity {
 
     public void onToBottomFABClicked(View view) {
         if (chatRV.getAdapter() != null)
-            chatRV.smoothScrollToPosition(chatRV.getAdapter().getItemCount() - 1);
+            scrollChatToPosition(chatRV.getAdapter().getItemCount() - 1);
     }
 
     public void onBackBtnClicked(View view) {

@@ -11,11 +11,13 @@ import android.widget.Toast;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RobotHandler;
+import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -79,7 +81,7 @@ public class WorkershipDataActivity extends AppCompatActivity {
             NetworkHelper.requestServer(call, new ServerCallback() {
                 @Override
                 public void onRequestSuccess(Packet packet) {
-                    GraphicHelper.getDesktopListener().workerUpdated(ws);
+                    Core.getInstance().bus().post(new WorkerUpdated(ws));
                     finish();
                 }
 

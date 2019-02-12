@@ -8,9 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.anadeainc.rxbus.Subscribe;
 
 import java.util.List;
 
@@ -18,11 +17,13 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnRoomSyncListener;
 import kasper.android.pulse.callbacks.ui.OnRoomIconClickListener;
 import kasper.android.pulse.core.Core;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.GlideApp;
+import kasper.android.pulse.rxbus.notifications.ContactCreated;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
+import kasper.android.pulse.rxbus.notifications.RoomRemoved;
+import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 
 public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
 
@@ -36,7 +37,40 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
         this.complexId = complexId;
         this.rooms = rooms;
         this.roomOpeningCallback = roomOpeningCallback;
+        Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
+    }
+
+    public void dispose() {
+        Core.getInstance().bus().unregister(this);
+    }
+
+    @Subscribe
+    public void onContactCreated(ContactCreated contactCreated) {
+        if (complexId == contactCreated.getContact().getComplex().getComplexId()) {
+            addRoom(contactCreated.getContact().getComplex().getRooms().get(0));
+        }
+    }
+
+    @Subscribe
+    public void onRoomCreated(RoomCreated roomCreated) {
+        if (complexId == roomCreated.getComplexId()) {
+            addRoom(roomCreated.getRoom());
+        }
+    }
+
+    @Subscribe
+    public void orRoomsCreated(RoomsCreated roomsCreated) {
+        for (Entities.Room room : roomsCreated.getRooms()) {
+            onRoomCreated(new RoomCreated(roomsCreated.getComplexId(), room));
+        }
+    }
+
+    @Subscribe
+    public void onRoomRemoved(RoomRemoved roomRemoved) {
+        if (complexId == roomRemoved.getRoom().getComplexId()) {
+            removeRoom(roomRemoved.getRoom());
+        }
     }
 
     @NonNull
@@ -71,35 +105,30 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
         return this.rooms.size();
     }
 
-    public void addRoom(Entities.Room room) {
-        GraphicHelper.runOnUiThread(() -> {
-            boolean exists = false;
-            for (Entities.Room r : rooms) {
-                if (r.getRoomId() == room.getRoomId()) {
-                    exists = true;
-                    break;
-                }
+    private void addRoom(Entities.Room room) {
+        boolean exists = false;
+        for (Entities.Room r : rooms) {
+            if (r.getRoomId() == room.getRoomId()) {
+                exists = true;
+                break;
             }
-            if (!exists) {
-                rooms.add(room);
-                notifyItemInserted(rooms.size() - 1);
-            }
-        });
+        }
+        if (!exists) {
+            rooms.add(room);
+            notifyItemInserted(rooms.size() - 1);
+        }
     }
 
-    public void removeRoom(Entities.Room room) {
-        GraphicHelper.runOnUiThread(() -> {
-            int counter = 0;
-            for (Entities.Room r : rooms) {
-                if (r.getRoomId() == room.getRoomId()) {
-                    final int index = counter;
-                    rooms.remove(index);
-                    GraphicHelper.runOnUiThread(() -> notifyItemRemoved(index));
-                    break;
-                }
-                counter++;
+    private void removeRoom(Entities.Room room) {
+        int counter = 0;
+        for (Entities.Room r : rooms) {
+            if (r.getRoomId() == room.getRoomId()) {
+                rooms.remove(counter);
+                notifyItemRemoved(counter);
+                break;
             }
-        });
+            counter++;
+        }
     }
 
     class RoomVH extends RecyclerView.ViewHolder {

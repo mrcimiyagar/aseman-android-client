@@ -18,15 +18,14 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.WorkershipDataActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.helpers.GraphicHelper;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RobotHandler;
+import kasper.android.pulse.rxbus.notifications.WorkerAdded;
+import kasper.android.pulse.rxbus.notifications.WorkerRemoved;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class BotsFullAdapter extends RecyclerView.Adapter<BotsFullAdapter.BotVH> {
 
@@ -102,7 +101,7 @@ public class BotsFullAdapter extends RecyclerView.Adapter<BotsFullAdapter.BotVH>
                         for (int counter = 0; counter < existingBots.size(); counter++) {
                             if (bot.getBaseUserId() == existingBots.get(counter).getBotId()) {
                                 Entities.Workership ws = existingBots.remove(counter);
-                                GraphicHelper.getDesktopListener().workerRemoved(ws);
+                                Core.getInstance().bus().post(new WorkerRemoved(ws));
                                 break;
                             }
                         }
@@ -145,7 +144,7 @@ public class BotsFullAdapter extends RecyclerView.Adapter<BotsFullAdapter.BotVH>
                     public void onRequestSuccess(Packet packet) {
                         Entities.Workership ws = packet.getWorkership();
                         existingBots.add(ws);
-                        GraphicHelper.getDesktopListener().workerAdded(ws);
+                        Core.getInstance().bus().post(new WorkerAdded(ws));
                         notifyItemChanged(holder.getAdapterPosition());
                     }
 
