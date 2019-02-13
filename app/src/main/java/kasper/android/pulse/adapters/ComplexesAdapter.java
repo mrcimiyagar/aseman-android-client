@@ -108,14 +108,6 @@ public class ComplexesAdapter extends RecyclerView.Adapter<ComplexesAdapter.Comp
     }
 
     @Subscribe
-    public void onContactCreated(ContactCreated contactCreated) {
-        Entities.Complex complex = contactCreated.getContact().getComplex();
-        Entities.Room room = complex.getRooms().get(0);
-        room.setComplex(complex);
-        addComplex(complex);
-    }
-
-    @Subscribe
     public void onProfileUpdated(ComplexProfileUpdated profileUpdated) {
         updateComplex(profileUpdated.getComplex());
     }

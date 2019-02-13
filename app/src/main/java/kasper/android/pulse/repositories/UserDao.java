@@ -26,4 +26,6 @@ public interface UserDao {
     List<Entities.User> getUsers();
     @Query("select * from user where baseUserId in (:userIds)")
     List<Entities.User> getUsersByIds(List<Long> userIds);
+    @Query("delete from user")
+    void deleteAll();
 }

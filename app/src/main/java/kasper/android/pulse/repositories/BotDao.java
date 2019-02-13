@@ -24,4 +24,6 @@ public interface BotDao {
     List<Entities.Bot> getCreatedBots();
     @Query("select * from bot where baseUserId in (select botId from botsubscription)")
     List<Entities.Bot> getSubscribedBots();
+    @Query("delete from bot")
+    void deleteAll();
 }

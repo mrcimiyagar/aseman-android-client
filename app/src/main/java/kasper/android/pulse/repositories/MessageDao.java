@@ -49,6 +49,16 @@ public abstract class MessageDao {
     public abstract void delete(Entities.VideoMessage... messages);
     @Delete
     public abstract void delete(Entities.ServiceMessage... messages);
+    @Query("delete from textmessage")
+    abstract void deleteAllTextMessages();
+    @Query("delete from photomessage")
+    abstract void deleteAllPhotoMessages();
+    @Query("delete from audiomessage")
+    abstract void deleteAllAudioMessages();
+    @Query("delete from videomessage")
+    abstract void deleteAllVideoMessages();
+    @Query("delete from servicemessage")
+    abstract void deleteAllServiceMessages();
     @Query("select * from textmessage where messageId = :mId")
     public abstract Entities.TextMessage getTextMessageById(long mId);
     @Query("select * from textmessage where roomId = :roomId")
@@ -156,5 +166,13 @@ public abstract class MessageDao {
             return messages.get(messages.size() - 1);
         else
             return null;
+    }
+    @Transaction
+    public void deleteAll() {
+        deleteAllTextMessages();
+        deleteAllPhotoMessages();
+        deleteAllAudioMessages();
+        deleteAllVideoMessages();
+        deleteAllServiceMessages();
     }
 }

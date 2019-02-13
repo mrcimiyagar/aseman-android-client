@@ -4,6 +4,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.repositories.BotCreationDao;
 import kasper.android.pulse.repositories.BotDao;
@@ -57,6 +58,31 @@ public abstract class AsemanDB extends RoomDatabase {
     public abstract UserSecretDao getUserSecretDao();
     public abstract WorkershipDao getWorkershipDao();
     public abstract KeyValueDao getKeyValueDao();
+
+    public static void deleteAllData() {
+        getInstance().getBotCreationDao().deleteAll();
+        getInstance().getBotDao().deleteAll();
+        getInstance().getBotSecretDao().deleteAll();
+        getInstance().getBotSubscriptionDao().deleteAll();
+        getInstance().getComplexDao().deleteAll();
+        getInstance().getComplexSecretDao().deleteAll();
+        getInstance().getContactDao().deleteAll();
+        getInstance().getFileDao().deleteAll();
+        getInstance().getFileLocalDao().deleteAll();
+        getInstance().getFileUsageDao().deleteAll();
+        getInstance().getInviteDao().deleteAll();
+        getInstance().getMembershipDao().deleteAll();
+        getInstance().getMessageDao().deleteAll();
+        getInstance().getMessageLocalDao().deleteAll();
+        getInstance().getRoomDao().deleteAll();
+        getInstance().getSessionDao().deleteAll();
+        getInstance().getUserDao().deleteAll();
+        getInstance().getUserSecretDao().deleteAll();
+        getInstance().getWorkershipDao().deleteAll();
+        getInstance().getKeyValueDao().deleteAll();
+
+        DatabaseHelper.setup();
+    }
 
     private static AsemanDB db;
     public static AsemanDB getInstance() {

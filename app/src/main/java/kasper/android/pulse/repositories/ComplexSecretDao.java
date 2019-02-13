@@ -20,4 +20,6 @@ public interface ComplexSecretDao {
     Entities.ComplexSecret getComplexSecretByComplexId(long complexId);
     @Query("select * from complexsecret where complexSecretId = :complexSecretId")
     Entities.ComplexSecret getComplexSecretById(long complexSecretId);
+    @Query("delete from complexsecret")
+    void deleteAll();
 }

@@ -125,11 +125,6 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         removeRoom(roomRemoved.getRoom());
     }
 
-    @Subscribe
-    public void onContactCreated(ContactCreated contactCreated) {
-        addRoom(contactCreated.getContact().getComplex().getRooms().get(0));
-    }
-
     private void addRoom(Entities.Room room) {
         boolean exists = false;
         for (Entities.Room r : rooms) {
@@ -160,6 +155,8 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
         if (holder.getAdapterPosition() == 0) {
+            if (peopleRV != null && peopleRV.getAdapter() != null)
+                ((ActiveNowAdapter) peopleRV.getAdapter()).dispose();
             peopleRV = null;
         }
     }
@@ -204,22 +201,31 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         } else if (position != 1) {
             Entities.Room room = rooms.get(position - 2);
             RoomItem vh = (RoomItem) holder;
-            NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
-            vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
-            Entities.Message lastAction = room.getLastAction();
-            if (lastAction != null) {
-                if (lastAction instanceof Entities.TextMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : "
-                            + ((Entities.TextMessage) lastAction).getText());
-                else if (lastAction instanceof Entities.PhotoMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : " + "Photo");
-                else if (lastAction instanceof Entities.AudioMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : " + "Audio");
-                else if (lastAction instanceof Entities.VideoMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : " + "Video");
-                else if (lastAction instanceof Entities.ServiceMessage)
-                    vh.lastActionTV.setText("Aseman : "
-                            + ((Entities.ServiceMessage) lastAction).getText());
+            if (room.getComplex().getMode() == 2 || room.getComplex().getTitle().length() == 0) {
+                Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
+                Entities.User user = contact.getPeer();
+                vh.nameTV.setText(user.getTitle().split(" ")[0] + " : " + room.getTitle());
+                NetworkHelper.loadRoomAvatar(user.getAvatar(), vh.avatarIV);
+            } else {
+                NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
+                vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
+                Entities.Message lastAction = room.getLastAction();
+                if (lastAction != null) {
+                    if (lastAction instanceof Entities.TextMessage)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
+                                + ((Entities.TextMessage) lastAction).getText());
+                    else if (lastAction instanceof Entities.PhotoMessage)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
+                    else if (lastAction instanceof Entities.AudioMessage)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
+                    else if (lastAction instanceof Entities.VideoMessage)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
+                    else if (lastAction instanceof Entities.ServiceMessage)
+                        vh.lastActionTV.setText("Aseman : "
+                                + ((Entities.ServiceMessage) lastAction).getText());
+                } else {
+                    vh.lastActionTV.setText("");
+                }
             }
             vh.itemView.setOnClickListener(view ->
                     activity.startActivity(new Intent(activity, ChatActivity.class)

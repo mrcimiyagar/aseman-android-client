@@ -136,15 +136,15 @@ Core.getInstance().bus().register(this);
     }
 
     private void initListeners() {
-        if (afterChat) {
-            msgFAB.getDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_OVER);
+        if (!afterChat) {
+            msgFAB.setColorFilter(Color.WHITE);
             msgFAB.setOnClickListener(v -> startActivity(new Intent(RoomActivity.this, ChatActivity.class)
                     .putExtra("complex_id", complexId)
                     .putExtra("room_id", roomId)
                     .putExtra("start_file_id", -1L)
                     .putExtra("after_room", true)));
         } else {
-            msgFAB.getDrawable().setColorFilter(Color.parseColor("#999999"), PorterDuff.Mode.SRC_OVER);
+            msgFAB.setColorFilter(Color.GRAY);
         }
 
         docsFAB.setOnClickListener(v -> startActivity(new Intent(RoomActivity.this, DocsActivity.class)

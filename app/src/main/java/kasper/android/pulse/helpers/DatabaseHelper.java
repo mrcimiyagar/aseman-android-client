@@ -870,7 +870,11 @@ public class DatabaseHelper {
     }
 
     public static Entities.Contact getContactByComplexId(long complexId) {
-        return AsemanDB.getInstance().getContactDao().getContactByComplexId(complexId);
+        Entities.Contact contact = AsemanDB.getInstance().getContactDao().getContactByComplexId(complexId);
+        contact.setComplex(getComplexById(contact.getComplexId()));
+        contact.setUser((Entities.User)getBaseUserById(contact.getUserId()));
+        contact.setPeer((Entities.User)getBaseUserById(contact.getPeerId()));
+        return contact;
     }
 
     public static List<Entities.Contact> getContacts() {

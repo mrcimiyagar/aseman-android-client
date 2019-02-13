@@ -20,4 +20,6 @@ public interface SessionDao {
     Entities.Session getSessionById(long sessionId);
     @Query("select * from session where baseUserId = :baseUserId")
     Entities.Session getSessionByUserId(long baseUserId);
+    @Query("delete from session")
+    void deleteAll();
 }

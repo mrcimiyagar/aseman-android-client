@@ -14,4 +14,6 @@ public interface AuthHandler {
     Call<Packet> login();
     @POST("auth/logout")
     Call<Packet> logout();
+    @POST("auth/delete_account")
+    Call<Packet> deleteAccount();
 }

@@ -24,4 +24,6 @@ public interface MessageLocalDao {
     List<Entities.MessageLocal> getMessageLocalsByIds(List<Long> messageIds);
     @Query("delete from messagelocal where messageId = :messageId")
     void deleteMessageById(long messageId);
+    @Query("delete from messagelocal")
+    void deleteAll();
 }

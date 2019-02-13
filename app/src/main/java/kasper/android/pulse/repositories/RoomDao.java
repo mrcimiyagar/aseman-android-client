@@ -33,5 +33,5 @@ public interface RoomDao {
     @Query("select * from room where complexId in (:complexesIds)")
     List<Entities.Room> getRoomsByComplexesIds(List<Long> complexesIds);
     @Query("delete from room")
-    void clearRooms();
+    void deleteAll();
 }

@@ -29,8 +29,8 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="outputName" value="ic_room" />
-                            <entry key="sourceFile" value="F:\Desktop\ic_room.svg" />
+                            <entry key="outputName" value="ic_logout" />
+                            <entry key="sourceFile" value="F:\Desktop\logout.svg" />
                           </map>
                         </option>
                       </PersistentState>

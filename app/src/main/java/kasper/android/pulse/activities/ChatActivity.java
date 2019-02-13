@@ -179,12 +179,17 @@ public class ChatActivity extends AppCompatActivity {
     private void scrollChatToPosition(int position) {
         if (chatRV.getLayoutManager() != null) {
             RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(this) {
-                @Override protected int getVerticalSnapPreference() {
+                @Override
+                protected int getVerticalSnapPreference() {
                     return LinearSmoothScroller.SNAP_TO_START;
                 }
             };
             smoothScroller.setTargetPosition(position);
-            chatRV.getLayoutManager().startSmoothScroll(smoothScroller);
+            try {
+                chatRV.getLayoutManager().startSmoothScroll(smoothScroller);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 

@@ -15,4 +15,6 @@ public interface KeyValueDao {
     void update(Entities.IdKeeper idKeeper);
     @Query("select * from idkeeper limit 1")
     Entities.IdKeeper getIdKeeper();
+    @Query("delete from idkeeper")
+    void deleteAll();
 }

@@ -1,6 +1,8 @@
 package kasper.android.pulse.activities;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -10,21 +12,26 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Pair;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.anadeainc.rxbus.Subscribe;
 import com.github.javiersantos.bottomdialogs.BottomDialog;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
+import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.Toolbar;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnMeSyncListener;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
@@ -32,8 +39,11 @@ import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.retrofit.AuthHandler;
 import kasper.android.pulse.retrofit.UserHandler;
+import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
+import kasper.android.pulse.services.NotificationsService;
 import retrofit2.Call;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -48,6 +58,8 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+
+        Core.getInstance().bus().register(this);
 
         this.avatarIV = findViewById(R.id.avatar);
         this.titleTV = findViewById(R.id.title);
@@ -66,6 +78,8 @@ public class SettingsActivity extends AppCompatActivity {
             NetworkHelper.loadUserAvatar(me.getAvatar(), avatarIV);
         }
 
+        subtitleTV.setText(NotificationsService.getConnectionState());
+
         DataSyncer.syncMeWithServer(new OnMeSyncListener() {
             @Override
             public void meSynced(Entities.User me, long homeId) {
@@ -73,10 +87,103 @@ public class SettingsActivity extends AppCompatActivity {
                 NetworkHelper.loadUserAvatar(me.getAvatar(), avatarIV);
             }
             @Override
-            public void syncFailed() {
+            public void syncFailed() { }
+        });
+    }
 
+    public void onOptionsBtnClicked(View view) {
+        Context wrapper = new ContextThemeWrapper(this, R.style.PopupMenu);
+        PopupMenu popupMenu = new PopupMenu(wrapper, view);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.settings_options_menu, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(menuItem -> {
+            switch (menuItem.getItemId()) {
+                case R.id.logout:
+                    new BottomDialog.Builder(this)
+                            .setTitle("Logout")
+                            .setContent("Do you really want to logout of this session ?")
+                            .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                            .setTitleColor(Color.WHITE)
+                            .setTextColor(Color.WHITE)
+                            .setPositiveText("Logout")
+                            .setPositiveBackgroundColorResource(R.color.colorPrimary)
+                            .setPositiveBackgroundColor(getResources().getColor(R.color.colorBlue))
+                            .setPositiveTextColor(Color.WHITE)
+                            .onPositive(dialog -> {
+                                AsemanDB.deleteAllData();
+                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                            })
+                            .setNegativeText("Cancel")
+                            .setNegativeTextColor(Color.WHITE)
+                            .onNegative(BottomDialog::dismiss)
+                            .show();
+                    return true;
+                case R.id.delete_account:
+                    new BottomDialog.Builder(this)
+                            .setTitle("Delete Account")
+                            .setContent("Do you really want to delete your account ?")
+                            .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                            .setTitleColor(Color.WHITE)
+                            .setTextColor(Color.WHITE)
+                            .setPositiveText("Delete account")
+                            .setPositiveBackgroundColorResource(R.color.colorPrimary)
+                            .setPositiveBackgroundColor(getResources().getColor(R.color.colorBlue))
+                            .setPositiveTextColor(Color.WHITE)
+                            .onPositive(dialog -> {
+                                NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(AuthHandler.class).deleteAccount(),
+                                        new ServerCallback() {
+                                            @Override
+                                            public void onRequestSuccess(Packet packet) {
+                                                AsemanDB.deleteAllData();
+                                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                            }
+
+                                            @Override
+                                            public void onServerFailure() {
+                                                AsemanDB.deleteAllData();
+                                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                            }
+
+                                            @Override
+                                            public void onConnectionFailure() {
+                                                AsemanDB.deleteAllData();
+                                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                            }
+                                        });
+                            })
+                            .setNegativeText("Cancel")
+                            .setNegativeTextColor(Color.WHITE)
+                            .onNegative(BottomDialog::dismiss)
+                            .show();
+                    return true;
+                default:
+                    return false;
             }
         });
+        popupMenu.show();
+    }
+
+    @SuppressLint("SetTextI18n")
+    @Subscribe
+    public void onConnectionStateChanged(ConnectionStateChanged connectionStateChanged) {
+        switch (connectionStateChanged.getState()) {
+            case Reconnecting:
+                subtitleTV.setText("Connecting");
+                break;
+            case Connected:
+                subtitleTV.setText("Online");
+                break;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
     }
 
     @Override
@@ -148,11 +255,9 @@ public class SettingsActivity extends AppCompatActivity {
             } else {
                 itemIcons = new Drawable[]{
                         editDrawable,
-                        deleteDrawable
                 };
                 itemTitles = new String[]{
-                        "Set new photo",
-                        "Delete photo"
+                        "Set new photo"
                 };
             }
             BottomSheet.Builder builder = new BottomSheet.Builder(this);

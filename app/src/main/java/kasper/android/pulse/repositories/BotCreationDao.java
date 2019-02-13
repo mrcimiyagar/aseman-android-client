@@ -3,6 +3,7 @@ package kasper.android.pulse.repositories;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.Query;
 import androidx.room.Update;
 
 import kasper.android.pulse.models.entities.Entities;
@@ -15,4 +16,6 @@ public interface BotCreationDao {
     void update(Entities.BotCreation... botCreations);
     @Delete
     void delete(Entities.BotCreation... botCreations);
+    @Query("delete from botcreation")
+    void deleteAll();
 }

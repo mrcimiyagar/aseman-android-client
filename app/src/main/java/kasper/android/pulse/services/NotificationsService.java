@@ -17,6 +17,9 @@ import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
 
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
+
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.RoomActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
@@ -29,14 +32,21 @@ import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.models.notifications.Notifications;
 import kasper.android.pulse.retrofit.NotifHandler;
+import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.FileReceived;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
 
 public class NotificationsService extends IntentService {
+
+    private static String connectionState;
+    public static String getConnectionState() {
+        return connectionState;
+    }
 
     private HubConnection connection;
 
@@ -61,6 +71,22 @@ public class NotificationsService extends IntentService {
         return START_STICKY;
     }
 
+    @Override
+    public void onDestroy() {
+        Log.d("KasperLogger", "Notification service destroyed");
+        super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.e("KasperLogger", "Notification service task removed");
+        try {
+            if (connection != null) connection.stop().blockingAwait();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     private void startConnection() {
         new Thread(() -> {
             while (!connectToHub()) {
@@ -73,21 +99,14 @@ public class NotificationsService extends IntentService {
         }).start();
     }
 
-    @Override
-    public void onDestroy() {
-        Log.d("KasperLogger", "Notification service destroyed");
-        super.onDestroy();
-    }
-
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        Log.e("KasperLogger", "Notification service task removed");
-        if (connection != null)
-            connection.stop();
-    }
-
     public boolean connectToHub() {
-        if (connection != null) connection.stop();
+
+        try {
+            if (connection != null) connection.stop().blockingAwait();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
         connection = HubConnectionBuilder.create(NetworkHelper.SERVER_IP + "NotificationsHub/").build();
         connection.on("NotifyInviteCreated", this::onInviteCreated, Notifications.InviteCreationNotification.class);
         connection.on("NotifyInviteCancelled", this::onInviteCancelled, Notifications.InviteCancellationNotification.class);
@@ -109,12 +128,15 @@ public class NotificationsService extends IntentService {
 
         connection.onClosed(exception -> new Thread(() -> {
             try {
+                connectionState = "Disconnected";
                 Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Reconnecting));
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
             startConnection();
         }).start());
+
+        connectionState = "Connecting";
 
         try {
             connection.start().doOnError(Throwable::printStackTrace).blockingAwait();
@@ -153,6 +175,8 @@ public class NotificationsService extends IntentService {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
+        connectionState = "Online";
 
         return true;
     }
@@ -243,12 +267,14 @@ public class NotificationsService extends IntentService {
     private void onContactCreated(final Notifications.ContactCreationNotification ccn) {
         Log.d("Aseman", "Received contact notification");
         DatabaseHelper.notifyComplexCreated(ccn.getContact().getComplex());
+        Core.getInstance().bus().post(new ComplexCreated(ccn.getContact().getComplex()));
         DatabaseHelper.notifyRoomCreated(ccn.getContact().getComplex().getRooms().get(0));
+        Core.getInstance().bus().post(new RoomCreated(ccn.getContact().getComplexId()
+                , ccn.getContact().getComplex().getRooms().get(0)));
         DatabaseHelper.notifyUserCreated(ccn.getContact().getUser());
         DatabaseHelper.notifyUserCreated(ccn.getContact().getPeer());
         DatabaseHelper.notifyContactCreated(ccn.getContact());
-        Core.getInstance().bus().post(new UiThreadRequested(() ->
-                Core.getInstance().bus().post(new ContactCreated(ccn.getContact()))));
+        Core.getInstance().bus().post(new ContactCreated(ccn.getContact()));
 
         notifyServerNotifReceived(ccn.getNotificationId());
     }

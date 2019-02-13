@@ -21,7 +21,10 @@ import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ContactHandler;
+import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import retrofit2.Call;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -123,6 +126,14 @@ public class ProfileActivity extends AppCompatActivity {
                             DatabaseHelper.notifyContactCreated(packet.getContact());
                             DatabaseHelper.notifyServiceMessageReceived(packet.getServiceMessage());
                             Core.getInstance().bus().post(new ContactCreated(packet.getContact()));
+                            Core.getInstance().bus().post(new ComplexCreated(packet.getContact().getComplex()));
+                            Core.getInstance().bus().post(new RoomCreated(
+                                    packet.getContact().getComplex().getComplexId(),
+                                    packet.getContact().getComplex().getRooms().get(0)));
+                            Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+                            messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
+                            messageLocal.setSent(true);
+                            Core.getInstance().bus().post(new MessageReceived(packet.getServiceMessage(), messageLocal));
                             connectFAB.setImageResource(R.drawable.ic_message);
                             ProfileActivity.this.startActivity(new Intent(ProfileActivity
                                     .this, RoomActivity.class)

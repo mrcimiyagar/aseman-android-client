@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.os.Handler;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -83,22 +84,13 @@ public class HomeActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        Entities.User me = DatabaseHelper.getMe();
-
-        if (me != null)
-            Crashlytics.setUserEmail(me.getUserSecret().getEmail());
-
-        if (ContextCompat.checkSelfPermission(HomeActivity.this
-                , Manifest.permission.READ_EXTERNAL_STORAGE) !=
-                PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(HomeActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    1);
-        } else {
+        new Handler().postDelayed(() -> {
+            Entities.User me = DatabaseHelper.getMe();
+            if (me != null) Crashlytics.setUserEmail(me.getUserSecret().getEmail());
             initViews();
             initUiData();
             loginToServer();
-        }
+        }, 500);
     }
 
     @Override
@@ -217,7 +209,7 @@ public class HomeActivity extends BaseActivity {
                 .show();
     }
 
-    private void showComplexDeleteDialog(long compleXId) {
+    private void showComplexDeleteDialog(long complexId) {
         new BottomDialog.Builder(this)
                 .setTitle("Delete complex")
                 .setContent("Do you really want to delete this complex ?")
@@ -228,7 +220,7 @@ public class HomeActivity extends BaseActivity {
                 .setPositiveBackgroundColorResource(R.color.colorPrimary)
                 .setPositiveBackgroundColor(getResources().getColor(R.color.colorBlue))
                 .setPositiveTextColor(Color.WHITE)
-                .onPositive(dialog -> deleteComplex(compleXId))
+                .onPositive(dialog -> deleteComplex(complexId))
                 .setNegativeText("Cancel")
                 .setNegativeTextColor(Color.WHITE)
                 .onNegative(BottomDialog::dismiss)
@@ -324,37 +316,32 @@ public class HomeActivity extends BaseActivity {
                     .getContactByComplexId(complex.getComplexId()).getPeerId());
             complexNameTV.setText(user.getTitle());
         }
-        @SuppressLint("RtlHardcoded")
-        RoomsAdapter roomsAdapter = new RoomsAdapter(HomeActivity.this
-                , complex.getComplexId()
-                , DatabaseHelper.getRooms(complex.getComplexId())
-                , room -> {
-                    drawerLayout.closeDrawer(Gravity.LEFT);
-                    startActivity(new Intent(HomeActivity.this
-                            , RoomActivity.class)
-                            .putExtra("complex_id", complex.getComplexId())
-                            .putExtra("room_id", room.getRoomId()));
-                });
-        menuRoomsRV.setAdapter(roomsAdapter);
+        initRoomsAdapter(complex, DatabaseHelper.getRooms(complex.getComplexId()));
         DataSyncer.syncRoomsWithServer(complex.getComplexId(), new OnRoomsSyncListener() {
             @Override
             public void roomsSynced(List<Entities.Room> rooms) {
-                @SuppressLint("RtlHardcoded")
-                RoomsAdapter roomsAdapter = new RoomsAdapter(HomeActivity.this
-                        , complex.getComplexId(), rooms, room -> {
-                            drawerLayout.closeDrawer(Gravity.LEFT);
-                            startActivity(new Intent(HomeActivity.this
-                                    , RoomActivity.class)
-                                    .putExtra("complex_id", complex.getComplexId())
-                                    .putExtra("room_id", room.getRoomId()));
-                        });
-                menuRoomsRV.setAdapter(roomsAdapter);
+                initRoomsAdapter(complex, rooms);
             }
             @Override
-            public void syncFailed() {
-                Toast.makeText(HomeActivity.this, "Connection Error", Toast.LENGTH_SHORT).show();
-            }
+            public void syncFailed() { }
         });
+    }
+
+    private void initRoomsAdapter(Entities.Complex complex, List<Entities.Room> rooms) {
+        if (menuRoomsRV.getAdapter() != null)
+            ((RoomsAdapter) menuRoomsRV.getAdapter()).dispose();
+        @SuppressLint("RtlHardcoded")
+        RoomsAdapter roomsAdapter = new RoomsAdapter(HomeActivity.this
+                , complex.getComplexId()
+                , rooms
+                , room -> {
+            drawerLayout.closeDrawer(Gravity.LEFT);
+            startActivity(new Intent(HomeActivity.this
+                    , RoomActivity.class)
+                    .putExtra("complex_id", complex.getComplexId())
+                    .putExtra("room_id", room.getRoomId()));
+        });
+        menuRoomsRV.setAdapter(roomsAdapter);
     }
 
     private int doneTasksCount = 0;
@@ -560,6 +547,7 @@ public class HomeActivity extends BaseActivity {
             if (doneTasksCount == 4) {
                 for (Entities.Contact contact : syncedContacts) {
                     boolean result = DatabaseHelper.notifyContactCreated(contact);
+                    DatabaseHelper.notifyUserCreated(contact.getPeer());
                     if (result) {
                         Core.getInstance().bus().post(new ContactCreated(contact));
                     }

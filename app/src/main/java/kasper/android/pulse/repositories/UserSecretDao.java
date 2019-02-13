@@ -18,4 +18,6 @@ public interface UserSecretDao {
     void delete(Entities.UserSecret... userSecrets);
     @Query("select * from usersecret where userId = :userId")
     Entities.UserSecret getUserSecretByUserId(long userId);
+    @Query("delete from usersecret")
+    void deleteAll();
 }

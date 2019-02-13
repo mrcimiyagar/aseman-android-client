@@ -24,4 +24,6 @@ public interface ContactDao {
     Entities.Contact getContactByPeerId(long peerId);
     @Query("select * from contact where complexId = :complexId")
     Entities.Contact getContactByComplexId(long complexId);
+    @Query("delete from contact")
+    void deleteAll();
 }

@@ -18,4 +18,6 @@ public interface BotSubscriptionDao {
     void delete(Entities.BotSubscription... botSubscriptions);
     @Query("select * from botsubscription where botId = :botId")
     Entities.BotSubscription getBotSubscriptionByBotId(long botId);
+    @Query("delete from botsubscription")
+    void deleteAll();
 }

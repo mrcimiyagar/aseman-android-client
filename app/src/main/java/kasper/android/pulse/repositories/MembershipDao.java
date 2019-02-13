@@ -22,4 +22,6 @@ public interface MembershipDao {
     void deleteComplexMemberships(long complexId);
     @Query("select * from membership where complexId = :complexId")
     List<Entities.Membership> getComplexMemberships(long complexId);
+    @Query("delete from membership")
+    void deleteAll();
 }

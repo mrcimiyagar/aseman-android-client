@@ -18,4 +18,6 @@ public interface FileUsageDao {
     void delete(Entities.FileUsage... fileUsages);
     @Query("select * from fileusage where fileUsageId = :fuId")
     Entities.FileUsage getFileUsageById(long fuId);
+    @Query("delete from fileusage")
+    void deleteAll();
 }

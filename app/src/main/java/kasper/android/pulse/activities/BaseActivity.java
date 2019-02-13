@@ -1,9 +1,11 @@
 package kasper.android.pulse.activities;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 
 import com.anadeainc.rxbus.Subscribe;
+import com.esotericsoftware.reflectasm.shaded.org.objectweb.asm.Handle;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.Nullable;
@@ -23,9 +25,11 @@ public class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Core.getInstance().bus().register(this);
         View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
-        statusSnackbar = Snackbar.make(rootView, "Empty",
-                Snackbar.LENGTH_INDEFINITE);
-        statusSnackbar.dismiss();
+        new Handler().post(() -> {
+            statusSnackbar = Snackbar.make(rootView, "Empty",
+                    Snackbar.LENGTH_INDEFINITE);
+            statusSnackbar.dismiss();
+        });
     }
 
     @Override

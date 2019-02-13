@@ -22,7 +22,24 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                app:layout_collapseMode="pin"/>
+                app:layout_collapseMode="pin">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageButton
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_gravity="right"
+                        android:src="@drawable/ic_more"
+                        android:tint="#fff"
+                        android:background="@android:color/transparent"
+                        android:onClick="onOptionsBtnClicked"/>
+
+                </FrameLayout>
+
+            </androidx.appcompat.widget.Toolbar>
 
             <kasper.android.pulse.components.SmoothCollapsingToolbarLayout
                 android:layout_width="match_parent"

@@ -24,4 +24,6 @@ public interface BotSecretDao {
     List<Entities.BotSecret> getBotSecretsByBotIds(List<Long> botIds);
     @Query("select * from botsecret where botId = :botId")
     Entities.BotSecret getBotSecretByBotId(long botId);
+    @Query("delete from botsecret")
+    void deleteAll();
 }

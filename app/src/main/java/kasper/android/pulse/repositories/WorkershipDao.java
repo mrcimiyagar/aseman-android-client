@@ -3,6 +3,7 @@ package kasper.android.pulse.repositories;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.Query;
 import androidx.room.Update;
 
 import kasper.android.pulse.models.entities.Entities;
@@ -15,4 +16,6 @@ public interface WorkershipDao {
     void update(Entities.Workership... workerships);
     @Delete
     void delete(Entities.Workership... workerships);
+    @Query("delete from workership")
+    void deleteAll();
 }

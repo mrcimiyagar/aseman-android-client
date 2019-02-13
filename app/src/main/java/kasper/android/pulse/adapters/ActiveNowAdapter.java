@@ -71,7 +71,7 @@ public class ActiveNowAdapter extends RecyclerView.Adapter<ActiveNowAdapter.Acti
     public void onBindViewHolder(@NonNull ActiveItem holder, int position) {
         Entities.User user = users.get(position);
         NetworkHelper.loadUserAvatar(user.getAvatar(), holder.avatarIV);
-        holder.titleTV.setText(user.getTitle());
+        holder.titleTV.setText(user.getTitle().split(" ")[0]);
         holder.itemView.setOnClickListener(view ->
                 activity.startActivity(new Intent(activity, ProfileActivity.class)
                         .putExtra("user-id", user.getBaseUserId())));

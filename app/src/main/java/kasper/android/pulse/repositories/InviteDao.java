@@ -24,4 +24,6 @@ public interface InviteDao {
     List<Entities.Invite> getInvites();
     @Query("select * from invite where complexId = :complexId")
     List<Entities.Invite> getComplexInvites(long complexId);
+    @Query("delete from invite")
+    void deleteAll();
 }

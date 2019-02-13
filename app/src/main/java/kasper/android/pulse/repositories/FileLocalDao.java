@@ -22,4 +22,6 @@ public interface FileLocalDao {
     Entities.FileLocal getFileLocalById(long fileId);
     @Query("select * from filelocal where fileId in (:fileIds)")
     List<Entities.FileLocal> getFileLocalsByIds(List<Long> fileIds);
+    @Query("delete from filelocal")
+    void deleteAll();
 }
