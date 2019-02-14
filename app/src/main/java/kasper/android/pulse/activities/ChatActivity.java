@@ -470,7 +470,8 @@ public class ChatActivity extends AppCompatActivity {
         messages = DatabaseHelper.getMessages(roomId);
         Hashtable<Long, Entities.MessageLocal> messageLocals = DatabaseHelper.getLocalMessages(messages);
         Hashtable<Long, Entities.FileLocal> fileLocals = DatabaseHelper.getLocalFiles(messages);
-        chatRV.setAdapter(new MessagesAdapter(this, messages, messageLocals, fileLocals));
+        chatRV.setAdapter(new MessagesAdapter(this, DatabaseHelper.getComplexById(complexId).getMode()
+                , messages, messageLocals, fileLocals));
         if (chatRV.getAdapter() != null)
             chatRV.scrollToPosition(chatRV.getAdapter().getItemCount() - 1);
     }

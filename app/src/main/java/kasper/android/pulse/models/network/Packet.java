@@ -31,6 +31,7 @@ public class Packet {
     private List<Entities.File> Files;
     private List<Entities.Message> Messages;
     private Entities.File File;
+    private Entities.Message Message;
     private Entities.TextMessage TextMessage;
     private Entities.PhotoMessage PhotoMessage;
     private Entities.AudioMessage AudioMessage;
@@ -244,6 +245,14 @@ public class Packet {
 
     public void setFile(Entities.File file) {
         File = file;
+    }
+
+    public Entities.Message getMessage() {
+        return Message;
+    }
+
+    public void setMessage(Entities.Message message) {
+        this.Message = message;
     }
 
     public Entities.TextMessage getTextMessage() {

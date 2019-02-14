@@ -10,4 +10,6 @@ public interface MessageHandler {
     Call<Packet> createTextMessage(@Body Packet packet);
     @POST("message/create_file_message")
     Call<Packet> createFileMessage(@Body Packet packet);
+    @POST("message/notify_message_seen")
+    Call<Packet> notifyMessageSeen(@Body Packet packet);
 }

@@ -355,7 +355,7 @@ public class HomeActivity extends BaseActivity {
     private List<Entities.BotSubscription> syncedBotSubscriptions = new ArrayList<>();
 
     private void loginToServer() {
-        getStatusSnackbar().show();
+        showSnack("Logging in...");
         AuthHandler authHandler = NetworkHelper.getRetrofit().create(AuthHandler.class);
         Call<Packet> call = authHandler.login();
         NetworkHelper.requestServer(call, new ServerCallback() {
@@ -363,27 +363,23 @@ public class HomeActivity extends BaseActivity {
             public void onRequestSuccess(Packet packet) {
                 Entities.Session session = packet.getSession();
                 DatabaseHelper.updateSession(session);
-                getStatusSnackbar().dismiss();
                 startSyncing();
             }
 
             @Override
             public void onServerFailure() {
-                getStatusSnackbar().setAction("Retry Login", view -> loginToServer());
-                getStatusSnackbar().setActionTextColor(getResources().getColor(R.color.colorBlue));
+                setupSnackAction("Retry Login", view -> loginToServer());
             }
 
             @Override
             public void onConnectionFailure() {
-                getStatusSnackbar().setAction("Retry Login", view -> loginToServer());
-                getStatusSnackbar().setActionTextColor(getResources().getColor(R.color.colorBlue));
+                setupSnackAction("Retry Login", view -> loginToServer());
             }
         });
     }
 
     private void startSyncing() {
-        getStatusSnackbar().setText("Syncing data ...");
-        getStatusSnackbar().show();
+        showSnack("Syncing data...");
         initContacts();
         initComplexes();
         initRooms();
@@ -397,7 +393,6 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onRequestSuccess(Packet packet) {
                 syncedContacts = packet.getContacts();
-                getStatusSnackbar().dismiss();
                 synchronized (TASKS_LOCK) {
                     notifyTaskDone();
                 }
@@ -406,7 +401,6 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onServerFailure() {
                 syncedContacts = new ArrayList<>();
-                getStatusSnackbar().dismiss();
                 synchronized (TASKS_LOCK) {
                     notifyTaskDone();
                 }
@@ -414,7 +408,6 @@ public class HomeActivity extends BaseActivity {
 
             @Override
             public void onConnectionFailure() {
-                getStatusSnackbar().dismiss();
                 synchronized (TASKS_LOCK) {
                     notifyTaskDone();
                 }
@@ -568,21 +561,16 @@ public class HomeActivity extends BaseActivity {
                     DatabaseHelper.notifyBotSubscribed(syncedBotSubscriptionsBots.get(counter)
                             , syncedBotSubscriptions.get(counter));
                 }
-
-                Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                    getStatusSnackbar().dismiss();
-                    getStatusSnackbar().setText("Starting services ...");
-                    getStatusSnackbar().show();
-                    startServices();
-                }));
+                Core.getInstance().bus().post(new UiThreadRequested(this::startServices));
             }
         }
     }
 
     private void startServices() {
+        showSnack("Starting services...");
         startService(new Intent(HomeActivity.this, NotificationsService.class));
         startService(new Intent(HomeActivity.this, FilesService.class));
         startService(new Intent(HomeActivity.this, MusicsService.class));
-        getStatusSnackbar().dismiss();
+        hideSnack();
     }
 }

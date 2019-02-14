@@ -10,6 +10,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import kasper.android.pulse.R;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 
@@ -24,12 +25,6 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Core.getInstance().bus().register(this);
-        View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
-        new Handler().post(() -> {
-            statusSnackbar = Snackbar.make(rootView, "Empty",
-                    Snackbar.LENGTH_INDEFINITE);
-            statusSnackbar.dismiss();
-        });
     }
 
     @Override
@@ -38,15 +33,36 @@ public class BaseActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    public void showSnack(String message) {
+        if (statusSnackbar == null) {
+            View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+            statusSnackbar = Snackbar.make(rootView, message,
+                    Snackbar.LENGTH_INDEFINITE);
+        } else {
+            statusSnackbar.setText(message);
+        }
+        if (!statusSnackbar.isShown()) {
+            statusSnackbar.show();
+        }
+    }
+
+    public void setupSnackAction(String action, View.OnClickListener clickListener) {
+        statusSnackbar.setAction("Retry Login", clickListener);
+        statusSnackbar.setActionTextColor(getResources().getColor(R.color.colorBlue));
+    }
+
+    public void hideSnack() {
+        statusSnackbar.dismiss();
+    }
+
     @Subscribe
     public void onConnectionStateChanged(ConnectionStateChanged connectionStateChanged) {
         switch (connectionStateChanged.getState()) {
             case Connected:
-                statusSnackbar.dismiss();
+                hideSnack();
                 break;
             case Reconnecting:
-                statusSnackbar.setText("Reconnecting to server");
-                statusSnackbar.show();
+                showSnack("Reconnecting to server");
                 break;
         }
     }

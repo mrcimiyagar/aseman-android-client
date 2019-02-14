@@ -16,8 +16,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ProfileActivity;
+import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
@@ -70,11 +72,20 @@ public class ActiveNowAdapter extends RecyclerView.Adapter<ActiveNowAdapter.Acti
     @Override
     public void onBindViewHolder(@NonNull ActiveItem holder, int position) {
         Entities.User user = users.get(position);
-        NetworkHelper.loadUserAvatar(user.getAvatar(), holder.avatarIV);
-        holder.titleTV.setText(user.getTitle().split(" ")[0]);
         holder.itemView.setOnClickListener(view ->
                 activity.startActivity(new Intent(activity, ProfileActivity.class)
                         .putExtra("user-id", user.getBaseUserId())));
+        DataSyncer.syncBaseUserWithServer(user.getBaseUserId(), new OnBaseUserSyncListener() {
+            @Override
+            public void userSynced(Entities.BaseUser baseUser) {
+                try {
+                    NetworkHelper.loadUserAvatar(baseUser.getAvatar(), holder.avatarIV);
+                    holder.titleTV.setText(baseUser.getTitle().split(" ")[0]);
+                } catch (Exception ignored) { }
+            }
+            @Override
+            public void syncFailed() { }
+        });
     }
 
     @Override

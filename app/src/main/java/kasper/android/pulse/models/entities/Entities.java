@@ -824,6 +824,7 @@ public class Entities {
         @PrimaryKey
         private long messageId;
         private long time;
+        private long seenCount;
         private long authorId;
         @Ignore
         private BaseUser author;
@@ -856,6 +857,14 @@ public class Entities {
 
         public void setTime(long time) {
             this.time = time;
+        }
+
+        public long getSeenCount() {
+            return seenCount;
+        }
+
+        public void setSeenCount(long seenCount) {
+            this.seenCount = seenCount;
         }
 
         public long getAuthorId() {

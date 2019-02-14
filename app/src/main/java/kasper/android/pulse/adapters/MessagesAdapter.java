@@ -33,11 +33,14 @@ import kasper.android.pulse.activities.MusicPlayerActivity;
 import kasper.android.pulse.activities.PhotoViewerActivity;
 import kasper.android.pulse.activities.VideoPlayerActivity;
 import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
+import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
+import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.rxbus.notifications.FileDownloadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileDownloaded;
 import kasper.android.pulse.rxbus.notifications.FileReceived;
@@ -47,8 +50,10 @@ import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.rxbus.notifications.FileUploading;
 import kasper.android.pulse.rxbus.notifications.MessageDeleted;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.MessageSeen;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
+import retrofit2.Call;
 
 import static kasper.android.pulse.models.extras.DocTypes.Audio;
 import static kasper.android.pulse.models.extras.DocTypes.Photo;
@@ -61,16 +66,19 @@ import static kasper.android.pulse.models.extras.DocTypes.Video;
 public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private AppCompatActivity activity;
+    private short complexMode;
     private final List<Entities.Message> messages;
     private Hashtable<Long, Entities.MessageLocal> messageLocals;
     private Hashtable<Long, Entities.FileLocal> fileLocals;
     private long myId;
 
     public MessagesAdapter(AppCompatActivity activity
+            , short complexMode
             , List<Entities.Message> ms
             , Hashtable<Long, Entities.MessageLocal> mls
             , Hashtable<Long, Entities.FileLocal> fls) {
         this.activity = activity;
+        this.complexMode = complexMode;
         this.messages = ms;
         this.messageLocals = mls;
         this.fileLocals = fls;
@@ -263,6 +271,21 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
 
+    @Subscribe
+    public void onMessageSeen(MessageSeen messageSeen) {
+        long messageId = messageSeen.getMessageId();
+        long seenCount = messageSeen.getSeenCount();
+        int counter = 0;
+        for (Entities.Message message : messages) {
+            if (message.getMessageId() == messageId) {
+                message.setSeenCount(seenCount);
+                notifyItemChanged(counter);
+                break;
+            }
+            counter++;
+        }
+    }
+
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -342,6 +365,21 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder rawHolder, int position) {
         final Entities.Message rawMessage = this.messages.get(position);
+
+        Packet packet = new Packet();
+        Entities.Message callMsg = new Entities.Message();
+        callMsg.setMessageId(rawMessage.getMessageId());
+        packet.setMessage(callMsg);
+        Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).notifyMessageSeen(packet);
+        NetworkHelper.requestServer(call, new ServerCallback() {
+            @Override
+            public void onRequestSuccess(Packet packet) { }
+            @Override
+            public void onServerFailure() { }
+            @Override
+            public void onConnectionFailure() { }
+        });
+
         int viewType = getItemViewType(position);
         if (viewType == 1 || viewType == 6) {
             Entities.TextMessage message = (Entities.TextMessage) rawMessage;
@@ -355,8 +393,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     calendar.get(Calendar.MINUTE) : "0" + calendar.get(Calendar.MINUTE)));
             if (viewType == 1) {
                 Entities.MessageLocal messageLocal = this.messageLocals.get(message.getMessageId());
-                if (messageLocal != null)
-                    holder.signIV.setVisibility(messageLocal.isSent() ? View.VISIBLE : View.GONE);
+                if (messageLocal != null) {
+                    if (messageLocal.isSent()) {
+                        holder.signIV.setVisibility(View.VISIBLE);
+                        if (message.getSeenCount() > 0) {
+                            holder.signIV.setImageResource(R.drawable.ic_seen);
+                        } else {
+                            holder.signIV.setImageResource(R.drawable.ic_done);
+                        }
+                    } else {
+                        holder.signIV.setVisibility(View.GONE);
+                    }
+                }
             }
             if (position == this.messages.size() - 1) {
                 holder.avatarIV.setVisibility(View.VISIBLE);
@@ -426,8 +474,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     calendar.get(Calendar.MINUTE) : "0" + calendar.get(Calendar.MINUTE)));
             if (viewType == 2) {
                 Entities.MessageLocal messageLocal = this.messageLocals.get(message.getMessageId());
-                if (messageLocal != null)
-                    holder.signIV.setVisibility(messageLocal.isSent() ? View.VISIBLE : View.GONE);
+                if (messageLocal != null) {
+                    if (messageLocal.isSent()) {
+                        holder.signIV.setVisibility(View.VISIBLE);
+                        if (message.getSeenCount() > 0) {
+                            holder.signIV.setImageResource(R.drawable.ic_seen);
+                        } else {
+                            holder.signIV.setImageResource(R.drawable.ic_done);
+                        }
+                    } else {
+                        holder.signIV.setVisibility(View.GONE);
+                    }
+                }
             }
             final Entities.FileLocal fileLocal = this.fileLocals.get(message.getPhoto().getFileId());
             if (fileLocal != null) {
@@ -525,8 +583,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     calendar.get(Calendar.MINUTE) : "0" + calendar.get(Calendar.MINUTE)));
             if (viewType == 3) {
                 Entities.MessageLocal messageLocal = this.messageLocals.get(message.getMessageId());
-                if (messageLocal != null)
-                    holder.signIV.setVisibility(messageLocal.isSent() ? View.VISIBLE : View.GONE);
+                if (messageLocal != null) {
+                    if (messageLocal.isSent()) {
+                        holder.signIV.setVisibility(View.VISIBLE);
+                        if (message.getSeenCount() > 0) {
+                            holder.signIV.setImageResource(R.drawable.ic_seen);
+                        } else {
+                            holder.signIV.setImageResource(R.drawable.ic_done);
+                        }
+                    } else {
+                        holder.signIV.setVisibility(View.GONE);
+                    }
+                }
             }
             final Entities.FileLocal fileLocal = this.fileLocals.get(message.getAudio().getFileId());
             if (fileLocal != null) {
@@ -620,8 +688,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     calendar.get(Calendar.MINUTE) : "0" + calendar.get(Calendar.MINUTE)));
             if (viewType == 4) {
                 Entities.MessageLocal messageLocal = this.messageLocals.get(message.getMessageId());
-                if (messageLocal != null)
-                    holder.signIV.setVisibility(messageLocal.isSent() ? View.VISIBLE : View.GONE);
+                if (messageLocal != null) {
+                    if (messageLocal.isSent()) {
+                        holder.signIV.setVisibility(View.VISIBLE);
+                        if (message.getSeenCount() > 0) {
+                            holder.signIV.setImageResource(R.drawable.ic_seen);
+                        } else {
+                            holder.signIV.setImageResource(R.drawable.ic_done);
+                        }
+                    } else {
+                        holder.signIV.setVisibility(View.GONE);
+                    }
+                }
             }
             final Entities.FileLocal fileLocal = this.fileLocals.get(message.getVideo().getFileId());
             if (fileLocal != null) {

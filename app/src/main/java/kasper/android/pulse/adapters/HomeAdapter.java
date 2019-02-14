@@ -2,6 +2,7 @@ package kasper.android.pulse.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +21,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ChatActivity;
+import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
+import kasper.android.pulse.callbacks.middleware.OnRoomSyncListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
@@ -63,7 +67,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 notifyItemChanged(counter + 2);
                 rooms.add(0, room);
                 rooms.remove(counter + 1);
-                notifyItemMoved(counter, 0);
+                notifyItemMoved(counter + 2, 2);
                 break;
             }
             counter++;
@@ -80,7 +84,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 room.setLastAction(message);
                 notifyItemChanged(counter + 2);
                 rooms.add(0, room);
-                rooms.remove(counter);
+                rooms.remove(counter + 1);
                 notifyItemMoved(counter + 2, 2);
                 break;
             }
@@ -100,7 +104,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 room.setLastAction(message);
                 notifyItemChanged(counter + 2);
                 rooms.add(0, room);
-                rooms.remove(counter);
+                rooms.remove(counter + 1);
                 notifyItemMoved(counter + 2, 2);
                 break;
             }
@@ -135,7 +139,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         if (!exists) {
             rooms.add(0, room);
-            notifyItemInserted(0);
+            notifyItemInserted(2);
         }
     }
 
@@ -204,28 +208,55 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (room.getComplex().getMode() == 2 || room.getComplex().getTitle().length() == 0) {
                 Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
                 Entities.User user = contact.getPeer();
-                vh.nameTV.setText(user.getTitle().split(" ")[0] + " : " + room.getTitle());
-                NetworkHelper.loadRoomAvatar(user.getAvatar(), vh.avatarIV);
+                DataSyncer.syncBaseUserWithServer(user.getBaseUserId(), new OnBaseUserSyncListener() {
+                    @Override
+                    public void userSynced(Entities.BaseUser baseUser) {
+                        DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                            @Override
+                            public void roomSynced(Entities.Room room) {
+                                try {
+                                    vh.nameTV.setText(baseUser.getTitle().split(" ")[0] + " : " + room.getTitle());
+                                    NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
+                                } catch (Exception ignored) { }
+                            }
+                            @Override
+                            public void syncFailed() { }
+                        });
+                    }
+                    @Override
+                    public void syncFailed() { }
+                });
             } else {
                 NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
                 vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
-                Entities.Message lastAction = room.getLastAction();
-                if (lastAction != null) {
-                    if (lastAction instanceof Entities.TextMessage)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
-                                + ((Entities.TextMessage) lastAction).getText());
-                    else if (lastAction instanceof Entities.PhotoMessage)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
-                    else if (lastAction instanceof Entities.AudioMessage)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
-                    else if (lastAction instanceof Entities.VideoMessage)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
-                    else if (lastAction instanceof Entities.ServiceMessage)
-                        vh.lastActionTV.setText("Aseman : "
-                                + ((Entities.ServiceMessage) lastAction).getText());
-                } else {
-                    vh.lastActionTV.setText("");
-                }
+                DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                    @Override
+                    public void roomSynced(Entities.Room room) {
+                        try {
+                            NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
+                            vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
+                        } catch (Exception ignored) { }
+                    }
+                    @Override
+                    public void syncFailed() { }
+                });
+            }
+            Entities.Message lastAction = room.getLastAction();
+            if (lastAction != null) {
+                if (lastAction instanceof Entities.TextMessage)
+                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
+                            + ((Entities.TextMessage) lastAction).getText());
+                else if (lastAction instanceof Entities.PhotoMessage)
+                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
+                else if (lastAction instanceof Entities.AudioMessage)
+                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
+                else if (lastAction instanceof Entities.VideoMessage)
+                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
+                else if (lastAction instanceof Entities.ServiceMessage)
+                    vh.lastActionTV.setText("Aseman : "
+                            + ((Entities.ServiceMessage) lastAction).getText());
+            } else {
+                vh.lastActionTV.setText("");
             }
             vh.itemView.setOnClickListener(view ->
                     activity.startActivity(new Intent(activity, ChatActivity.class)

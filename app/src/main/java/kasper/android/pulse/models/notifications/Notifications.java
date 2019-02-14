@@ -12,6 +12,7 @@ public class Notifications {
             include = JsonTypeInfo.As.PROPERTY,
             property = "type")
     @JsonSubTypes({
+            @JsonSubTypes.Type(value = MessageSeenNotification.class, name = "MessageSeenNotification"),
             @JsonSubTypes.Type(value = InviteCreationNotification.class, name = "InviteCreationNotification"),
             @JsonSubTypes.Type(value = InviteAcceptanceNotification.class, name = "InviteAcceptanceNotification"),
             @JsonSubTypes.Type(value = InviteIgnoranceNotification.class, name = "InviteIgnoranceNotification"),
@@ -31,14 +32,14 @@ public class Notifications {
             @JsonSubTypes.Type(value = BotRanCommandsOnBotViewNotification.class, name = "BotRanCommandsOnBotViewNotification")
     })
     public static class Notification {
-        private long notificationId;
+        private String notificationId;
         private Entities.Session session;
 
-        public long getNotificationId() {
+        public String getNotificationId() {
             return notificationId;
         }
 
-        public void setNotificationId(long notificationId) {
+        public void setNotificationId(String notificationId) {
             this.notificationId = notificationId;
         }
 
@@ -48,6 +49,28 @@ public class Notifications {
 
         public void setSession(Entities.Session session) {
             this.session = session;
+        }
+    }
+
+    public static class MessageSeenNotification extends Notification {
+
+        private long messageId;
+        private long messageSeenCount;
+
+        public long getMessageId() {
+            return messageId;
+        }
+
+        public void setMessageId(long messageId) {
+            this.messageId = messageId;
+        }
+
+        public long getMessageSeenCount() {
+            return messageSeenCount;
+        }
+
+        public void setMessageSeenCount(long messageSeenCount) {
+            this.messageSeenCount = messageSeenCount;
         }
     }
 

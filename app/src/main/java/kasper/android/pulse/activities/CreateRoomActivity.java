@@ -88,8 +88,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                 donePressed = true;
                 loadingView.setVisibility(View.VISIBLE);
                 final Packet packet = new Packet();
-                final Entities.Complex complex = new Entities.Complex();
-                complex.setComplexId(complexId);
+                final Entities.Complex complex = DatabaseHelper.getComplexById(complexId);
                 packet.setComplex(complex);
                 Entities.Room room = new Entities.Room();
                 room.setTitle(roomName);
@@ -109,15 +108,6 @@ public class CreateRoomActivity extends AppCompatActivity {
                                     progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
                                             progressBar.setProgress(progress))),
                                     (OnFileUploadListener) (fileId, fileUsageId) -> {
-                                        File sourceFile = new File(selectedImageFile.getPath());
-                                        File destFile = new File(new File(Environment
-                                                .getExternalStorageDirectory(), DatabaseHelper.StorageDir)
-                                                , fileId + "");
-                                        try {
-                                            FileUtils.copyFile(sourceFile, destFile);
-                                        } catch (Exception ex) {
-                                            ex.printStackTrace();
-                                        }
                                         Core.getInstance().bus().post(new UiThreadRequested(() -> {
                                             loadingView.setVisibility(View.GONE);
                                             Packet packet2 = new Packet();
@@ -130,6 +120,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                                                 @Override
                                                 public void onRequestSuccess(Packet packet) {
                                                     DatabaseHelper.updateRoom(room);
+                                                    room.setComplex(complex);
                                                     Core.getInstance().bus().post(new RoomCreated(complexId, room));
                                                     finish();
                                                 }

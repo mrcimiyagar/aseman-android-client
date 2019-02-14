@@ -120,20 +120,22 @@ public class ProfileActivity extends AppCompatActivity {
                     NetworkHelper.requestServer(call, new ServerCallback() {
                         @Override
                         public void onRequestSuccess(Packet packet) {
-                            DatabaseHelper.notifyComplexCreated(packet.getContact().getComplex());
-                            DatabaseHelper.notifyRoomCreated(packet.getContact().getComplex()
-                                    .getRooms().get(0));
-                            DatabaseHelper.notifyContactCreated(packet.getContact());
-                            DatabaseHelper.notifyServiceMessageReceived(packet.getServiceMessage());
-                            Core.getInstance().bus().post(new ContactCreated(packet.getContact()));
-                            Core.getInstance().bus().post(new ComplexCreated(packet.getContact().getComplex()));
-                            Core.getInstance().bus().post(new RoomCreated(
-                                    packet.getContact().getComplex().getComplexId(),
-                                    packet.getContact().getComplex().getRooms().get(0)));
+                            Entities.Contact contact = packet.getContact();
+                            Entities.Complex complex = packet.getContact().getComplex();
+                            Entities.Room room = complex.getRooms().get(0);
+                            room.setComplex(complex);
+                            Entities.ServiceMessage message = packet.getServiceMessage();
+                            DatabaseHelper.notifyComplexCreated(complex);
+                            DatabaseHelper.notifyRoomCreated(room);
+                            DatabaseHelper.notifyContactCreated(contact);
+                            DatabaseHelper.notifyServiceMessageReceived(message);
+                            Core.getInstance().bus().post(new ContactCreated(contact));
+                            Core.getInstance().bus().post(new ComplexCreated(complex));
+                            Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
                             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
                             messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
                             messageLocal.setSent(true);
-                            Core.getInstance().bus().post(new MessageReceived(packet.getServiceMessage(), messageLocal));
+                            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
                             connectFAB.setImageResource(R.drawable.ic_message);
                             ProfileActivity.this.startActivity(new Intent(ProfileActivity
                                     .this, RoomActivity.class)
