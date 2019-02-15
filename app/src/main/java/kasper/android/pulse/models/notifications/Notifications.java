@@ -52,6 +52,48 @@ public class Notifications {
         }
     }
 
+    public static class BotAddedToRoomNotification extends Notification {
+        private long roomId;
+        private Entities.Room room;
+
+        public long getRoomId() {
+            return roomId;
+        }
+
+        public void setRoomId(long roomId) {
+            this.roomId = roomId;
+        }
+
+        public Entities.Room getRoom() {
+            return room;
+        }
+
+        public void setRoom(Entities.Room room) {
+            this.room = room;
+        }
+    }
+
+    public static class BotRemovedFromRoomNotification extends Notification {
+        private long roomId;
+        private Entities.Room room;
+
+        public long getRoomId() {
+            return roomId;
+        }
+
+        public void setRoomId(long roomId) {
+            this.roomId = roomId;
+        }
+
+        public Entities.Room getRoom() {
+            return room;
+        }
+
+        public void setRoom(Entities.Room room) {
+            this.room = room;
+        }
+    }
+
     public static class MessageSeenNotification extends Notification {
 
         private long messageId;

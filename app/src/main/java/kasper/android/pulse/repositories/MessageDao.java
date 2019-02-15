@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import kasper.android.pulse.core.AsemanDB;
+import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
 
 @Dao
@@ -104,6 +105,16 @@ public abstract class MessageDao {
     @Query("select * from servicemessage where roomId = :roomId " +
             "and time = (select max(time) from servicemessage where roomId = :roomId)")
     abstract Entities.ServiceMessage getLastServiceMessage(long roomId);
+    @Query("select count(*) from textmessage where roomId = :roomId and authorId != :myId and seenByMe = 0")
+    abstract long getUnreadTextMessagesCount(long myId, long roomId);
+    @Query("select count(*) from photomessage where roomId = :roomId and authorId != :myId and seenByMe = 0")
+    abstract long getUnreadPhotoMessagesCount(long myId, long roomId);
+    @Query("select count(*) from audiomessage where roomId = :roomId and authorId != :myId and seenByMe = 0")
+    abstract long getUnreadAudioMessagesCount(long myId, long roomId);
+    @Query("select count(*) from videomessage where roomId = :roomId and authorId != :myId and seenByMe = 0")
+    abstract long getUnreadVideoMessagesCount(long myId, long roomId);
+    @Query("select count(*) from servicemessage where roomId = :roomId and authorId != :myId and seenByMe = 0")
+    abstract long getUnreadServiceMessagesCount(long myId, long roomId);
     @Transaction
     public Entities.Message getMessageById(long mId) {
         Entities.TextMessage textMessage = getTextMessageById(mId);
@@ -122,6 +133,14 @@ public abstract class MessageDao {
         if (serviceMessage != null)
             return serviceMessage;
         return null;
+    }
+    @Transaction
+    public long getUnreadMessagesCount(long myId, long roomId) {
+        return getUnreadTextMessagesCount(myId, roomId) +
+                getUnreadPhotoMessagesCount(myId, roomId) +
+                getUnreadAudioMessagesCount(myId, roomId) +
+                getUnreadVideoMessagesCount(myId, roomId) +
+                getUnreadServiceMessagesCount(myId, roomId);
     }
     @Transaction
     public List<Entities.Message> getMessages(long roomId) {

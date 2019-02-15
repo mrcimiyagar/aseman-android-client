@@ -81,7 +81,11 @@ public class CreateComplexActivity extends AppCompatActivity {
     public void onOkBtnClicked(View view) {
         final String name = nameET.getText().toString();
         if (name.length() > 0) {
-            loadingView.setVisibility(View.VISIBLE);
+            if (selectedImageFile != null && selectedImageFile.exists()) {
+                loadingView.setVisibility(View.VISIBLE);
+            } else {
+                loadingView.setVisibility(View.GONE);
+            }
             final Packet packet = new Packet();
             complex = new Entities.Complex();
             complex.setTitle(name);
@@ -94,71 +98,54 @@ public class CreateComplexActivity extends AppCompatActivity {
                 public void onRequestSuccess(Packet packet) {
                     complex = packet.getComplex();
                     Entities.ComplexSecret complexSecret = packet.getComplexSecret();
+                    Entities.Room room = complex.getRooms().get(0);
                     DatabaseHelper.notifyComplexCreated(complex);
                     DatabaseHelper.notifyComplexSecretCreated(complexSecret);
-                    DatabaseHelper.notifyRoomCreated(complex.getRooms().get(0));
+                    DatabaseHelper.notifyRoomCreated(room);
                     if (selectedImageFile != null && selectedImageFile.exists()) {
-                        Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath()
-                                , 56, 56);
+                        Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(
+                                true, selectedImageFile.getPath(), 56, 56);
                         Entities.File file = pair.first;
                         NetworkHelper.uploadFile(file, -1, -1, selectedImageFile.getPath(),
                                 progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
                                     progressBar.setProgress(progress)))
                                 , (OnFileUploadListener) (fileId, fileUsageId) -> {
-                                    File sourceFile = new File(selectedImageFile.getPath());
-                                    File destFile = new File(new File(Environment
-                                            .getExternalStorageDirectory(), DatabaseHelper
-                                            .StorageDir), fileId + "");
-                                    try {
-                                        FileUtils.copyFile(sourceFile, destFile);
-                                    } catch (Exception ex) {
-                                        ex.printStackTrace();
-                                    }
-                                    Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                                        loadingView.setVisibility(View.GONE);
-                                        complex.setAvatar(fileId);
-                                        Packet packet2 = new Packet();
-                                        packet2.setComplex(complex);
-                                        ComplexHandler profileHandler = NetworkHelper.getRetrofit().create(ComplexHandler.class);
-                                        Call<Packet> call2 = profileHandler.updateComplexProfile(packet2);
-                                        NetworkHelper.requestServer(call2, new ServerCallback() {
-                                            @Override
-                                            public void onRequestSuccess(Packet packet) {
-                                                DatabaseHelper.updateComplex(complex);
-                                                Core.getInstance().bus().post(new ComplexCreated(complex));
-                                                Entities.Room room = complex.getRooms().get(0);
-                                                room.setComplex(complex);
-                                                Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
-                                                finish();
-                                            }
-
-                                            @Override
-                                            public void onServerFailure() {
-                                                Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
-                                            }
-
-                                            @Override
-                                            public void onConnectionFailure() {
-                                                Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                                    }));
+                                    loadingView.setVisibility(View.GONE);
+                                    complex.setAvatar(fileId);
+                                    Packet packet2 = new Packet();
+                                    packet2.setComplex(complex);
+                                    ComplexHandler profileHandler = NetworkHelper.getRetrofit().create(ComplexHandler.class);
+                                    Call<Packet> call2 = profileHandler.updateComplexProfile(packet2);
+                                    NetworkHelper.requestServer(call2, new ServerCallback() {
+                                        @Override
+                                        public void onRequestSuccess(Packet packet) {
+                                            DatabaseHelper.updateComplex(complex);
+                                            room.setComplex(complex);
+                                            Core.getInstance().bus().post(new ComplexCreated(complex));
+                                            Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
+                                            finish();
+                                        }
+                                        @Override
+                                        public void onServerFailure() {
+                                            Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
+                                        }
+                                        @Override
+                                        public void onConnectionFailure() {
+                                            Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
                                 });
                     } else {
-                        Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                            Core.getInstance().bus().post(new ComplexCreated(complex));
-                            Entities.Room room = complex.getRooms().get(0);
-                            Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
-                            finish();
-                        }));
+                        room.setComplex(complex);
+                        Core.getInstance().bus().post(new ComplexCreated(complex));
+                        Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
+                        finish();
                     }
                 }
-
                 @Override
                 public void onServerFailure() {
                     Toast.makeText(CreateComplexActivity.this, "Complex creation failure", Toast.LENGTH_SHORT).show();
                 }
-
                 @Override
                 public void onConnectionFailure() {
                     Toast.makeText(CreateComplexActivity.this, "Complex creation failure", Toast.LENGTH_SHORT).show();

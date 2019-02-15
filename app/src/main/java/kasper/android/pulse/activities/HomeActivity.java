@@ -2,21 +2,27 @@ package kasper.android.pulse.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import android.os.Handler;
+import android.text.SpannableStringBuilder;
+import android.text.style.ImageSpan;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,7 +32,6 @@ import com.github.javiersantos.bottomdialogs.BottomDialog;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -41,19 +46,14 @@ import kasper.android.pulse.callbacks.middleware.OnRoomsSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.AuthHandler;
 import kasper.android.pulse.retrofit.ComplexHandler;
-import kasper.android.pulse.retrofit.ContactHandler;
-import kasper.android.pulse.retrofit.RobotHandler;
-import kasper.android.pulse.retrofit.RoomHandler;
-import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
-import kasper.android.pulse.rxbus.notifications.ContactCreated;
-import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
@@ -84,13 +84,11 @@ public class HomeActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        new Handler().postDelayed(() -> {
-            Entities.User me = DatabaseHelper.getMe();
-            if (me != null) Crashlytics.setUserEmail(me.getUserSecret().getEmail());
-            initViews();
-            initUiData();
-            loginToServer();
-        }, 500);
+        Entities.User me = DatabaseHelper.getMe();
+        if (me != null) Crashlytics.setUserEmail(me.getUserSecret().getEmail());
+        initViews();
+        initUiData();
+        loginToServer();
     }
 
     @Override
@@ -102,6 +100,13 @@ public class HomeActivity extends BaseActivity {
         if (homeRV.getAdapter() != null)
             ((HomeAdapter) homeRV.getAdapter()).dispose();
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (homeRV.getAdapter() != null)
+            ((HomeAdapter) homeRV.getAdapter()).softRefresh();
     }
 
     @SuppressLint("RtlHardcoded")
@@ -138,26 +143,36 @@ public class HomeActivity extends BaseActivity {
         drawerLayout.openDrawer(Gravity.LEFT);
     }
 
-    public void onBotsBtnClicked(View view) {
-        startActivity(new Intent(this, BotsActivity.class));
-    }
-
-    public void onStoreBtnClicked(View view) {
-        startActivity(new Intent(this, BotStoreActivity.class));
-    }
-
     @SuppressLint("RtlHardcoded")
     public void onSettingsBtnClicked(View view) {
         drawerLayout.closeDrawer(Gravity.LEFT);
         startActivity(new Intent(this, SettingsActivity.class));
     }
 
-    public void onGlobalSearchBtnClicked(View view) {
-        startActivity(new Intent(this, SearchActivity.class));
+    @SuppressLint("RestrictedApi")
+    public void onOptionsBtnClicked(View view) {
+        showOptionsMenu(R.menu.home_options_menu, view, menuItem -> {
+            switch (menuItem.getItemId()) {
+                case R.id.explore:
+                    startActivity(new Intent(HomeActivity.this, SearchActivity.class));
+                    return true;
+                case R.id.store:
+                    startActivity(new Intent(HomeActivity.this, BotStoreActivity.class));
+                    return true;
+                case R.id.bots:
+                    startActivity(new Intent(HomeActivity.this, BotsActivity.class));
+                    return true;
+                case R.id.invites:
+                    startActivity(new Intent(HomeActivity.this, InvitesActivity.class));
+                    return true;
+                default:
+                    return false;
+            }
+        });
     }
 
     @SuppressLint("RtlHardcoded")
-    public void onMoreMenuBtnClicked(final View view) {
+    public void onMenuMoreMenuBtnClicked(final View view) {
         final Entities.Complex complex = DatabaseHelper.getComplexById(chosenComplexId);
         String[] itemTitles;
         Drawable[] itemIcons;
@@ -344,16 +359,6 @@ public class HomeActivity extends BaseActivity {
         menuRoomsRV.setAdapter(roomsAdapter);
     }
 
-    private int doneTasksCount = 0;
-    private final Object TASKS_LOCK = new Object();
-    private List<Entities.Contact> syncedContacts = new ArrayList<>();
-    private List<Entities.Complex> syncedComplexes = new ArrayList<>();
-    private List<Entities.Room> syncedRooms = new ArrayList<>();
-    private List<Entities.Bot> syncedBotCreationsBots = new ArrayList<>();
-    private List<Entities.BotCreation> syncedBotCreations = new ArrayList<>();
-    private List<Entities.Bot> syncedBotSubscriptionsBots = new ArrayList<>();
-    private List<Entities.BotSubscription> syncedBotSubscriptions = new ArrayList<>();
-
     private void loginToServer() {
         showSnack("Logging in...");
         AuthHandler authHandler = NetworkHelper.getRetrofit().create(AuthHandler.class);
@@ -363,7 +368,7 @@ public class HomeActivity extends BaseActivity {
             public void onRequestSuccess(Packet packet) {
                 Entities.Session session = packet.getSession();
                 DatabaseHelper.updateSession(session);
-                startSyncing();
+                startServices();
             }
 
             @Override
@@ -376,194 +381,6 @@ public class HomeActivity extends BaseActivity {
                 setupSnackAction("Retry Login", view -> loginToServer());
             }
         });
-    }
-
-    private void startSyncing() {
-        showSnack("Syncing data...");
-        initContacts();
-        initComplexes();
-        initRooms();
-        initBots();
-    }
-
-    private void initContacts() {
-        ContactHandler contactHandler = NetworkHelper.getRetrofit().create(ContactHandler.class);
-        Call<Packet> contactsCall = contactHandler.getContacts();
-        NetworkHelper.requestServer(contactsCall, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet packet) {
-                syncedContacts = packet.getContacts();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onServerFailure() {
-                syncedContacts = new ArrayList<>();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onConnectionFailure() {
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-        });
-    }
-
-    private void initComplexes() {
-        ComplexHandler complexHandler = NetworkHelper.getRetrofit().create(ComplexHandler.class);
-        Call<Packet> contactsCall = complexHandler.getComplexes();
-        NetworkHelper.requestServer(contactsCall, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet packet) {
-                syncedComplexes = packet.getComplexes();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onServerFailure() {
-                syncedContacts = new ArrayList<>();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onConnectionFailure() {
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-        });
-    }
-
-    private void initRooms() {
-        RoomHandler roomHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
-        Packet packet = new Packet();
-        Entities.Complex complex = new Entities.Complex();
-        complex.setComplexId(0);
-        packet.setComplex(complex);
-        Call<Packet> call = roomHandler.getRooms(packet);
-        NetworkHelper.requestServer(call, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet packet) {
-                syncedRooms = packet.getRooms();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onServerFailure() {
-                syncedRooms = new ArrayList<>();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onConnectionFailure() {
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-        });
-    }
-
-    private void initBots() {
-        Call<Packet> creationCall = NetworkHelper.getRetrofit().create(RobotHandler.class).getCreatedBots();
-        NetworkHelper.requestServer(creationCall, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet packet) {
-                syncedBotCreationsBots = packet.getBots();
-                syncedBotCreations = packet.getBotCreations();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onServerFailure() {
-                syncedBotCreationsBots = new ArrayList<>();
-                syncedBotCreations = new ArrayList<>();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onConnectionFailure() {
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-        });
-        Call<Packet> subscriptionCall = NetworkHelper.getRetrofit().create(RobotHandler.class).getSubscribedBots();
-        NetworkHelper.requestServer(subscriptionCall, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet packet) {
-                syncedBotSubscriptionsBots = packet.getBots();
-                syncedBotSubscriptions = packet.getBotSubscriptions();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onServerFailure() {
-                syncedBotSubscriptionsBots = new ArrayList<>();
-                syncedBotSubscriptions = new ArrayList<>();
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-
-            @Override
-            public void onConnectionFailure() {
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-        });
-    }
-
-    private void notifyTaskDone() {
-        synchronized (TASKS_LOCK) {
-            doneTasksCount++;
-            if (doneTasksCount == 4) {
-                for (Entities.Contact contact : syncedContacts) {
-                    boolean result = DatabaseHelper.notifyContactCreated(contact);
-                    DatabaseHelper.notifyUserCreated(contact.getPeer());
-                    if (result) {
-                        Core.getInstance().bus().post(new ContactCreated(contact));
-                    }
-                }
-                for (Entities.Complex complex : syncedComplexes) {
-                    DatabaseHelper.notifyComplexCreated(complex);
-                    Core.getInstance().bus().post(new ComplexCreated(complex));
-                }
-                for (Entities.Room room : syncedRooms) {
-                    DatabaseHelper.notifyRoomCreated(room);
-                    Core.getInstance().bus().post(new RoomCreated(room.getComplexId(), room));
-                }
-                for (int counter = 0; counter < syncedBotCreationsBots.size(); counter++) {
-                    DatabaseHelper.notifyBotCreated(syncedBotCreationsBots.get(counter)
-                            , syncedBotCreations.get(counter));
-                }
-                for (int counter = 0; counter < syncedBotSubscriptionsBots.size(); counter++) {
-                    DatabaseHelper.notifyBotSubscribed(syncedBotSubscriptionsBots.get(counter)
-                            , syncedBotSubscriptions.get(counter));
-                }
-                Core.getInstance().bus().post(new UiThreadRequested(this::startServices));
-            }
-        }
     }
 
     private void startServices() {

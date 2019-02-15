@@ -184,8 +184,8 @@ public class NetworkHelper {
                 .centerCrop()
                 .placeholder(errorDrawable)
                 .error(errorDrawable)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .priority(Priority.HIGH);
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                .priority(Priority.NORMAL);
         Glide.with(Core.getInstance())
                 .load(path)
                 .apply(options)

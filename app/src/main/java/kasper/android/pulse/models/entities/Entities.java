@@ -825,6 +825,7 @@ public class Entities {
         private long messageId;
         private long time;
         private long seenCount;
+        private boolean seenByMe;
         private long authorId;
         @Ignore
         private BaseUser author;
@@ -865,6 +866,14 @@ public class Entities {
 
         public void setSeenCount(long seenCount) {
             this.seenCount = seenCount;
+        }
+
+        public boolean isSeenByMe() {
+            return seenByMe;
+        }
+
+        public void setSeenByMe(boolean seenByMe) {
+            this.seenByMe = seenByMe;
         }
 
         public long getAuthorId() {

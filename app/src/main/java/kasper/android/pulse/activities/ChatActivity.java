@@ -66,7 +66,7 @@ import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends BaseActivity {
 
     private long complexId;
     private long roomId;
@@ -99,8 +99,6 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-
-        Core.getInstance().bus().register(this);
 
         if (getIntent().getExtras() != null) {
             if (getIntent().getExtras().containsKey("complex_id"))
@@ -139,7 +137,6 @@ public class ChatActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (chatRV.getAdapter() != null)
             ((MessagesAdapter) chatRV.getAdapter()).dispose();
-        Core.getInstance().bus().unregister(this);
         super.onDestroy();
     }
 
@@ -257,6 +254,10 @@ public class ChatActivity extends AppCompatActivity {
                 public void onRequestSuccess(Packet packet) {
                     final Entities.TextMessage msg = packet.getTextMessage();
                     DatabaseHelper.notifyTextMessageSent(messageLocalId, msg.getMessageId(), msg.getTime());
+                    if (DatabaseHelper.getComplexById(complexId).getMode() == 1) {
+                        msg.setSeenCount(1);
+                        DatabaseHelper.notifyMessageUpdated(msg);
+                    }
                     Core.getInstance().bus().post(new MessageSent(messageLocalId, msg.getMessageId()));
                 }
 
@@ -366,18 +367,26 @@ public class ChatActivity extends AppCompatActivity {
                                 public void onRequestSuccess(Packet packet) {
                                     long messageId = -1;
                                     long time;
+                                    Entities.Message msg;
                                     if (docType == DocTypes.Photo) {
-                                        messageId = packet.getPhotoMessage().getMessageId();
+                                        msg = packet.getPhotoMessage();
+                                        messageId = msg.getMessageId();
                                         time = packet.getPhotoMessage().getTime();
                                         DatabaseHelper.notifyPhotoMessageSent(finalMessageLocal.getMessageId(), messageId, time);
                                     } else if (docType == DocTypes.Audio) {
-                                        messageId = packet.getAudioMessage().getMessageId();
+                                        msg = packet.getAudioMessage();
+                                        messageId = msg.getMessageId();
                                         time = packet.getAudioMessage().getTime();
                                         DatabaseHelper.notifyAudioMessageSent(finalMessageLocal.getMessageId(), messageId, time);
                                     } else if (docType == DocTypes.Video) {
-                                        messageId = packet.getVideoMessage().getMessageId();
+                                        msg = packet.getVideoMessage();
+                                        messageId = msg.getMessageId();
                                         time = packet.getVideoMessage().getTime();
                                         DatabaseHelper.notifyVideoMessageSent(finalMessageLocal.getMessageId(), messageId, time);
+                                    }
+                                    if (DatabaseHelper.getComplexById(complexId).getMode() == 1) {
+                                        finalMessage.setSeenCount(1);
+                                        DatabaseHelper.notifyMessageUpdated(finalMessage);
                                     }
                                     Core.getInstance().bus().post(new MessageSent(finalMessageLocal.getMessageId(), messageId));
                                 }
@@ -470,8 +479,7 @@ public class ChatActivity extends AppCompatActivity {
         messages = DatabaseHelper.getMessages(roomId);
         Hashtable<Long, Entities.MessageLocal> messageLocals = DatabaseHelper.getLocalMessages(messages);
         Hashtable<Long, Entities.FileLocal> fileLocals = DatabaseHelper.getLocalFiles(messages);
-        chatRV.setAdapter(new MessagesAdapter(this, DatabaseHelper.getComplexById(complexId).getMode()
-                , messages, messageLocals, fileLocals));
+        chatRV.setAdapter(new MessagesAdapter(this, roomId, messages, messageLocals, fileLocals));
         if (chatRV.getAdapter() != null)
             chatRV.scrollToPosition(chatRV.getAdapter().getItemCount() - 1);
     }
@@ -535,14 +543,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void onOptionsBtnClicked(View view) {
-        Context wrapper = new ContextThemeWrapper(this, R.style.PopupMenu);
-        PopupMenu popupMenu = new PopupMenu(wrapper, view);
-        MenuInflater inflater = getMenuInflater();
-        if (afterRoom)
-            inflater.inflate(R.menu.chat_options_menu1, popupMenu.getMenu());
-        else
-            inflater.inflate(R.menu.chat_options_menu2, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(menuItem -> {
+        showOptionsMenu(afterRoom ? R.menu.chat_options_menu1 : R.menu.chat_options_menu2, view, menuItem -> {
             switch (menuItem.getItemId()) {
                 case R.id.goto_room:
                     startActivity(new Intent(ChatActivity.this, RoomActivity.class)
@@ -572,6 +573,5 @@ public class ChatActivity extends AppCompatActivity {
                     return false;
             }
         });
-        popupMenu.show();
     }
 }

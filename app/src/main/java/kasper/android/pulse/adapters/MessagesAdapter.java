@@ -53,6 +53,7 @@ import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSeen;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
+import kasper.android.pulse.rxbus.notifications.RoomUnreadChanged;
 import retrofit2.Call;
 
 import static kasper.android.pulse.models.extras.DocTypes.Audio;
@@ -66,19 +67,19 @@ import static kasper.android.pulse.models.extras.DocTypes.Video;
 public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private AppCompatActivity activity;
-    private short complexMode;
+    private long roomId;
     private final List<Entities.Message> messages;
     private Hashtable<Long, Entities.MessageLocal> messageLocals;
     private Hashtable<Long, Entities.FileLocal> fileLocals;
     private long myId;
 
     public MessagesAdapter(AppCompatActivity activity
-            , short complexMode
+            , long roomId
             , List<Entities.Message> ms
             , Hashtable<Long, Entities.MessageLocal> mls
             , Hashtable<Long, Entities.FileLocal> fls) {
         this.activity = activity;
-        this.complexMode = complexMode;
+        this.roomId = roomId;
         this.messages = ms;
         this.messageLocals = mls;
         this.fileLocals = fls;
@@ -218,12 +219,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Subscribe
     public void onMessageReceived(MessageReceived messageReceived) {
         Entities.Message message = messageReceived.getMessage();
-        Entities.MessageLocal messageLocal = messageReceived.getMessageLocal();
-        messages.add(message);
-        messageLocals.put(messageLocal.getMessageId(), messageLocal);
-        notifyItemInserted(messages.size() - 1);
-        if (messages.size() >= 2) {
-            notifyItemChanged(messages.size() - 2);
+        if (message.getRoomId() == roomId) {
+            Entities.MessageLocal messageLocal = messageReceived.getMessageLocal();
+            messages.add(message);
+            messageLocals.put(messageLocal.getMessageId(), messageLocal);
+            notifyItemInserted(messages.size() - 1);
+            if (messages.size() >= 2) {
+                notifyItemChanged(messages.size() - 2);
+            }
         }
     }
 
@@ -242,12 +245,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Subscribe
     public void onMessageSending(MessageSending messageSending) {
         Entities.Message message = messageSending.getMessage();
-        Entities.MessageLocal messageLocal = messageSending.getMessageLocal();
-        messages.add(message);
-        messageLocals.put(messageLocal.getMessageId(), messageLocal);
-        notifyItemInserted(messages.size() - 1);
-        if (messages.size() >= 2) {
-            notifyItemChanged(messages.size() - 2);
+        if (message.getRoom().getRoomId() == roomId) {
+            Entities.MessageLocal messageLocal = messageSending.getMessageLocal();
+            messages.add(message);
+            messageLocals.put(messageLocal.getMessageId(), messageLocal);
+            notifyItemInserted(messages.size() - 1);
+            if (messages.size() >= 2) {
+                notifyItemChanged(messages.size() - 2);
+            }
         }
     }
 
@@ -255,26 +260,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onMessageSent(MessageSent messageSent) {
         long localMessageId = messageSent.getLocalMessageId();
         long onlineMessageId = messageSent.getOnlineMessageId();
-        Entities.MessageLocal messageLocal = messageLocals.get(localMessageId);
-        messageLocal.setMessageId(onlineMessageId);
-        messageLocal.setSent(true);
-        messageLocals.put(onlineMessageId, messageLocal);
-        messageLocals.remove(localMessageId);
-        int counter = 0;
-        for (Entities.Message message : messages) {
-            if (message.getMessageId() == localMessageId || message.getMessageId() == onlineMessageId) {
-                message.setMessageId(onlineMessageId);
-                notifyItemChanged(counter);
-                break;
+        if (messageLocals.containsKey(localMessageId)) {
+            Entities.MessageLocal messageLocal = messageLocals.get(localMessageId);
+            messageLocal.setMessageId(onlineMessageId);
+            messageLocal.setSent(true);
+            messageLocals.put(onlineMessageId, messageLocal);
+            messageLocals.remove(localMessageId);
+            int counter = 0;
+            for (Entities.Message message : messages) {
+                if (message.getMessageId() == localMessageId || message.getMessageId() == onlineMessageId) {
+                    message.setMessageId(onlineMessageId);
+                    notifyItemChanged(counter);
+                    break;
+                }
+                counter++;
             }
-            counter++;
         }
     }
 
     @Subscribe
     public void onMessageSeen(MessageSeen messageSeen) {
-        long messageId = messageSeen.getMessageId();
-        long seenCount = messageSeen.getSeenCount();
+        long messageId = messageSeen.getMessage().getMessageId();
+        long seenCount = messageSeen.getMessage().getSeenCount();
         int counter = 0;
         for (Entities.Message message : messages) {
             if (message.getMessageId() == messageId) {
@@ -373,7 +380,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).notifyMessageSeen(packet);
         NetworkHelper.requestServer(call, new ServerCallback() {
             @Override
-            public void onRequestSuccess(Packet packet) { }
+            public void onRequestSuccess(Packet packet) {
+                rawMessage.setSeenByMe(true);
+                DatabaseHelper.notifyMessageUpdated(rawMessage);
+                Core.getInstance().bus().post(new RoomUnreadChanged(roomId));
+            }
             @Override
             public void onServerFailure() { }
             @Override

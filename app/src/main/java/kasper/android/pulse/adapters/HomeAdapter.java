@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.anadeainc.rxbus.Subscribe;
@@ -30,10 +31,12 @@ import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.MessageSeen;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
+import kasper.android.pulse.rxbus.notifications.RoomUnreadChanged;
 import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 
 public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -55,6 +58,12 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (peopleRV != null && peopleRV.getAdapter() != null)
             ((ActiveNowAdapter) peopleRV.getAdapter()).dispose();
         Core.getInstance().bus().unregister(this);
+    }
+
+    public void softRefresh() {
+        for (int counter = 2; counter < getItemCount(); counter++) {
+            notifyItemChanged(counter);
+        }
     }
 
     @Subscribe
@@ -120,13 +129,40 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Subscribe
     public void onRoomsCreated(RoomsCreated roomsCreated) {
         for (Entities.Room room : rooms) {
-            onRoomCreated(new RoomCreated(roomsCreated.getComplexId(), room));
+            addRoom(room);
         }
     }
 
     @Subscribe
     public void onRoomRemoved(RoomRemoved roomRemoved) {
         removeRoom(roomRemoved.getRoom());
+    }
+
+    @Subscribe
+    public void onRoomUnreadChanged(RoomUnreadChanged unreadChanged) {
+        int counter = 0;
+        for (Entities.Room room : rooms) {
+            if (room.getRoomId() == unreadChanged.getRoomId()) {
+                notifyItemChanged(counter + 2);
+                break;
+            }
+            counter++;
+        }
+    }
+
+    @Subscribe
+    public void onMessageSeen(MessageSeen messageSeen) {
+        int counter = 0;
+        for (Entities.Room room : rooms) {
+            if (room.getRoomId() == messageSeen.getMessage().getRoom().getRoomId()) {
+                if (room.getLastAction() != null) {
+                    room.getLastAction().setSeenCount(messageSeen.getMessage().getSeenCount());
+                    notifyItemChanged(counter + 2);
+                }
+                break;
+            }
+            counter++;
+        }
     }
 
     private void addRoom(Entities.Room room) {
@@ -174,9 +210,6 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         } else if (viewType == 1) {
             return new ConvHeaderItem(LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.home_conv_header, parent, false));
-        } else if (viewType == 2) {
-            return new RoomItem(LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.home_room_item, parent, false));
         } else {
             return new RoomItem(LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.home_room_item, parent, false));
@@ -255,6 +288,35 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 else if (lastAction instanceof Entities.ServiceMessage)
                     vh.lastActionTV.setText("Aseman : "
                             + ((Entities.ServiceMessage) lastAction).getText());
+                if (room.getComplex().getMode() == 1) {
+                    ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
+                    ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                    ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                } else {
+                    long unreadCount = DatabaseHelper.getUnreadMessagesCount(room.getRoomId());
+                    if (unreadCount == 0) {
+                        ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                        if (lastAction.getAuthorId() == DatabaseHelper.getMe().getBaseUserId()) {
+                            if (lastAction.getSeenCount() > 0) {
+                                ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
+                                ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                            } else {
+                                Entities.MessageLocal messageLocal = DatabaseHelper.getMessageLocalById(lastAction.getMessageId());
+                                if (messageLocal != null && messageLocal.isSent()) {
+                                    ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_done);
+                                    ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                                } else {
+                                    ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                                }
+                            }
+                        } else {
+                            ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                        }
+                    } else {
+                        ((RoomItem) holder).unreadCount.setText(unreadCount + "");
+                        ((RoomItem) holder).unreadCount.setVisibility(View.VISIBLE);
+                    }
+                }
             } else {
                 vh.lastActionTV.setText("");
             }
@@ -293,12 +355,16 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         CircleImageView avatarIV;
         TextView nameTV;
         TextView lastActionTV;
+        TextView unreadCount;
+        ImageView stateIV;
 
         RoomItem(View itemView) {
             super(itemView);
             this.avatarIV = itemView.findViewById(R.id.homeRoomItemAvatar);
             this.nameTV = itemView.findViewById(R.id.homeRoomItemName);
             this.lastActionTV = itemView.findViewById(R.id.homeRoomItemLastAction);
+            this.unreadCount = itemView.findViewById(R.id.homeRoomItemUnreadCount);
+            this.stateIV = itemView.findViewById(R.id.homeRoomItemMyMessageState);
         }
     }
 }

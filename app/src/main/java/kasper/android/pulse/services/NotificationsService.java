@@ -127,6 +127,8 @@ public class NotificationsService extends IntentService {
         connection.on("NotifyBotUpdatedBotView", this::onBotUpdatedBotView, Notifications.BotUpdatedBotViewNotification.class);
         connection.on("NotifyBotAnimatedBotView", this::onBotAnimatedBotView, Notifications.BotAnimatedBotViewNotification.class);
         connection.on("NotifyBotRanCommandsOnBotView", this::onBotRanCommandsOnBotView, Notifications.BotRanCommandsOnBotViewNotification.class);
+        connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAddedToRoomNotification.class);
+        connection.on("NotifyBotRemovedFromRoom", this::onBotRemovedFromRoom, Notifications.BotRemovedFromRoomNotification.class);
 
         connection.onClosed(exception -> new Thread(() -> {
             try {
@@ -187,48 +189,68 @@ public class NotificationsService extends IntentService {
         return true;
     }
 
+    private void onBotAddedToRoom(Notifications.BotAddedToRoomNotification notif) {
+        Log.d("Aseman", "Received Bot Added notification");
+
+        notifyServerNotifReceived(notif.getNotificationId());
+    }
+
+    private void onBotRemovedFromRoom(Notifications.BotRemovedFromRoomNotification notif) {
+        Log.d("Aseman", "Received Bot Removed notification");
+
+        notifyServerNotifReceived(notif.getNotificationId());
+    }
+
     private void onMessageSeen(final Notifications.MessageSeenNotification msn) {
         Log.d("Aseman", "Received Message Seen notification");
         Entities.Message message = DatabaseHelper.getMessageById(msn.getMessageId());
         if (message != null) {
             message.setSeenCount(msn.getMessageSeenCount());
             DatabaseHelper.notifyMessageUpdated(message);
+            Core.getInstance().bus().post(new MessageSeen(message));
         }
-        Core.getInstance().bus().post(new MessageSeen(msn.getMessageId(), msn.getMessageSeenCount()));
+
         notifyServerNotifReceived(msn.getNotificationId());
     }
 
     private void onInviteCreated(final Notifications.InviteCreationNotification icn) {
+        Log.d("Aseman", "Received Invite Creation notification");
 
         notifyServerNotifReceived(icn.getNotificationId());
     }
 
     private void onInviteCancelled(final Notifications.InviteCancellationNotification icn) {
+        Log.d("Aseman", "Received Invite Cancellation notification");
 
         notifyServerNotifReceived(icn.getNotificationId());
     }
 
     private void onInviteAccepted(final Notifications.InviteAcceptanceNotification ian) {
+        Log.d("Aseman", "Received Invite Acceptance notification");
 
         notifyServerNotifReceived(ian.getNotificationId());
     }
 
     private void onInviteIgnored(final Notifications.InviteIgnoranceNotification iin) {
+        Log.d("Aseman", "Received Invite Ignorance notification");
 
         notifyServerNotifReceived(iin.getNotificationId());
     }
 
     private void onUserJointComplex(final Notifications.UserJointComplexNotification ujcn) {
+        Log.d("Aseman", "Received User Joint Complex notification");
 
         notifyServerNotifReceived(ujcn.getNotificationId());
     }
 
     private void onComplexDeletion(final Notifications.ComplexDeletionNotification cdn) {
+        Log.d("Aseman", "Received Complex Deletion notification");
 
         notifyServerNotifReceived(cdn.getNotificationId());
     }
 
     private void onRoomDeletion(final Notifications.RoomDeletionNotification rdn) {
+        Log.d("Aseman", "Received Room Deletion notification");
 
         notifyServerNotifReceived(rdn.getNotificationId());
     }
@@ -283,9 +305,6 @@ public class NotificationsService extends IntentService {
 
     private void onContactCreated(final Notifications.ContactCreationNotification ccn) {
         Log.d("Aseman", "Received contact notification");
-        try {
-            Log.d("Aseman", NetworkHelper.getMapper().writeValueAsString(ccn));
-        } catch (Exception ignored) { }
 
         Entities.Complex complex = ccn.getContact().getComplex();
         Entities.Room room = complex.getRooms().get(0);
@@ -308,16 +327,15 @@ public class NotificationsService extends IntentService {
 
     private void onTextMessage(final Notifications.TextMessageNotification mcn) {
         Log.d("Aseman", "Received text message notification");
-        try {
-            Log.d("Aseman", NetworkHelper.getMapper().writeValueAsString(mcn));
-        } catch (Exception ignored) { }
         final Entities.TextMessage message = mcn.getMessage();
-        DatabaseHelper.notifyTextMessageReceived(message);
-        Entities.MessageLocal messageLocal = new Entities.MessageLocal();
-        messageLocal.setMessageId(message.getRoomId());
-        messageLocal.setSent(true);
-        Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
-        showMessageNotification(message, message.getText());
+        message.setSeenByMe(false);
+        if (DatabaseHelper.notifyTextMessageReceived(message)) {
+            Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+            messageLocal.setMessageId(message.getRoomId());
+            messageLocal.setSent(true);
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            showMessageNotification(message, message.getText());
+        }
 
         notifyServerNotifReceived(mcn.getNotificationId());
     }
@@ -325,18 +343,20 @@ public class NotificationsService extends IntentService {
     private void onPhotoMessage(final Notifications.PhotoMessageNotification mcn) {
         Log.d("Aseman", "Received photo message notification");
         final Entities.PhotoMessage message = mcn.getMessage();
-        DatabaseHelper.notifyPhotoMessageReceived(message);
-        Entities.FileLocal fileLocal = new Entities.FileLocal();
-        fileLocal.setFileId(message.getPhoto().getFileId());
-        fileLocal.setPath("");
-        fileLocal.setProgress(0);
-        fileLocal.setTransferring(false);
-        Core.getInstance().bus().post(new FileReceived(DocTypes.Photo, message.getPhoto(), fileLocal));
-        Entities.MessageLocal messageLocal = new Entities.MessageLocal();
-        messageLocal.setMessageId(message.getRoomId());
-        messageLocal.setSent(true);
-        Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
-        showMessageNotification(message, "Photo");
+        message.setSeenByMe(false);
+        if (DatabaseHelper.notifyPhotoMessageReceived(message)) {
+            Entities.FileLocal fileLocal = new Entities.FileLocal();
+            fileLocal.setFileId(message.getPhoto().getFileId());
+            fileLocal.setPath("");
+            fileLocal.setProgress(0);
+            fileLocal.setTransferring(false);
+            Core.getInstance().bus().post(new FileReceived(DocTypes.Photo, message.getPhoto(), fileLocal));
+            Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+            messageLocal.setMessageId(message.getRoomId());
+            messageLocal.setSent(true);
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            showMessageNotification(message, "Photo");
+        }
 
         notifyServerNotifReceived(mcn.getNotificationId());
     }
@@ -344,18 +364,20 @@ public class NotificationsService extends IntentService {
     private void onAudioMessage(final Notifications.AudioMessageNotification mcn) {
         Log.d("Aseman", "Received audio message notification");
         final Entities.AudioMessage message = mcn.getMessage();
-        DatabaseHelper.notifyAudioMessageReceived(message);
-        Entities.FileLocal fileLocal = new Entities.FileLocal();
-        fileLocal.setFileId(message.getAudio().getFileId());
-        fileLocal.setPath("");
-        fileLocal.setProgress(0);
-        fileLocal.setTransferring(false);
-        Core.getInstance().bus().post(new FileReceived(DocTypes.Audio, message.getAudio(), fileLocal));
-        Entities.MessageLocal messageLocal = new Entities.MessageLocal();
-        messageLocal.setMessageId(message.getRoomId());
-        messageLocal.setSent(true);
-        Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
-        showMessageNotification(message, "Audio");
+        message.setSeenByMe(false);
+        if (DatabaseHelper.notifyAudioMessageReceived(message)) {
+            Entities.FileLocal fileLocal = new Entities.FileLocal();
+            fileLocal.setFileId(message.getAudio().getFileId());
+            fileLocal.setPath("");
+            fileLocal.setProgress(0);
+            fileLocal.setTransferring(false);
+            Core.getInstance().bus().post(new FileReceived(DocTypes.Audio, message.getAudio(), fileLocal));
+            Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+            messageLocal.setMessageId(message.getRoomId());
+            messageLocal.setSent(true);
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            showMessageNotification(message, "Audio");
+        }
 
         notifyServerNotifReceived(mcn.getNotificationId());
     }
@@ -363,18 +385,20 @@ public class NotificationsService extends IntentService {
     private void onVideoMessage(final Notifications.VideoMessageNotification mcn) {
         Log.d("Aseman", "Received video message notification");
         final Entities.VideoMessage message = mcn.getMessage();
-        DatabaseHelper.notifyVideoMessageReceived(message);
-        Entities.FileLocal fileLocal = new Entities.FileLocal();
-        fileLocal.setFileId(message.getVideo().getFileId());
-        fileLocal.setPath("");
-        fileLocal.setProgress(0);
-        fileLocal.setTransferring(false);
-        Core.getInstance().bus().post(new FileReceived(DocTypes.Video, message.getVideo(), fileLocal));
-        Entities.MessageLocal messageLocal = new Entities.MessageLocal();
-        messageLocal.setMessageId(message.getRoomId());
-        messageLocal.setSent(true);
-        Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
-        showMessageNotification(message, "Video");
+        message.setSeenByMe(false);
+        if (DatabaseHelper.notifyVideoMessageReceived(message)) {
+            Entities.FileLocal fileLocal = new Entities.FileLocal();
+            fileLocal.setFileId(message.getVideo().getFileId());
+            fileLocal.setPath("");
+            fileLocal.setProgress(0);
+            fileLocal.setTransferring(false);
+            Core.getInstance().bus().post(new FileReceived(DocTypes.Video, message.getVideo(), fileLocal));
+            Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+            messageLocal.setMessageId(message.getRoomId());
+            messageLocal.setSent(true);
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            showMessageNotification(message, "Video");
+        }
 
         notifyServerNotifReceived(mcn.getNotificationId());
     }
@@ -382,12 +406,14 @@ public class NotificationsService extends IntentService {
     private void onServiceMessage(final Notifications.ServiceMessageNotification mcn) {
         Log.d("Aseman", "Received service message notification");
         final Entities.ServiceMessage message = mcn.getMessage();
-        DatabaseHelper.notifyServiceMessageReceived(message);
-        Entities.MessageLocal messageLocal = new Entities.MessageLocal();
-        messageLocal.setMessageId(message.getRoomId());
-        messageLocal.setSent(true);
-        Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
-        showMessageNotification(message, message.getText());
+        message.setSeenByMe(false);
+        if (DatabaseHelper.notifyServiceMessageReceived(message)) {
+            Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+            messageLocal.setMessageId(message.getRoomId());
+            messageLocal.setSent(true);
+            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            showMessageNotification(message, message.getText());
+        }
 
         notifyServerNotifReceived(mcn.getNotificationId());
     }

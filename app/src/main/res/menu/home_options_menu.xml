@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/explore"
+        android:title="Explore"
+        android:icon="@drawable/ic_earth" />
+    <item android:id="@+id/store"
+        android:title="Store"
+        android:icon="@drawable/ic_store"/>
+    <item android:id="@+id/bots"
+        android:title="Bots"
+        android:icon="@drawable/ic_robot"/>
+    <item android:id="@+id/invites"
+        android:title="Invites"
+        android:icon="@drawable/ic_invite" />
+</menu>

@@ -2,20 +2,15 @@ package kasper.android.pulse.activities;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.util.Pair;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,7 +19,6 @@ import com.github.javiersantos.bottomdialogs.BottomDialog;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
-import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.Toolbar;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
@@ -34,7 +28,6 @@ import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
@@ -46,7 +39,7 @@ import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
 import kasper.android.pulse.services.NotificationsService;
 import retrofit2.Call;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends BaseActivity {
 
     private CircleImageView avatarIV;
     private TextView titleTV;
@@ -58,8 +51,6 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-
-        Core.getInstance().bus().register(this);
 
         this.avatarIV = findViewById(R.id.avatar);
         this.titleTV = findViewById(R.id.title);
@@ -92,14 +83,10 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void onOptionsBtnClicked(View view) {
-        Context wrapper = new ContextThemeWrapper(this, R.style.PopupMenu);
-        PopupMenu popupMenu = new PopupMenu(wrapper, view);
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.settings_options_menu, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(menuItem -> {
+        showOptionsMenu(R.menu.settings_options_menu, view, menuItem -> {
             switch (menuItem.getItemId()) {
                 case R.id.logout:
-                    new BottomDialog.Builder(this)
+                    new BottomDialog.Builder(SettingsActivity.this)
                             .setTitle("Logout")
                             .setContent("Do you really want to logout of this session ?")
                             .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
@@ -120,7 +107,7 @@ public class SettingsActivity extends AppCompatActivity {
                             .show();
                     return true;
                 case R.id.delete_account:
-                    new BottomDialog.Builder(this)
+                    new BottomDialog.Builder(SettingsActivity.this)
                             .setTitle("Delete Account")
                             .setContent("Do you really want to delete your account ?")
                             .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
@@ -130,31 +117,30 @@ public class SettingsActivity extends AppCompatActivity {
                             .setPositiveBackgroundColorResource(R.color.colorPrimary)
                             .setPositiveBackgroundColor(getResources().getColor(R.color.colorBlue))
                             .setPositiveTextColor(Color.WHITE)
-                            .onPositive(dialog -> {
-                                NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(AuthHandler.class).deleteAccount(),
-                                        new ServerCallback() {
-                                            @Override
-                                            public void onRequestSuccess(Packet packet) {
-                                                AsemanDB.deleteAllData();
-                                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
-                                            }
+                            .onPositive(dialog ->
+                                    NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(AuthHandler.class).deleteAccount(),
+                                            new ServerCallback() {
+                                                @Override
+                                                public void onRequestSuccess(Packet packet) {
+                                                    AsemanDB.deleteAllData();
+                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                }
 
-                                            @Override
-                                            public void onServerFailure() {
-                                                AsemanDB.deleteAllData();
-                                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
-                                            }
+                                                @Override
+                                                public void onServerFailure() {
+                                                    AsemanDB.deleteAllData();
+                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                }
 
-                                            @Override
-                                            public void onConnectionFailure() {
-                                                AsemanDB.deleteAllData();
-                                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
-                                            }
-                                        });
-                            })
+                                                @Override
+                                                public void onConnectionFailure() {
+                                                    AsemanDB.deleteAllData();
+                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                }
+                                            }))
                             .setNegativeText("Cancel")
                             .setNegativeTextColor(Color.WHITE)
                             .onNegative(BottomDialog::dismiss)
@@ -164,7 +150,6 @@ public class SettingsActivity extends AppCompatActivity {
                     return false;
             }
         });
-        popupMenu.show();
     }
 
     @SuppressLint("SetTextI18n")
@@ -178,12 +163,6 @@ public class SettingsActivity extends AppCompatActivity {
                 subtitleTV.setText("Online");
                 break;
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        Core.getInstance().bus().unregister(this);
-        super.onDestroy();
     }
 
     @Override

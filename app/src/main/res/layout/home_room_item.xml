@@ -36,13 +36,48 @@
                 android:textStyle="bold"
                 android:gravity="center_vertical"/>
 
-            <TextView
-                android:id="@+id/homeRoomItemLastAction"
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="28dp"
-                android:textColor="#999"
-                android:textSize="16sp"
-                android:gravity="center_vertical"/>
+                android:layout_height="28dp">
+
+                <TextView
+                    android:id="@+id/homeRoomItemLastAction"
+                    android:layout_width="match_parent"
+                    android:layout_height="28dp"
+                    android:textColor="#999"
+                    android:textSize="16sp"
+                    android:layout_marginRight="44dp"
+                    android:gravity="center_vertical"/>
+
+                <FrameLayout
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_alignParentRight="true">
+
+                    <TextView
+                        android:id="@+id/homeRoomItemUnreadCount"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textColor="#fff"
+                        android:text="99"
+                        android:gravity="center"
+                        android:textSize="16sp"
+                        android:visibility="gone"
+                        android:background="@drawable/circle_blue"/>
+
+                    <ImageView
+                        android:id="@+id/homeRoomItemMyMessageState"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_seen"
+                        android:tint="#fff"
+                        android:visibility="gone"
+                        android:padding="2dp"/>
+
+                </FrameLayout>
+
+            </RelativeLayout>
 
         </LinearLayout>
 

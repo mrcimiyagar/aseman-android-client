@@ -81,22 +81,18 @@ public class CreateBotActivity extends AppCompatActivity {
         if (botName.length() > 0 && botDesc.length() > 0) {
             if (!donePressed) {
                 donePressed = true;
-                loadingView.setVisibility(View.VISIBLE);
-                Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper
-                        .notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
-                Entities.Photo file = (Entities.Photo) pair.first;
                 if (selectedImageFile != null && selectedImageFile.exists()) {
+                    loadingView.setVisibility(View.VISIBLE);
+                } else {
+                    loadingView.setVisibility(View.GONE);
+                }
+                if (selectedImageFile != null && selectedImageFile.exists()) {
+                    Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper
+                            .notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
+                    Entities.Photo file = (Entities.Photo) pair.first;
                     NetworkHelper.uploadFile(file, -1, -1, selectedImageFile.getPath(),
                             progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
                                     progressBar.setProgress(progress))), (OnFileUploadListener) (fileId, fileUsageId) -> {
-                                File sourceFile = new File(selectedImageFile.getPath());
-                                File destFile = new File(new File(Environment
-                                        .getExternalStorageDirectory(), DatabaseHelper.StorageDir), fileId + "");
-                                try {
-                                    FileUtils.copyFile(sourceFile, destFile);
-                                } catch (Exception ex) {
-                                    ex.printStackTrace();
-                                }
                                 createBot(botName, fileId, botDesc);
                             });
                 } else {

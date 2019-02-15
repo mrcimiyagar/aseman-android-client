@@ -1,20 +1,16 @@
 package kasper.android.pulse.rxbus.notifications;
 
+import kasper.android.pulse.models.entities.Entities;
+
 public class MessageSeen {
 
-    private long messageId;
-    private long seenCount;
+    private Entities.Message message;
 
-    public MessageSeen(long messageId, long seenCount) {
-        this.messageId = messageId;
-        this.seenCount = seenCount;
+    public MessageSeen(Entities.Message message) {
+        this.message = message;
     }
 
-    public long getMessageId() {
-        return messageId;
-    }
-
-    public long getSeenCount() {
-        return seenCount;
+    public Entities.Message getMessage() {
+        return message;
     }
 }

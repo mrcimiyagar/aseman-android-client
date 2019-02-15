@@ -509,8 +509,8 @@ public class DatabaseHelper {
         return AsemanDB.getInstance().getFileDao().getFileById(fileId);
     }
 
-    public static void notifyMessageUpdated(Entities.Message message) {
-        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null) {
+    public static boolean notifyMessageUpdated(Entities.Message message) {
+        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) != null) {
             if (message instanceof Entities.TextMessage) {
                 AsemanDB.getInstance().getMessageDao().insert((Entities.TextMessage) message);
             } else if (message instanceof Entities.PhotoMessage) {
@@ -522,6 +522,7 @@ public class DatabaseHelper {
             } else if (message instanceof Entities.ServiceMessage) {
                 AsemanDB.getInstance().getMessageDao().insert((Entities.ServiceMessage) message);
             }
+            return true;
         } else {
             if (message instanceof Entities.TextMessage) {
                 AsemanDB.getInstance().getMessageDao().update((Entities.TextMessage) message);
@@ -534,21 +535,29 @@ public class DatabaseHelper {
             } else if (message instanceof Entities.ServiceMessage) {
                 AsemanDB.getInstance().getMessageDao().update((Entities.ServiceMessage) message);
             }
+            return false;
         }
     }
 
-    public static void notifyTextMessageReceived(Entities.TextMessage message) {
-        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null)
+    public static boolean notifyTextMessageReceived(Entities.TextMessage message) {
+        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null) {
             AsemanDB.getInstance().getMessageDao().insert(message);
-        else
+            return true;
+        } else {
             AsemanDB.getInstance().getMessageDao().update(message);
+            return false;
+        }
     }
 
-    public static void notifyPhotoMessageReceived(Entities.PhotoMessage message) {
-        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null)
+    public static boolean notifyPhotoMessageReceived(Entities.PhotoMessage message) {
+        boolean result;
+        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null) {
             AsemanDB.getInstance().getMessageDao().insert(message);
-        else
+            result = true;
+        } else {
             AsemanDB.getInstance().getMessageDao().update(message);
+            result = false;
+        }
         if (AsemanDB.getInstance().getFileDao().getFileById(message.getPhotoId()) == null) {
             AsemanDB.getInstance().getFileDao().insert(message.getPhoto());
             Entities.FileLocal fileLocal = new Entities.FileLocal();
@@ -561,13 +570,18 @@ public class DatabaseHelper {
         Entities.FileUsage fileUsage = message.getPhoto().getFileUsages().get(0);
         if (AsemanDB.getInstance().getFileUsageDao().getFileUsageById(fileUsage.getFileUsageId()) == null)
             AsemanDB.getInstance().getFileUsageDao().insert(fileUsage);
+        return result;
     }
 
-    public static void notifyAudioMessageReceived(Entities.AudioMessage message) {
-        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null)
+    public static boolean notifyAudioMessageReceived(Entities.AudioMessage message) {
+        boolean result;
+        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null) {
             AsemanDB.getInstance().getMessageDao().insert(message);
-        else
+            result = true;
+        } else {
             AsemanDB.getInstance().getMessageDao().update(message);
+            result = false;
+        }
         if (AsemanDB.getInstance().getFileDao().getFileById(message.getAudioId()) == null) {
             AsemanDB.getInstance().getFileDao().insert(message.getAudio());
             Entities.FileLocal fileLocal = new Entities.FileLocal();
@@ -580,13 +594,18 @@ public class DatabaseHelper {
         Entities.FileUsage fileUsage = message.getAudio().getFileUsages().get(0);
         if (AsemanDB.getInstance().getFileUsageDao().getFileUsageById(fileUsage.getFileUsageId()) == null)
             AsemanDB.getInstance().getFileUsageDao().insert(fileUsage);
+        return result;
     }
 
-    public static void notifyVideoMessageReceived(Entities.VideoMessage message) {
-        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null)
+    public static boolean notifyVideoMessageReceived(Entities.VideoMessage message) {
+        boolean result;
+        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null) {
             AsemanDB.getInstance().getMessageDao().insert(message);
-        else
+            result = true;
+        } else {
             AsemanDB.getInstance().getMessageDao().update(message);
+            result = false;
+        }
         if (AsemanDB.getInstance().getFileDao().getFileById(message.getVideoId()) == null) {
             AsemanDB.getInstance().getFileDao().insert(message.getVideo());
             Entities.FileLocal fileLocal = new Entities.FileLocal();
@@ -599,13 +618,22 @@ public class DatabaseHelper {
         Entities.FileUsage fileUsage = message.getVideo().getFileUsages().get(0);
         if (AsemanDB.getInstance().getFileUsageDao().getFileUsageById(fileUsage.getFileUsageId()) == null)
             AsemanDB.getInstance().getFileUsageDao().insert(fileUsage);
+        return result;
     }
 
-    public static void notifyServiceMessageReceived(Entities.ServiceMessage message) {
-        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null)
+    public static boolean notifyServiceMessageReceived(Entities.ServiceMessage message) {
+        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null) {
             AsemanDB.getInstance().getMessageDao().insert(message);
-        else
+            return true;
+        } else {
             AsemanDB.getInstance().getMessageDao().update(message);
+            return false;
+        }
+    }
+
+    public static long getUnreadMessagesCount(long roomId) {
+        Entities.User me = getMe();
+        return AsemanDB.getInstance().getMessageDao().getUnreadMessagesCount(me.getBaseUserId(), roomId);
     }
 
     public static Pair<Entities.File, Entities.FileLocal> notifyPhotoUploading(boolean isPublic, String path, int width, int height) {
@@ -827,6 +855,10 @@ public class DatabaseHelper {
             message.setRoom(getRoomById(message.getRoomId()));
         }
         return message;
+    }
+
+    public static Entities.MessageLocal getMessageLocalById(long messageId) {
+        return AsemanDB.getInstance().getMessageLocalDao().getMessageLocalById(messageId);
     }
 
     public static List<Entities.Message> getMessages(long roomId) {

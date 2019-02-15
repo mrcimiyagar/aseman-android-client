@@ -86,7 +86,11 @@ public class CreateRoomActivity extends AppCompatActivity {
         if (roomName.length() > 0) {
             if (!donePressed) {
                 donePressed = true;
-                loadingView.setVisibility(View.VISIBLE);
+                if (selectedImageFile != null && selectedImageFile.exists()) {
+                    loadingView.setVisibility(View.VISIBLE);
+                } else {
+                    loadingView.setVisibility(View.GONE);
+                }
                 final Packet packet = new Packet();
                 final Entities.Complex complex = DatabaseHelper.getComplexById(complexId);
                 packet.setComplex(complex);
@@ -101,9 +105,9 @@ public class CreateRoomActivity extends AppCompatActivity {
                     public void onRequestSuccess(Packet packet) {
                         final Entities.Room room = packet.getRoom();
                         DatabaseHelper.notifyRoomCreated(room);
-                        Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
-                        Entities.Photo file = (Entities.Photo) pair.first;
                         if (selectedImageFile != null && selectedImageFile.exists()) {
+                            Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
+                            Entities.Photo file = (Entities.Photo) pair.first;
                             NetworkHelper.uploadFile(file, complexId, -1, selectedImageFile.getPath(),
                                     progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
                                             progressBar.setProgress(progress))),
