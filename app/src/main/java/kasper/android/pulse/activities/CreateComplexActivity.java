@@ -31,6 +31,7 @@ import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import retrofit2.Call;
@@ -99,14 +100,16 @@ public class CreateComplexActivity extends AppCompatActivity {
                     complex = packet.getComplex();
                     Entities.ComplexSecret complexSecret = packet.getComplexSecret();
                     Entities.Room room = complex.getRooms().get(0);
+                    Entities.ServiceMessage message = packet.getServiceMessage();
                     DatabaseHelper.notifyComplexCreated(complex);
                     DatabaseHelper.notifyComplexSecretCreated(complexSecret);
                     DatabaseHelper.notifyRoomCreated(room);
+                    DatabaseHelper.notifyServiceMessageReceived(message);
                     if (selectedImageFile != null && selectedImageFile.exists()) {
                         Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(
                                 true, selectedImageFile.getPath(), 56, 56);
                         Entities.File file = pair.first;
-                        NetworkHelper.uploadFile(file, -1, -1, selectedImageFile.getPath(),
+                        NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath(),
                                 progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
                                     progressBar.setProgress(progress)))
                                 , (OnFileUploadListener) (fileId, fileUsageId) -> {
@@ -121,6 +124,7 @@ public class CreateComplexActivity extends AppCompatActivity {
                                         public void onRequestSuccess(Packet packet) {
                                             DatabaseHelper.updateComplex(complex);
                                             room.setComplex(complex);
+                                            room.setLastAction(message);
                                             Core.getInstance().bus().post(new ComplexCreated(complex));
                                             Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
                                             finish();
@@ -137,6 +141,7 @@ public class CreateComplexActivity extends AppCompatActivity {
                                 });
                     } else {
                         room.setComplex(complex);
+                        room.setLastAction(message);
                         Core.getInstance().bus().post(new ComplexCreated(complex));
                         Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
                         finish();

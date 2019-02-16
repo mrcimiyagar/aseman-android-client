@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,20 +28,11 @@ import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 public class BaseActivity extends AppCompatActivity {
 
     private Snackbar statusSnackbar;
-    public Snackbar getStatusSnackbar() {
-        return statusSnackbar;
-    }
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Core.getInstance().bus().register(this);
-    }
-
-    @Override
-    protected void onDestroy() {
-        Core.getInstance().bus().unregister(this);
-        super.onDestroy();
+    public void onBackPressed() {
+        hideSnack();
+        super.onBackPressed();
     }
 
     public void showSnack(String message) {
@@ -51,30 +43,25 @@ public class BaseActivity extends AppCompatActivity {
         } else {
             statusSnackbar.setText(message);
         }
-        if (!statusSnackbar.isShown()) {
-            statusSnackbar.show();
-        }
+        statusSnackbar.show();
     }
 
-    public void setupSnackAction(String action, View.OnClickListener clickListener) {
-        statusSnackbar.setAction("Retry Login", clickListener);
+    public void showSnack(String message, String action, View.OnClickListener actionCallback) {
+        if (statusSnackbar == null) {
+            View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+            statusSnackbar = Snackbar.make(rootView, message,
+                    Snackbar.LENGTH_INDEFINITE);
+        } else {
+            statusSnackbar.setText(message);
+        }
         statusSnackbar.setActionTextColor(getResources().getColor(R.color.colorBlue));
+        statusSnackbar.setAction(action, actionCallback);
+        statusSnackbar.show();
     }
 
     public void hideSnack() {
-        statusSnackbar.dismiss();
-    }
-
-    @Subscribe
-    public void onConnectionStateChanged(ConnectionStateChanged connectionStateChanged) {
-        switch (connectionStateChanged.getState()) {
-            case Connected:
-                hideSnack();
-                break;
-            case Reconnecting:
-                showSnack("Reconnecting to server");
-                break;
-        }
+        if (statusSnackbar != null)
+            statusSnackbar.dismiss();
     }
 
     public static void insertMenuItemIcons(Context context, PopupMenu popupMenu) {

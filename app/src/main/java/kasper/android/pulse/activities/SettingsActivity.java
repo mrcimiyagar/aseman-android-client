@@ -52,6 +52,8 @@ public class SettingsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        Core.getInstance().bus().register(this);
+
         this.avatarIV = findViewById(R.id.avatar);
         this.titleTV = findViewById(R.id.title);
         this.subtitleTV = findViewById(R.id.subtitle);
@@ -80,6 +82,12 @@ public class SettingsActivity extends BaseActivity {
             @Override
             public void syncFailed() { }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
     }
 
     public void onOptionsBtnClicked(View view) {
@@ -156,11 +164,13 @@ public class SettingsActivity extends BaseActivity {
     @Subscribe
     public void onConnectionStateChanged(ConnectionStateChanged connectionStateChanged) {
         switch (connectionStateChanged.getState()) {
-            case Reconnecting:
+            case Connecting:
                 subtitleTV.setText("Connecting");
+                showSnack("Connecting to server...", "Dismiss", view -> hideSnack());
                 break;
             case Connected:
                 subtitleTV.setText("Online");
+                hideSnack();
                 break;
         }
     }
@@ -175,7 +185,7 @@ public class SettingsActivity extends BaseActivity {
                     Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(
                             true, path, 256, 256);
                     Entities.File file = pair.first;
-                    NetworkHelper.uploadFile(file, -1, -1, path
+                    NetworkHelper.uploadFile(file, -1, -1, true, path
                             , progress -> {
 
                             }, (OnFileUploadListener) (fileId, fileUsageId) -> {

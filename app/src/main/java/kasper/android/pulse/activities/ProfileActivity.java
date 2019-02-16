@@ -3,8 +3,10 @@ package kasper.android.pulse.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +16,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.callbacks.ui.ProfileListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
@@ -21,6 +24,7 @@ import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ContactHandler;
+import kasper.android.pulse.retrofit.InviteHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
@@ -33,7 +37,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private ImageView avatarIV;
     private TextView titleTV;
-    private FloatingActionButton connectFAB;
+    private ImageButton connectBTN;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +46,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         this.avatarIV = findViewById(R.id.activity_profile_avatar_image_view);
         this.titleTV = findViewById(R.id.activity_profile_title_text_view);
-        this.connectFAB = findViewById(R.id.connectFAB);
+        this.connectBTN = findViewById(R.id.connectFAB);
 
         if (getIntent().getExtras() != null)
             this.humanId = getIntent().getExtras().getLong("user-id");
@@ -59,12 +63,49 @@ public class ProfileActivity extends AppCompatActivity {
         Entities.User me = DatabaseHelper.getMe();
         if (me != null) {
             if (humanId == me.getBaseUserId()) {
-                connectFAB.setImageResource(R.drawable.ic_home);
+                connectBTN.setImageResource(R.drawable.ic_home);
             } else {
                 if (DatabaseHelper.isContactInDatabase(humanId)) {
-                    connectFAB.setImageResource(R.drawable.ic_message);
+                    connectBTN.setImageResource(R.drawable.ic_message);
                 } else {
-                    connectFAB.setImageResource(R.drawable.ic_connection);
+                    connectBTN.setImageResource(R.drawable.ic_connection);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 123) {
+            if (resultCode == RESULT_OK) {
+                if (data != null) {
+                    if (data.getExtras() != null) {
+                        if (data.getExtras().containsKey("complex")) {
+                            Entities.Complex complex = (Entities.Complex) data.getExtras().getSerializable("complex");
+                            Packet packet = new Packet();
+                            packet.setComplex(complex);
+                            Entities.User user = new Entities.User();
+                            user.setBaseUserId(humanId);
+                            packet.setUser(user);
+                            Call<Packet> call = NetworkHelper.getRetrofit().create(InviteHandler.class).createInvite(packet);
+                            NetworkHelper.requestServer(call, new ServerCallback() {
+                                @Override
+                                public void onRequestSuccess(Packet packet) {
+                                    DatabaseHelper.notifyInviteSent(packet.getInvite());
+                                    Toast.makeText(ProfileActivity.this, "Invite sent.", Toast.LENGTH_SHORT).show();
+                                }
+                                @Override
+                                public void onServerFailure() {
+                                    Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
+                                }
+                                @Override
+                                public void onConnectionFailure() {
+                                    Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -136,7 +177,7 @@ public class ProfileActivity extends AppCompatActivity {
                             messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
                             messageLocal.setSent(true);
                             Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
-                            connectFAB.setImageResource(R.drawable.ic_message);
+                            connectBTN.setImageResource(R.drawable.ic_message);
                             ProfileActivity.this.startActivity(new Intent(ProfileActivity
                                     .this, RoomActivity.class)
                                     .putExtra("complex_id", packet.getContact()
@@ -160,6 +201,14 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    public void onBlockBtnClicked(View view) {
+
+    }
+
+    public void onInviteBtnClicked(View view) {
+        startActivityForResult(new Intent(this, ComplexPickerActivity.class), 123);
     }
 
     public void onBackBtnClicked(View view) {

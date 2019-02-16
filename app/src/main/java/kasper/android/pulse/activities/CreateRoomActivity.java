@@ -108,7 +108,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                         if (selectedImageFile != null && selectedImageFile.exists()) {
                             Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
                             Entities.Photo file = (Entities.Photo) pair.first;
-                            NetworkHelper.uploadFile(file, complexId, -1, selectedImageFile.getPath(),
+                            NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath(),
                                     progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
                                             progressBar.setProgress(progress))),
                                     (OnFileUploadListener) (fileId, fileUsageId) -> {

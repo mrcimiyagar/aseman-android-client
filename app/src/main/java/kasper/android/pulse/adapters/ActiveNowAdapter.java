@@ -72,6 +72,8 @@ public class ActiveNowAdapter extends RecyclerView.Adapter<ActiveNowAdapter.Acti
     @Override
     public void onBindViewHolder(@NonNull ActiveItem holder, int position) {
         Entities.User user = users.get(position);
+        NetworkHelper.loadUserAvatar(user.getAvatar(), holder.avatarIV);
+        holder.titleTV.setText(user.getTitle().split(" ")[0]);
         holder.itemView.setOnClickListener(view ->
                 activity.startActivity(new Intent(activity, ProfileActivity.class)
                         .putExtra("user-id", user.getBaseUserId())));
@@ -80,7 +82,10 @@ public class ActiveNowAdapter extends RecyclerView.Adapter<ActiveNowAdapter.Acti
             public void userSynced(Entities.BaseUser baseUser) {
                 try {
                     NetworkHelper.loadUserAvatar(baseUser.getAvatar(), holder.avatarIV);
-                    holder.titleTV.setText(baseUser.getTitle().split(" ")[0]);
+                    if (!baseUser.getTitle().equals(user.getTitle())) {
+                        user.setTitle(baseUser.getTitle());
+                        holder.titleTV.setText(baseUser.getTitle().split(" ")[0]);
+                    }
                 } catch (Exception ignored) { }
             }
             @Override

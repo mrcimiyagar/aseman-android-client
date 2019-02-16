@@ -100,6 +100,8 @@ public class ChatActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        Core.getInstance().bus().register(this);
+
         if (getIntent().getExtras() != null) {
             if (getIntent().getExtras().containsKey("complex_id"))
                 complexId = getIntent().getExtras().getLong("complex_id");
@@ -137,6 +139,7 @@ public class ChatActivity extends BaseActivity {
     protected void onDestroy() {
         if (chatRV.getAdapter() != null)
             ((MessagesAdapter) chatRV.getAdapter()).dispose();
+        Core.getInstance().bus().unregister(this);
         super.onDestroy();
     }
 
@@ -405,7 +408,7 @@ public class ChatActivity extends BaseActivity {
                     }
                 };
 
-                NetworkHelper.uploadFile(file, complexId, roomId, path, progressListener, uploadListener);
+                NetworkHelper.uploadFile(file, complexId, roomId, false, path, progressListener, uploadListener);
             };
             long selectCallbackId = CallbackHelper.register(selectListener);
             startActivity(new Intent(ChatActivity.this, FilesActivity.class)

@@ -68,7 +68,7 @@ public class PickImageActivity extends AppCompatActivity {
                     @Override
                     public void onPermissionsChecked(MultiplePermissionsReport report) {
                         if (report.areAllPermissionsGranted()) {
-                            new DocsLoadTask(PickImageActivity.this, "PHOTO", docs ->
+                            new DocsLoadTask("PHOTO", docs ->
                                     photosRV.setAdapter(new FilesAdapter(docs, blockSize, fileSelectListener))).execute();
                         } else {
                             finish();

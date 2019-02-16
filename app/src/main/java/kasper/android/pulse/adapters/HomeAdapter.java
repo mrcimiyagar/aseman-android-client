@@ -2,7 +2,6 @@ package kasper.android.pulse.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +28,6 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSeen;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
@@ -45,11 +43,14 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final List<Entities.Room> rooms;
     private Hashtable<Long, Entities.Message> sendingMessages;
     private RecyclerView peopleRV;
+    private long myId;
 
     public HomeAdapter(AppCompatActivity activity, List<Entities.Room> rooms) {
         this.activity = activity;
         this.rooms = rooms;
         this.sendingMessages = new Hashtable<>();
+        Entities.User user = DatabaseHelper.getMe();
+        if (user != null) this.myId = user.getBaseUserId();
         Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
     }
@@ -241,6 +242,8 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (room.getComplex().getMode() == 2 || room.getComplex().getTitle().length() == 0) {
                 Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
                 Entities.User user = contact.getPeer();
+                vh.nameTV.setText(user.getTitle().split(" ")[0] + " : " + room.getTitle());
+                NetworkHelper.loadRoomAvatar(user.getAvatar(), vh.avatarIV);
                 DataSyncer.syncBaseUserWithServer(user.getBaseUserId(), new OnBaseUserSyncListener() {
                     @Override
                     public void userSynced(Entities.BaseUser baseUser) {
@@ -248,7 +251,10 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             @Override
                             public void roomSynced(Entities.Room room) {
                                 try {
-                                    vh.nameTV.setText(baseUser.getTitle().split(" ")[0] + " : " + room.getTitle());
+                                    if (!baseUser.getTitle().equals(user.getTitle())) {
+                                        user.setTitle(baseUser.getTitle());
+                                        vh.nameTV.setText(baseUser.getTitle().split(" ")[0] + " : " + room.getTitle());
+                                    }
                                     NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
                                 } catch (Exception ignored) { }
                             }
@@ -264,10 +270,14 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
                 DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
                     @Override
-                    public void roomSynced(Entities.Room room) {
+                    public void roomSynced(Entities.Room r) {
                         try {
-                            NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
-                            vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
+                            if (!(r.getComplex().getTitle().equals(room.getComplex().getTitle())
+                                    && r.getTitle().equals(room.getTitle()))) {
+                                room.setTitle(r.getTitle());
+                                vh.nameTV.setText(r.getComplex().getTitle() + " : " + r.getTitle());
+                            }
+                            NetworkHelper.loadRoomAvatar(r.getAvatar(), vh.avatarIV);
                         } catch (Exception ignored) { }
                     }
                     @Override
@@ -296,7 +306,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     long unreadCount = DatabaseHelper.getUnreadMessagesCount(room.getRoomId());
                     if (unreadCount == 0) {
                         ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
-                        if (lastAction.getAuthorId() == DatabaseHelper.getMe().getBaseUserId()) {
+                        if (lastAction.getAuthorId() == myId) {
                             if (lastAction.getSeenCount() > 0) {
                                 ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
                                 ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
@@ -315,6 +325,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     } else {
                         ((RoomItem) holder).unreadCount.setText(unreadCount + "");
                         ((RoomItem) holder).unreadCount.setVisibility(View.VISIBLE);
+                        ((RoomItem) holder).stateIV.setVisibility(View.GONE);
                     }
                 }
             } else {

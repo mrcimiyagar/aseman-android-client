@@ -1,21 +1,35 @@
 package kasper.android.pulse.helpers;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.model.StreamEncoder;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
@@ -38,6 +52,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 /**
  * Created by keyhan1376 on 1/28/2018.
@@ -101,16 +116,18 @@ public class NetworkHelper {
         retrofit = new Retrofit.Builder()
                 .baseUrl(API_PATH)
                 .client(client)
+                .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(JacksonConverterFactory.create(mapper))
                 .build();
     }
 
-    public static void uploadFile(Entities.File file, long complexId, long roomId, String path, ProgressListener progressListener, OnFileUploadListener uploadListener) {
+    public static void uploadFile(Entities.File file, long complexId, long roomId, boolean isAvatar, String path, ProgressListener progressListener, OnFileUploadListener uploadListener) {
         Uploading uploading = new Uploading();
         uploading.setFile(file);
         uploading.setPath(path);
         uploading.setComplexId(complexId);
         uploading.setRoomId(roomId);
+        uploading.setAvatarUsage(isAvatar);
         uploading.setProgressListener(progressListener);
         uploading.setUploadListener(uploadListener);
         FilesService.uploadFile(uploading);
@@ -186,7 +203,8 @@ public class NetworkHelper {
                 .error(errorDrawable)
                 .diskCacheStrategy(DiskCacheStrategy.DATA)
                 .priority(Priority.NORMAL);
-        Glide.with(Core.getInstance())
+        Glide.with(Core.getInstance().getApplicationContext())
+                .asBitmap()
                 .load(path)
                 .apply(options)
                 .into(imageView);

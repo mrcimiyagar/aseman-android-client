@@ -9,6 +9,7 @@ public class Uploading {
     private String path;
     private long complexId;
     private long roomId;
+    private boolean avatarUsage;
     private ProgressListener progressListener;
     private OnFileUploadListener uploadListener;
 
@@ -58,5 +59,13 @@ public class Uploading {
 
     public void setUploadListener(OnFileUploadListener uploadListener) {
         this.uploadListener = uploadListener;
+    }
+
+    public boolean isAvatarUsage() {
+        return avatarUsage;
+    }
+
+    public void setAvatarUsage(boolean avatarUsage) {
+        this.avatarUsage = avatarUsage;
     }
 }

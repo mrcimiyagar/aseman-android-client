@@ -86,6 +86,12 @@ public final class RxBus implements Bus {
 
             composite.add(bus.ofType(eventClass)
                     .observeOn(AndroidSchedulers.mainThread())
+                    .doOnError(new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) {
+                            throwable.printStackTrace();
+                        }
+                    })
                     .subscribe(new AnnotatedSubscriber<>(observer, method)));
         }
 

@@ -1,1 +1,1 @@
-include ':app', ':carouselview', ':carouselview', ':kasperpulseframework', ':bottomsheet', ':bottomdialog', ':textfieldboxes', ':smoothAppBar', ':rxbus'
+include ':app', ':carouselview', ':carouselview', ':kasperpulseframework', ':bottomsheet', ':bottomdialog', ':textfieldboxes', ':smoothAppBar', ':rxbus', ':signalr'

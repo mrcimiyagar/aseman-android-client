@@ -1,28 +1,15 @@
 package kasper.android.pulse.activities;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.view.ContextThemeWrapper;
-import androidx.core.app.ActivityCompat;
-
-import android.text.SpannableStringBuilder;
-import android.text.style.ImageSpan;
 import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,15 +33,15 @@ import kasper.android.pulse.callbacks.middleware.OnRoomsSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
-import kasper.android.pulse.retrofit.AuthHandler;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
+import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
+import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
 import kasper.android.pulse.services.FilesService;
@@ -84,11 +71,13 @@ public class HomeActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        Core.getInstance().bus().register(this);
+
         Entities.User me = DatabaseHelper.getMe();
         if (me != null) Crashlytics.setUserEmail(me.getUserSecret().getEmail());
         initViews();
         initUiData();
-        loginToServer();
+        startServices();
     }
 
     @Override
@@ -99,6 +88,7 @@ public class HomeActivity extends BaseActivity {
             ((RoomsAdapter) menuRoomsRV.getAdapter()).dispose();
         if (homeRV.getAdapter() != null)
             ((HomeAdapter) homeRV.getAdapter()).dispose();
+        Core.getInstance().bus().unregister(this);
         super.onDestroy();
     }
 
@@ -119,25 +109,6 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    initViews();
-                    initUiData();
-                    loginToServer();
-                } else {
-                    ActivityCompat.requestPermissions(HomeActivity.this,
-                            new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                            1);
-                }
-                break;
-            }
-        }
-    }
-
     @SuppressLint("RtlHardcoded")
     public void onMenuBtnClicked(View view) {
         drawerLayout.openDrawer(Gravity.LEFT);
@@ -149,7 +120,6 @@ public class HomeActivity extends BaseActivity {
         startActivity(new Intent(this, SettingsActivity.class));
     }
 
-    @SuppressLint("RestrictedApi")
     public void onOptionsBtnClicked(View view) {
         showOptionsMenu(R.menu.home_options_menu, view, menuItem -> {
             switch (menuItem.getItemId()) {
@@ -287,6 +257,18 @@ public class HomeActivity extends BaseActivity {
     }
 
     @Subscribe
+    public void onConnectionStateChanged(ConnectionStateChanged connectionStateChanged) {
+        switch (connectionStateChanged.getState()) {
+            case Connected:
+                hideSnack();
+                break;
+            case Connecting:
+                showSnack("Connecting to server", "Dismiss", view -> hideSnack());
+                break;
+        }
+    }
+
+    @Subscribe
     public void onUiThreadRequested(UiThreadRequested uiThreadRequested) {
         this.runOnUiThread(uiThreadRequested.getRunnable());
     }
@@ -295,6 +277,11 @@ public class HomeActivity extends BaseActivity {
     public void onProfileUpdated(UserProfileUpdated profileUpdated) {
         NetworkHelper.loadUserAvatar(profileUpdated.getUser().getAvatar(), myAvatarIV);
         myTitleTV.setText(profileUpdated.getUser().getTitle());
+    }
+
+    @Subscribe
+    public void onShowingTost(ShowToast showToast) {
+        Toast.makeText(this, showToast.getText(), Toast.LENGTH_SHORT).show();
     }
 
     private void initUiData() {
@@ -357,30 +344,6 @@ public class HomeActivity extends BaseActivity {
                     .putExtra("room_id", room.getRoomId()));
         });
         menuRoomsRV.setAdapter(roomsAdapter);
-    }
-
-    private void loginToServer() {
-        showSnack("Logging in...");
-        AuthHandler authHandler = NetworkHelper.getRetrofit().create(AuthHandler.class);
-        Call<Packet> call = authHandler.login();
-        NetworkHelper.requestServer(call, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet packet) {
-                Entities.Session session = packet.getSession();
-                DatabaseHelper.updateSession(session);
-                startServices();
-            }
-
-            @Override
-            public void onServerFailure() {
-                setupSnackAction("Retry Login", view -> loginToServer());
-            }
-
-            @Override
-            public void onConnectionFailure() {
-                setupSnackAction("Retry Login", view -> loginToServer());
-            }
-        });
     }
 
     private void startServices() {

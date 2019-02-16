@@ -32,6 +32,7 @@ public class FileFragment extends BaseFragment {
     private long scrollCallbackId;
 
     private RecyclerView docsRV;
+    private DocsLoadTask docsLoadTask;
 
     public FileFragment() {
 
@@ -61,6 +62,18 @@ public class FileFragment extends BaseFragment {
     }
 
     @Override
+    public void onDestroy() {
+        if (docsLoadTask != null) {
+            try {
+                docsLoadTask.cancel(true);
+            } catch (Exception ignored) {
+
+            }
+        }
+        super.onDestroy();
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View contentView = inflater.inflate(R.layout.fragment_doc, container, false);
         docsRV = contentView.findViewById(R.id.fragment_doc_recycler_view);
@@ -75,8 +88,9 @@ public class FileFragment extends BaseFragment {
         });
         docsRV.setLayoutManager(new GridLayoutManager(getActivity(), 3, RecyclerView.VERTICAL, false));
         final int blockSize = getResources().getDisplayMetrics().widthPixels / 3;
-        new DocsLoadTask(getActivity(), docType, docs ->
-                docsRV.setAdapter(new FilesAdapter(docs, blockSize, fileSelectListener))).execute();
+        docsLoadTask = new DocsLoadTask(docType, docs ->
+                docsRV.setAdapter(new FilesAdapter(docs, blockSize, fileSelectListener)));
+        docsLoadTask.execute();
         return contentView;
     }
 }

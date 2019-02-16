@@ -16,6 +16,10 @@ import android.util.Log;
 import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
+import com.microsoft.signalr.TransportEnum;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.RoomActivity;
@@ -47,6 +51,7 @@ public class NotificationsService extends IntentService {
     }
 
     private HubConnection connection;
+    private boolean starterRunning = false;
 
     public NotificationsService() {
         super("NotificationsService");
@@ -66,7 +71,7 @@ public class NotificationsService extends IntentService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("KasperLogger", "Notification service started");
         startConnection();
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -79,36 +84,43 @@ public class NotificationsService extends IntentService {
     public void onTaskRemoved(Intent rootIntent) {
         Log.e("KasperLogger", "Notification service task removed");
         try {
-            if (connection != null) connection.stop().blockingAwait();
+            if (connection != null)
+                connection.stop().blockingAwait();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
     private void startConnection() {
-        new Thread(() -> {
-            while (!connectToHub()) {
-                try {
-                    Thread.sleep(5000);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+        if (!starterRunning) {
+            starterRunning = true;
+            Thread starterThread = new Thread(() -> {
+                while (!connectToHub()) {
+                    try {
+                        Thread.sleep(5000);
+                    } catch (Exception ignored) {
+                    }
                 }
-            }
-        }).start();
+                starterRunning = false;
+            });
+            starterThread.start();
+        }
     }
 
     public boolean connectToHub() {
+
+        connectionState = "Connecting";
+        Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connecting));
 
         try {
             if (connection != null) {
                 connection.onClosed(exception -> { });
                 connection.stop().blockingAwait();
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        } catch (Exception ignored) { }
 
-        connection = HubConnectionBuilder.create(NetworkHelper.SERVER_IP + "NotificationsHub/").build();
+        HubConnection connection = HubConnectionBuilder.create(NetworkHelper.SERVER_IP + "NotificationsHub/")
+                .withTransport(TransportEnum.LONG_POLLING).build();
         connection.on("NotifyMessageSeen", this::onMessageSeen, Notifications.MessageSeenNotification.class);
         connection.on("NotifyInviteCreated", this::onInviteCreated, Notifications.InviteCreationNotification.class);
         connection.on("NotifyInviteCancelled", this::onInviteCancelled, Notifications.InviteCancellationNotification.class);
@@ -130,20 +142,20 @@ public class NotificationsService extends IntentService {
         connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAddedToRoomNotification.class);
         connection.on("NotifyBotRemovedFromRoom", this::onBotRemovedFromRoom, Notifications.BotRemovedFromRoomNotification.class);
 
-        connection.onClosed(exception -> new Thread(() -> {
-            try {
-                connectionState = "Disconnected";
-                Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Reconnecting));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+        connection.onClosed(exception -> {
+            connectionState = "Offline";
+            Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connecting));
             startConnection();
-        }).start());
+        });
 
         connectionState = "Connecting";
 
         try {
-            connection.start().doOnError(Throwable::printStackTrace).blockingAwait();
+            connection.start().doOnError(throwable -> {
+                connectionState = "Offline";
+                Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connecting));
+                throwable.printStackTrace();
+            }).blockingAwait();
         } catch (Exception ex) {
             ex.printStackTrace();
             return false;
@@ -162,12 +174,13 @@ public class NotificationsService extends IntentService {
 
         new Thread(() -> {
             try {
-                while (connection != null && connection.getConnectionState() == HubConnectionState.CONNECTED) {
+                while (connection.getConnectionState() == HubConnectionState.CONNECTED) {
                     Log.d("Aseman", "sending keep-alive");
                     String authResult1 = connection.invoke(String.class
                             , "KeepAlive").blockingGet();
                     if (authResult1.equals("failure")) {
-                        connection.stop();
+                        connection.stop().blockingAwait();
+                        break;
                     } else {
                         Log.d("Aseman", "received keep-alive answer : " + authResult1);
                         Thread.sleep(10000);
@@ -178,13 +191,8 @@ public class NotificationsService extends IntentService {
             }
         }).start();
 
-        try {
-            Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connected));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
         connectionState = "Online";
+        Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connected));
 
         return true;
     }

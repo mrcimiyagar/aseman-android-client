@@ -26,6 +26,8 @@ public interface ComplexDao {
     void deleteComplexById(long complexId);
     @Query("select * from complex where complexId in (:complexIds)")
     List<Entities.Complex> getComplexesByIds(List<Long> complexIds);
+    @Query("select * from complex where complexId in (select complexId from complexsecret) and mode = 3")
+    List<Entities.Complex> getAdminedComplexes();
     @Query("delete from complex")
     void deleteAll();
 }

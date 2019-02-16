@@ -3,7 +3,7 @@ package kasper.android.pulse.rxbus.notifications;
 public class ConnectionStateChanged {
 
     public enum State {
-        Reconnecting, Connected
+        Connecting, Connected
     }
 
     private State state;

@@ -386,7 +386,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 Core.getInstance().bus().post(new RoomUnreadChanged(roomId));
             }
             @Override
-            public void onServerFailure() { }
+            public void onServerFailure() {
+                rawMessage.setSeenByMe(true);
+                DatabaseHelper.notifyMessageUpdated(rawMessage);
+                Core.getInstance().bus().post(new RoomUnreadChanged(roomId));
+            }
             @Override
             public void onConnectionFailure() { }
         });

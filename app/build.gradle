@@ -42,6 +42,7 @@ dependencies {
     implementation project(':bottomdialog')
     implementation project(':textfieldboxes')
     implementation project(':rxbus')
+    implementation project(':signalr')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.1.0-alpha01'
@@ -71,13 +72,13 @@ dependencies {
     implementation 'com.jpardogo.materialtabstrip:library:1.1.1'
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-jackson:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-scalars:2.4.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.9.1'
     implementation 'commons-io:commons-io:2.6'
     implementation 'com.esotericsoftware:kryonet:2.22.0-RC1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.browser:browser:1.0.0'
-    implementation 'com.microsoft.signalr:signalr:3.0.0-preview-18579-0056'
     implementation 'org.slf4j:slf4j-jdk14:1.7.25'
     implementation 'com.synnapps:carouselview:0.1.5'
     implementation 'com.karumi:dexter:5.0.0'

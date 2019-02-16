@@ -139,7 +139,27 @@ public class DatabaseHelper {
     }
 
     public static List<Entities.Complex> getComplexes() {
-        return AsemanDB.getInstance().getComplexDao().getComplexes();
+        List<Entities.Complex> complexes = AsemanDB.getInstance().getComplexDao().getComplexes();
+        for (Entities.Complex complex : complexes) {
+            List<Entities.Room> rooms = AsemanDB.getInstance().getRoomDao().getComplexRooms(complex.getComplexId());
+            for (Entities.Room room : rooms) {
+                room.setComplex(complex);
+            }
+            complex.setRooms(rooms);
+        }
+        return complexes;
+    }
+
+    public static List<Entities.Complex> getAdminedComplexes() {
+        List<Entities.Complex> complexes = AsemanDB.getInstance().getComplexDao().getAdminedComplexes();
+        for (Entities.Complex complex : complexes) {
+            List<Entities.Room> rooms = AsemanDB.getInstance().getRoomDao().getComplexRooms(complex.getComplexId());
+            for (Entities.Room room : rooms) {
+                room.setComplex(complex);
+            }
+            complex.setRooms(rooms);
+        }
+        return complexes;
     }
 
     public static List<Entities.Room> getRooms(long complexId) {
@@ -510,7 +530,7 @@ public class DatabaseHelper {
     }
 
     public static boolean notifyMessageUpdated(Entities.Message message) {
-        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) != null) {
+        if (AsemanDB.getInstance().getMessageDao().getMessageById(message.getMessageId()) == null) {
             if (message instanceof Entities.TextMessage) {
                 AsemanDB.getInstance().getMessageDao().insert((Entities.TextMessage) message);
             } else if (message instanceof Entities.PhotoMessage) {
@@ -900,16 +920,16 @@ public class DatabaseHelper {
                         filesTable.get(((Entities.VideoMessage) message).getVideoId()));
             }
         }
-        if (messages.size() == 0) {
-            Entities.ServiceMessage serviceMessage = new Entities.ServiceMessage();
-            serviceMessage.setMessageId(-1);
-            serviceMessage.setText("Room created.");
-            serviceMessage.setAuthor(new Entities.User());
-            serviceMessage.setAuthorId(-1);
-            serviceMessage.setRoomId(roomId);
-            serviceMessage.setRoom(room);
-            serviceMessage.setTime(System.currentTimeMillis());
-        }
+//        if (messages.size() == 0) {
+//            Entities.ServiceMessage serviceMessage = new Entities.ServiceMessage();
+//            serviceMessage.setMessageId(-1);
+//            serviceMessage.setText("Room created.");
+//            serviceMessage.setAuthor(new Entities.User());
+//            serviceMessage.setAuthorId(-1);
+//            serviceMessage.setRoomId(roomId);
+//            serviceMessage.setRoom(room);
+//            serviceMessage.setTime(System.currentTimeMillis());
+//        }
         return messages;
     }
 

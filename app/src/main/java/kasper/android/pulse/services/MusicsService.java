@@ -90,7 +90,7 @@ public class MusicsService extends IntentService {
                 }
             }
         }
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override

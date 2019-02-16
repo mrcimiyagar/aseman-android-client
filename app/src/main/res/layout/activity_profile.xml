@@ -17,85 +17,72 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#000"
-        android:alpha="0.25"/>
+        android:layout_height="400dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/gradient_dark_to_light_90"/>
 
-    <androidx.cardview.widget.CardView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        app:cardCornerRadius="28dp"
-        app:cardBackgroundColor="@color/colorBlackBlue"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="88dp">
-        
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp">
-            
-            <TextView
-                android:id="@+id/activity_profile_title_text_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:text="Keyhan Mohammadi"
-                android:textColor="#fff"
-                android:textSize="20sp" />
-            
-        </FrameLayout>
-        
-    </androidx.cardview.widget.CardView>
+        android:layout_height="400dp"
+        android:background="@drawable/gradient_dark_to_light_90"
+        android:rotation="180"/>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <TextView
+        android:id="@+id/activity_profile_title_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Keyhan Mohammadi"
+        android:textColor="#fff"
+        android:textSize="25sp"
+        android:layout_margin="24dp"
+        android:drawableLeft="@drawable/ic_user"
+        android:drawableTint="#fff"
+        android:drawablePadding="8dp"/>
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/connectFAB"
-        app:fabSize="normal"
-        android:src="@drawable/ic_connection"
-        android:tint="#fff"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_alignParentBottom="true"
-        android:onClick="onConnectBtnClicked"
-        app:backgroundTint="@color/colorBlue"/>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="88dp"
-        android:onClick="onConnectBtnClicked"
-        android:src="@drawable/ic_block"
-        android:tint="#fff"
-        app:backgroundTint="@color/colorBlue"
-        app:fabSize="normal"
-        android:visibility="gone"/>
-    
-    <androidx.cardview.widget.CardView
-        android:layout_width="84dp"
-        android:layout_height="56dp"
-        app:cardCornerRadius="28dp"
-        android:layout_marginLeft="-28dp"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/colorBlackBlue">
+        android:orientation="horizontal"
+        android:layout_alignParentRight="true">
 
         <ImageButton
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:background="@android:color/transparent"
-            android:layout_gravity="right"
-            android:src="@drawable/ic_back"
+            android:id="@+id/connectFAB"
+            android:src="@drawable/ic_connection"
             android:tint="#fff"
-            android:onClick="onBackBtnClicked"/>
+            android:onClick="onConnectBtnClicked"
+            android:background="@android:color/transparent"
+            android:layout_margin="8dp"/>
 
-    </androidx.cardview.widget.CardView>
+        <ImageButton
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_block"
+            android:tint="#fff"
+            android:onClick="onBlockBtnClicked"
+            android:background="@android:color/transparent"
+            android:layout_margin="8dp"/>
+
+        <ImageButton
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_building"
+            android:tint="#fff"
+            android:onClick="onInviteBtnClicked"
+            android:background="@android:color/transparent"
+            android:layout_margin="8dp"/>
+
+    </LinearLayout>
+
+    <ImageButton
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@android:color/transparent"
+        android:layout_gravity="right"
+        android:src="@drawable/ic_back"
+        android:tint="#fff"
+        android:onClick="onBackBtnClicked"/>
 
 </RelativeLayout>
