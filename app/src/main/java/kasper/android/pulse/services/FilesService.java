@@ -4,17 +4,12 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
 import android.util.Log;
-import android.widget.Toast;
-
-import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,29 +18,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.FileRequestBody;
 import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.FileHandler;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
-import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
-import retrofit2.Callback;
-import retrofit2.Response;
+import retrofit2.Call;
 
 public class FilesService extends IntentService {
 
@@ -53,14 +42,16 @@ public class FilesService extends IntentService {
     private static Call currentUploadingCall;
 
     private static Entities.File currentDownloadingFile;
+    private static Call currentDownloadingCall;
 
-    private static BlockingQueue<Uploading> uploadingFiles = new LinkedBlockingQueue<>();
+    private static final BlockingQueue<Uploading> uploadingFiles = new LinkedBlockingQueue<>();
     private static Thread uploaderThread;
 
     private static final BlockingQueue<Downloading> downloadingFiles = new LinkedBlockingQueue<>();
     private static Thread downloaderThread;
 
     private static boolean skipDownload = false;
+    private boolean alive = false;
 
     public FilesService() {
         super("FileService");
@@ -69,6 +60,163 @@ public class FilesService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
 
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("KasperLogger", "File service started");
+
+        alive = true;
+
+        if (uploaderThread == null) {
+            uploaderThread = new Thread(() -> {
+                try {
+                    while (alive) {
+                        Uploading uploading = uploadingFiles.take();
+                        try {
+                            Entities.File fileEntity = uploading.getFile();
+                            currentUploadingFile = fileEntity;
+                            retrofit2.Call<Packet> call = null;
+                            if (fileEntity instanceof Entities.Photo) {
+                                Entities.Photo photo = (Entities.Photo) fileEntity;
+                                if (uploading.isAvatarUsage())
+                                    compressImage(uploading.getPath());
+                                Map<String, RequestBody> parts = new HashMap<>();
+                                parts.put("ComplexId", createRequestBody(uploading.getComplexId()));
+                                parts.put("RoomId", createRequestBody(uploading.getRoomId()));
+                                parts.put("Width", createRequestBody(photo.getWidth()));
+                                parts.put("Height", createRequestBody(photo.getHeight()));
+                                parts.put("IsAvatar", createRequestBody(uploading.isAvatarUsage()));
+                                File file = uploading.isAvatarUsage() ? new File(
+                                        new File(Environment.getExternalStorageDirectory(), DatabaseHelper.StorageDir)
+                                        , "uploadTemp") : new File(uploading.getPath());
+                                if (file.exists()) {
+                                    MultipartBody.Part filePart = createFileBody(file.getPath());
+                                    call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadPhoto(parts, filePart);
+                                } else {
+                                    uploading.getUploadListener().fileUploaded(0, -1);
+                                }
+                            } else if (fileEntity instanceof Entities.Audio) {
+                                Entities.Audio audio = (Entities.Audio) fileEntity;
+                                Map<String, RequestBody> parts = new HashMap<>();
+                                parts.put("ComplexId", createRequestBody(uploading.getComplexId()));
+                                parts.put("RoomId", createRequestBody(uploading.getRoomId()));
+                                parts.put("Title", createRequestBody(audio.getTitle()));
+                                parts.put("Duration", createRequestBody(audio.getDuration()));
+                                File file = new File(uploading.getPath());
+                                if (file.exists()) {
+                                    MultipartBody.Part filePart = createFileBody(file.getPath());
+                                    call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadAudio(parts, filePart);
+                                } else {
+                                    uploading.getUploadListener().fileUploaded(0, -1);
+                                }
+                            } else if (fileEntity instanceof Entities.Video) {
+                                Entities.Video video = (Entities.Video) fileEntity;
+                                Map<String, RequestBody> parts = new HashMap<>();
+                                parts.put("ComplexId", createRequestBody(uploading.getComplexId()));
+                                parts.put("RoomId", createRequestBody(uploading.getRoomId()));
+                                parts.put("Title", createRequestBody(video.getTitle()));
+                                parts.put("Duration", createRequestBody(video.getDuration()));
+                                File file = new File(uploading.getPath());
+                                if (file.exists()) {
+                                    MultipartBody.Part filePart = createFileBody(file.getPath());
+                                    call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadVideo(parts, filePart);
+                                } else {
+                                    uploading.getUploadListener().fileUploaded(0, -1);
+                                }
+                            }
+                            currentUploadingCall = call;
+                            if (call != null) {
+                                NetworkHelper.requestServer(call, new ServerCallback() {
+                                    @Override
+                                    public void onRequestSuccess(Packet packet) {
+                                        Entities.File uploadedFile = packet.getFile();
+                                        Entities.FileUsage createdFileUsage = packet.getFileUsage();
+                                        try {
+                                            uploading.getUploadListener().fileUploaded(
+                                                    uploadedFile.getFileId(),
+                                                    createdFileUsage != null ? createdFileUsage.getFileUsageId() : -1);
+                                        } catch (Exception ex) {
+                                            ex.printStackTrace();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onServerFailure() {
+                                        Core.getInstance().bus().post(new ShowToast("File upload failure"));
+                                    }
+
+                                    @Override
+                                    public void onConnectionFailure() {
+                                        Core.getInstance().bus().post(new ShowToast("File upload failure"));
+                                    }
+                                });
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            uploadingFiles.offer(uploading);
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+
+            uploaderThread.start();
+        }
+
+        if (downloaderThread == null) {
+            downloaderThread = new Thread(() -> {
+                try {
+                    while (alive) {
+                        Downloading downloading = downloadingFiles.take();
+                        currentDownloadingFile = downloading.getFile();
+                        skipDownload = false;
+                        FileHandler fileHandler = NetworkHelper.getRetrofit().create(FileHandler.class);
+                        retrofit2.Call<ResponseBody> call = fileHandler.downloadFile(downloading.getFile().getFileId());
+                        currentDownloadingCall = call;
+                        ResponseBody body = call.execute().body();
+                        try {
+                            if (body != null)
+                                writeResponseBodyToDisk(body, downloading.getFile().getFileId(), downloading);
+                            if (!skipDownload)
+                                Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                        downloading.getDownloadListener().fileDownloaded()));
+                            else
+                                skipDownload = false;
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            downloadingFiles.offer(downloading);
+                            Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                    downloading.getDownloadListener().downloadFailed()));
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+
+            downloaderThread.start();
+        }
+
+        return START_NOT_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d("KasperLogger", "File service destroyed");
+        alive = false;
+        super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.e("KasperLogger", "File service task removed");
     }
 
     public static void uploadFile(Uploading uploading) {
@@ -98,6 +246,7 @@ public class FilesService extends IntentService {
         synchronized (downloadingFiles) {
             if (currentDownloadingFile != null && currentDownloadingFile.getFileId() == fileId) {
                 skipDownload = true;
+                currentDownloadingCall.cancel();
             } else {
                 for (Downloading downloading : downloadingFiles) {
                     if (downloading.getFile().getFileId() == fileId) {
@@ -107,115 +256,6 @@ public class FilesService extends IntentService {
                 }
             }
         }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("KasperLogger", "File service started");
-        if (uploaderThread == null) {
-            uploaderThread = new Thread(() -> {
-                try {
-                    while (true) {
-                        Uploading uploading = uploadingFiles.take();
-                        Entities.File fileEntity = uploading.getFile();
-                        currentUploadingFile = fileEntity;
-                        retrofit2.Call<Packet> call = null;
-                        if (fileEntity instanceof Entities.Photo) {
-                            Entities.Photo photo = (Entities.Photo) fileEntity;
-                            if (uploading.isAvatarUsage())
-                                compressImage(uploading.getPath());
-                            Map<String, RequestBody> parts = new HashMap<>();
-                            parts.put("ComplexId", createRequestBody(uploading.getComplexId()));
-                            parts.put("RoomId", createRequestBody(uploading.getRoomId()));
-                            parts.put("Width", createRequestBody(photo.getWidth()));
-                            parts.put("Height", createRequestBody(photo.getHeight()));
-                            parts.put("IsAvatar", createRequestBody(uploading.isAvatarUsage()));
-                            MultipartBody.Part filePart = createFileBody(uploading.isAvatarUsage() ? new File(
-                                    new File(Environment.getExternalStorageDirectory(), DatabaseHelper.StorageDir)
-                                    , "uploadTemp").getPath() : uploading.getPath());
-                            call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadPhoto(parts, filePart);
-                        } else if (fileEntity instanceof Entities.Audio) {
-                            Entities.Audio audio = (Entities.Audio) fileEntity;
-                            Map<String, RequestBody> parts = new HashMap<>();
-                            parts.put("ComplexId", createRequestBody(uploading.getComplexId()));
-                            parts.put("RoomId", createRequestBody(uploading.getRoomId()));
-                            parts.put("Width", createRequestBody(audio.getTitle()));
-                            parts.put("Height", createRequestBody(audio.getDuration()));
-                            MultipartBody.Part filePart = createFileBody(uploading.getPath());
-                            call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadAudio(parts, filePart);
-                        } else if (fileEntity instanceof Entities.Video) {
-                            Entities.Video video = (Entities.Video) fileEntity;
-                            Map<String, RequestBody> parts = new HashMap<>();
-                            parts.put("ComplexId", createRequestBody(uploading.getComplexId()));
-                            parts.put("RoomId", createRequestBody(uploading.getRoomId()));
-                            parts.put("Width", createRequestBody(video.getTitle()));
-                            parts.put("Height", createRequestBody(video.getDuration()));
-                            MultipartBody.Part filePart = createFileBody(uploading.getPath());
-                            call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadVideo(parts, filePart);
-                        }
-                        if (call != null) {
-                            NetworkHelper.requestServer(call, new ServerCallback() {
-                                @Override
-                                public void onRequestSuccess(Packet packet) {
-                                    Entities.File uploadedFile = packet.getFile();
-                                    Entities.FileUsage createdFileUsage = packet.getFileUsage();
-                                    try {
-                                        uploading.getUploadListener().fileUploaded(
-                                                uploadedFile.getFileId(),
-                                                createdFileUsage != null ? createdFileUsage.getFileUsageId() : -1);
-                                    } catch (Exception ex) {
-                                        ex.printStackTrace();
-                                    }
-                                }
-                                @Override
-                                public void onServerFailure() {
-                                    Core.getInstance().bus().post(new ShowToast("File upload failure"));
-                                }
-                                @Override
-                                public void onConnectionFailure() {
-                                    Core.getInstance().bus().post(new ShowToast("File upload failure"));
-                                }
-                            });
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            });
-            downloaderThread = new Thread(() -> {
-                try {
-                    while (true) {
-                        Downloading downloading = downloadingFiles.take();
-                        currentDownloadingFile = downloading.getFile();
-                        skipDownload = false;
-                        FileHandler fileHandler = NetworkHelper.getRetrofit().create(FileHandler.class);
-                        retrofit2.Call<ResponseBody> call = fileHandler.downloadFile(downloading.getFile().getFileId());
-                        ResponseBody body = call.execute().body();
-                        try {
-                            if (body != null) {
-                                writeResponseBodyToDisk(body, downloading.getFile().getFileId(), downloading);
-                            }
-                            Core.getInstance().bus().post(new UiThreadRequested(() ->
-                                    downloading.getDownloadListener().fileDownloaded()));
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            Core.getInstance().bus().post(new UiThreadRequested(() ->
-                                    downloading.getDownloadListener().downloadFailed()));
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            });
-            uploaderThread.start();
-            downloaderThread.start();
-        }
-        return START_NOT_STICKY;
     }
 
     private void compressImage(String photoPath) {
@@ -294,7 +334,7 @@ public class FilesService extends IntentService {
                 long fileSizeDownloaded = 0;
                 inputStream = body.byteStream();
                 outputStream = new FileOutputStream(futureStudioIconFile);
-                while (true) {
+                while (!skipDownload) {
                     int read = inputStream.read(fileReader);
                     if (read == -1)
                         break;
@@ -314,16 +354,5 @@ public class FilesService extends IntentService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.d("KasperLogger", "File service destroyed");
-        super.onDestroy();
-    }
-
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        Log.e("KasperLogger", "File service task removed");
     }
 }

@@ -322,7 +322,8 @@ public class HomeActivity extends BaseActivity {
         DataSyncer.syncRoomsWithServer(complex.getComplexId(), new OnRoomsSyncListener() {
             @Override
             public void roomsSynced(List<Entities.Room> rooms) {
-                initRoomsAdapter(complex, rooms);
+                if (complex.getComplexId() == chosenComplexId)
+                    initRoomsAdapter(complex, rooms);
             }
             @Override
             public void syncFailed() { }

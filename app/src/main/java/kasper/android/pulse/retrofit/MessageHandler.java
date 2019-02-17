@@ -12,4 +12,6 @@ public interface MessageHandler {
     Call<Packet> createFileMessage(@Body Packet packet);
     @POST("message/notify_message_seen")
     Call<Packet> notifyMessageSeen(@Body Packet packet);
+    @POST("message/get_messages")
+    Call<Packet> getMessages(@Body Packet packet);
 }

@@ -73,7 +73,8 @@
 
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <kasper.android.pulse.components.OneClickFAB
+        android:id="@+id/saveFAB"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:fabSize="normal"

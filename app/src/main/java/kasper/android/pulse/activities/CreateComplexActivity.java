@@ -45,6 +45,7 @@ public class CreateComplexActivity extends AppCompatActivity {
     private OneClickFAB saveFAB;
 
     File selectedImageFile;
+    Entities.Complex complex = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +56,7 @@ public class CreateComplexActivity extends AppCompatActivity {
         nameET = findViewById(R.id.activity_create_room_name_edit_text);
         loadingView = findViewById(R.id.page_add_room_loading_view);
         progressBar = findViewById(R.id.page_add_room_progress_bar);
+        saveFAB = findViewById(R.id.saveFAB);
     }
 
     @Override
@@ -76,8 +78,6 @@ public class CreateComplexActivity extends AppCompatActivity {
     public void onPickAvatarBtnClicked(View view) {
         startActivityForResult(new Intent(this, PickImageActivity.class), 123);
     }
-
-    Entities.Complex complex = null;
 
     public void onOkBtnClicked(View view) {
         final String name = nameET.getText().toString();
@@ -123,40 +123,44 @@ public class CreateComplexActivity extends AppCompatActivity {
                                         @Override
                                         public void onRequestSuccess(Packet packet) {
                                             DatabaseHelper.updateComplex(complex);
-                                            room.setComplex(complex);
-                                            room.setLastAction(message);
-                                            Core.getInstance().bus().post(new ComplexCreated(complex));
-                                            Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
-                                            finish();
+                                            taskDone(complex, room, message);
                                         }
                                         @Override
                                         public void onServerFailure() {
                                             Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
+                                            taskDone(complex, room, message);
                                         }
                                         @Override
                                         public void onConnectionFailure() {
                                             Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
+                                            taskDone(complex, room, message);
                                         }
                                     });
                                 });
                     } else {
-                        room.setComplex(complex);
-                        room.setLastAction(message);
-                        Core.getInstance().bus().post(new ComplexCreated(complex));
-                        Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
-                        finish();
+                        taskDone(complex, room, message);
                     }
                 }
                 @Override
                 public void onServerFailure() {
                     Toast.makeText(CreateComplexActivity.this, "Complex creation failure", Toast.LENGTH_SHORT).show();
+                    saveFAB.enable();
                 }
                 @Override
                 public void onConnectionFailure() {
                     Toast.makeText(CreateComplexActivity.this, "Complex creation failure", Toast.LENGTH_SHORT).show();
+                    saveFAB.enable();
                 }
             });
         }
+    }
+
+    private void taskDone(Entities.Complex complex, Entities.Room room, Entities.ServiceMessage message) {
+        room.setComplex(complex);
+        room.setLastAction(message);
+        Core.getInstance().bus().post(new ComplexCreated(complex));
+        Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
+        finish();
     }
 
     public void onBackBtnClicked(View view) {

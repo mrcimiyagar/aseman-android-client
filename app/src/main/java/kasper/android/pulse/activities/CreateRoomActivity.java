@@ -2,7 +2,6 @@ package kasper.android.pulse.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Pair;
@@ -13,14 +12,13 @@ import android.widget.Toast;
 
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
@@ -40,8 +38,7 @@ public class CreateRoomActivity extends AppCompatActivity {
     private EditText nameET;
     private FrameLayout loadingView;
     private CircularProgressBar progressBar;
-
-    boolean donePressed;
+    private OneClickFAB saveFAB;
 
     File selectedImageFile = null;
 
@@ -53,12 +50,11 @@ public class CreateRoomActivity extends AppCompatActivity {
         if (getIntent().getExtras() != null)
             complexId = getIntent().getExtras().getLong("complex_id");
 
-        donePressed = false;
-
         avatarIV = findViewById(R.id.activity_create_room_avatar_image_view);
         nameET = findViewById(R.id.activity_create_room_name_edit_text);
         loadingView = findViewById(R.id.page_add_room_loading_view);
         progressBar = findViewById(R.id.page_add_room_progress_bar);
+        saveFAB = findViewById(R.id.saveFAB);
     }
 
     @Override
@@ -84,34 +80,34 @@ public class CreateRoomActivity extends AppCompatActivity {
     public void onOkBtnClicked(View view) {
         final String roomName = nameET.getText().toString();
         if (roomName.length() > 0) {
-            if (!donePressed) {
-                donePressed = true;
-                if (selectedImageFile != null && selectedImageFile.exists()) {
-                    loadingView.setVisibility(View.VISIBLE);
-                } else {
-                    loadingView.setVisibility(View.GONE);
-                }
-                final Packet packet = new Packet();
-                final Entities.Complex complex = DatabaseHelper.getComplexById(complexId);
-                packet.setComplex(complex);
-                Entities.Room room = new Entities.Room();
-                room.setTitle(roomName);
-                room.setAvatar(0);
-                packet.setRoom(room);
-                RoomHandler roomHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
-                Call<Packet> call = roomHandler.createRoom(packet);
-                NetworkHelper.requestServer(call, new ServerCallback() {
-                    @Override
-                    public void onRequestSuccess(Packet packet) {
-                        final Entities.Room room = packet.getRoom();
-                        DatabaseHelper.notifyRoomCreated(room);
-                        if (selectedImageFile != null && selectedImageFile.exists()) {
-                            Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
-                            Entities.Photo file = (Entities.Photo) pair.first;
-                            NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath(),
-                                    progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
-                                            progressBar.setProgress(progress))),
-                                    (OnFileUploadListener) (fileId, fileUsageId) -> {
+            if (selectedImageFile != null && selectedImageFile.exists()) {
+                loadingView.setVisibility(View.VISIBLE);
+            } else {
+                loadingView.setVisibility(View.GONE);
+            }
+            final Packet packet = new Packet();
+            final Entities.Complex complex = DatabaseHelper.getComplexById(complexId);
+            packet.setComplex(complex);
+            Entities.Room room = new Entities.Room();
+            room.setTitle(roomName);
+            room.setAvatar(0);
+            packet.setRoom(room);
+            RoomHandler roomHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
+            Call<Packet> call = roomHandler.createRoom(packet);
+            NetworkHelper.requestServer(call, new ServerCallback() {
+                @Override
+                public void onRequestSuccess(Packet packet) {
+                    final Entities.Room room = packet.getRoom();
+                    final Entities.ServiceMessage message = packet.getServiceMessage();
+                    DatabaseHelper.notifyRoomCreated(room);
+                    DatabaseHelper.notifyServiceMessageReceived(message);
+                    if (selectedImageFile != null && selectedImageFile.exists()) {
+                        Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
+                        Entities.Photo file = (Entities.Photo) pair.first;
+                        NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath(),
+                                progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
+                                        progressBar.setProgress(progress))),
+                                (OnFileUploadListener) (fileId, fileUsageId) ->
                                         Core.getInstance().bus().post(new UiThreadRequested(() -> {
                                             loadingView.setVisibility(View.GONE);
                                             Packet packet2 = new Packet();
@@ -124,43 +120,47 @@ public class CreateRoomActivity extends AppCompatActivity {
                                                 @Override
                                                 public void onRequestSuccess(Packet packet) {
                                                     DatabaseHelper.updateRoom(room);
-                                                    room.setComplex(complex);
-                                                    Core.getInstance().bus().post(new RoomCreated(complexId, room));
-                                                    finish();
+                                                    taskDone(complex, room, message);
                                                 }
-
                                                 @Override
                                                 public void onServerFailure() {
                                                     Toast.makeText(CreateRoomActivity.this, "Room profile update failure", Toast.LENGTH_SHORT).show();
+                                                    taskDone(complex, room, message);
                                                 }
-
                                                 @Override
                                                 public void onConnectionFailure() {
                                                     Toast.makeText(CreateRoomActivity.this, "Room profile update failure", Toast.LENGTH_SHORT).show();
+                                                    taskDone(complex, room, message);
                                                 }
                                             });
-                                        }));
-                                    });
-                        } else {
-                            Core.getInstance().bus().post(new RoomCreated(complexId, room));
-                            finish();
-                        }
+                                        })));
+                    } else {
+                        taskDone(complex, room, message);
                     }
+                }
 
-                    @Override
-                    public void onServerFailure() {
-                        Toast.makeText(CreateRoomActivity.this, "Room creation failure", Toast.LENGTH_SHORT).show();
-                    }
+                @Override
+                public void onServerFailure() {
+                    Toast.makeText(CreateRoomActivity.this, "Room creation failure", Toast.LENGTH_SHORT).show();
+                    saveFAB.enable();
+                }
 
-                    @Override
-                    public void onConnectionFailure() {
-                        Toast.makeText(CreateRoomActivity.this, "Room creation failure", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
+                @Override
+                public void onConnectionFailure() {
+                    Toast.makeText(CreateRoomActivity.this, "Room creation failure", Toast.LENGTH_SHORT).show();
+                    saveFAB.enable();
+                }
+            });
         } else {
             Toast.makeText(CreateRoomActivity.this, "Room name can not be empty", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void taskDone(Entities.Complex complex, Entities.Room room, Entities.ServiceMessage message) {
+        room.setComplex(complex);
+        room.setLastAction(message);
+        Core.getInstance().bus().post(new RoomCreated(complexId, room));
+        finish();
     }
 
     public void onBackBtnClicked(View view) {

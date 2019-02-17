@@ -299,9 +299,14 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     vh.lastActionTV.setText("Aseman : "
                             + ((Entities.ServiceMessage) lastAction).getText());
                 if (room.getComplex().getMode() == 1) {
-                    ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
-                    ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
-                    ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                    if (lastAction.getAuthorId() == myId) {
+                        ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
+                        ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                        ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                    } else {
+                        ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                        ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                    }
                 } else {
                     long unreadCount = DatabaseHelper.getUnreadMessagesCount(room.getRoomId());
                     if (unreadCount == 0) {

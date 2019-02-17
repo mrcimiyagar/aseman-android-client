@@ -5,9 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.ComplexSelectorAdapter;
-import kasper.android.pulse.callbacks.ui.OnComplexSelectionListener;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.models.entities.Entities;
 
 import android.content.Intent;
 import android.os.Bundle;

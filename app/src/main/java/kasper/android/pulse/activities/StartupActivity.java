@@ -9,20 +9,18 @@ import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import androidx.core.util.Pair;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.ContactHandler;
+import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.retrofit.RoomHandler;
-import kasper.android.pulse.rxbus.notifications.ComplexCreated;
-import kasper.android.pulse.rxbus.notifications.ContactCreated;
-import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import retrofit2.Call;
 
 public class StartupActivity extends AppCompatActivity {
@@ -33,11 +31,12 @@ public class StartupActivity extends AppCompatActivity {
     private final Object TASKS_LOCK = new Object();
     private List<Entities.Contact> syncedContacts = new ArrayList<>();
     private List<Entities.Complex> syncedComplexes = new ArrayList<>();
-    private List<Entities.Room> syncedRooms = new ArrayList<>();
     private List<Entities.Bot> syncedBotCreationsBots = new ArrayList<>();
     private List<Entities.BotCreation> syncedBotCreations = new ArrayList<>();
     private List<Entities.Bot> syncedBotSubscriptionsBots = new ArrayList<>();
     private List<Entities.BotSubscription> syncedBotSubscriptions = new ArrayList<>();
+    private long syncingRoomsCount = 0;
+    private List<Entities.Message> syncedMessages = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,10 +45,16 @@ public class StartupActivity extends AppCompatActivity {
 
         startTime = System.currentTimeMillis();
 
-        if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("newUser"))
+        Entities.Session session = DatabaseHelper.getSingleSession();
+        if (session != null && session.getBaseUserId() > 0)
             startSyncing();
         else
             syncDone();
+
+        //if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("newUser"))
+
+        //else
+          //  syncDone();
     }
 
     private void syncDone() {
@@ -75,9 +80,8 @@ public class StartupActivity extends AppCompatActivity {
 
     private void startSyncing() {
         initContacts();
-        initComplexes();
-        initRooms();
         initBots();
+        initComplexes();
     }
 
     private void initContacts() {
@@ -93,24 +97,22 @@ public class StartupActivity extends AppCompatActivity {
                     }
                 }).start();
             }
-
             @Override
             public void onServerFailure() {
                 new Thread(() -> {
-                    syncedContacts = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initContacts();
                 }).start();
             }
-
             @Override
             public void onConnectionFailure() {
                 new Thread(() -> {
-                    syncedContacts = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initContacts();
                 }).start();
             }
         });
@@ -124,6 +126,7 @@ public class StartupActivity extends AppCompatActivity {
             public void onRequestSuccess(Packet p) {
                 new Thread(() -> {
                     syncedComplexes = p.getComplexes();
+                    initMessages();
                     synchronized (TASKS_LOCK) {
                         notifyTaskDone();
                     }
@@ -133,60 +136,20 @@ public class StartupActivity extends AppCompatActivity {
             @Override
             public void onServerFailure() {
                 new Thread(() -> {
-                    syncedContacts = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initComplexes();
                 }).start();
             }
 
             @Override
             public void onConnectionFailure() {
                 new Thread(() -> {
-                    syncedContacts = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
-                }).start();
-            }
-        });
-    }
-
-    private void initRooms() {
-        RoomHandler roomHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
-        Packet packet = new Packet();
-        Entities.Complex complex = new Entities.Complex();
-        complex.setComplexId(0);
-        packet.setComplex(complex);
-        Call<Packet> call = roomHandler.getRooms(packet);
-        NetworkHelper.requestServer(call, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet p) {
-                new Thread(() -> {
-                    syncedRooms = p.getRooms();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
-                }).start();
-            }
-
-            @Override
-            public void onServerFailure() {
-                new Thread(() -> {
-                    syncedRooms = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
-                }).start();
-            }
-
-            @Override
-            public void onConnectionFailure() {
-                new Thread(() -> {
-                    syncedRooms = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initComplexes();
                 }).start();
             }
         });
@@ -209,23 +172,20 @@ public class StartupActivity extends AppCompatActivity {
             @Override
             public void onServerFailure() {
                 new Thread(() -> {
-                    syncedBotCreationsBots = new ArrayList<>();
-                    syncedBotCreations = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initBots();
                 }).start();
-
             }
 
             @Override
             public void onConnectionFailure() {
                 new Thread(() -> {
-                    syncedBotCreationsBots = new ArrayList<>();
-                    syncedBotCreations = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initBots();
                 }).start();
             }
         });
@@ -245,25 +205,86 @@ public class StartupActivity extends AppCompatActivity {
             @Override
             public void onServerFailure() {
                 new Thread(() -> {
-                    syncedBotSubscriptionsBots = new ArrayList<>();
-                    syncedBotSubscriptions = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initBots();
                 }).start();
             }
 
             @Override
             public void onConnectionFailure() {
                 new Thread(() -> {
-                    syncedBotSubscriptionsBots = new ArrayList<>();
-                    syncedBotSubscriptions = new ArrayList<>();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initBots();
                 }).start();
             }
         });
+    }
+
+    private void initMessages() {
+        syncingRoomsCount = 0;
+        List<Pair<Long, Long>> messageContainers = new ArrayList<>();
+        for (Entities.Complex complex : syncedComplexes) {
+            syncingRoomsCount += complex.getRooms().size();
+            for (Entities.Room room : complex.getRooms()) {
+                messageContainers.add(new Pair<>(complex.getComplexId(), room.getRoomId()));
+            }
+        }
+        for (Pair<Long, Long> messageContainer : messageContainers)
+            if (messageContainer.first != null && messageContainer.second != null)
+                fetchRoomMessages(messageContainer.first, messageContainer.second);
+    }
+
+    private void fetchRoomMessages(long complexId, long roomId) {
+        Packet packet = new Packet();
+        Entities.Complex complex = new Entities.Complex();
+        complex.setComplexId(complexId);
+        packet.setComplex(complex);
+        Entities.Room room = new Entities.Room();
+        room.setRoomId(roomId);
+        packet.setRoom(room);
+        Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).getMessages(packet);
+        NetworkHelper.requestServer(call, new ServerCallback() {
+            @Override
+            public void onRequestSuccess(Packet packet) {
+                new Thread(() -> {
+                    syncedMessages.addAll(packet.getMessages());
+                    synchronized (TASKS_LOCK) {
+                        notifyMessageTaskDone();
+                    }
+                }).start();
+            }
+            @Override
+            public void onServerFailure() {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    fetchRoomMessages(complexId, roomId);
+                }).start();
+            }
+            @Override
+            public void onConnectionFailure() {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    fetchRoomMessages(complexId, roomId);
+                }).start();
+            }
+        });
+    }
+
+    private void notifyMessageTaskDone() {
+        synchronized (TASKS_LOCK) {
+            syncingRoomsCount--;
+            if (syncingRoomsCount == 0) {
+                notifyTaskDone();
+            }
+        }
     }
 
     private void notifyTaskDone() {
@@ -276,9 +297,13 @@ public class StartupActivity extends AppCompatActivity {
                 }
                 for (Entities.Complex complex : syncedComplexes) {
                     DatabaseHelper.notifyComplexCreated(complex);
-                }
-                for (Entities.Room room : syncedRooms) {
-                    DatabaseHelper.notifyRoomCreated(room);
+                    for (Entities.Room room : complex.getRooms()) {
+                        DatabaseHelper.notifyRoomCreated(room);
+                    }
+                    for (Entities.Membership mem : complex.getMembers()) {
+                        DatabaseHelper.notifyMembershipCreated(mem);
+                        DatabaseHelper.notifyUserCreated(mem.getUser());
+                    }
                 }
                 for (int counter = 0; counter < syncedBotCreationsBots.size(); counter++) {
                     DatabaseHelper.notifyBotCreated(syncedBotCreationsBots.get(counter)
@@ -287,6 +312,19 @@ public class StartupActivity extends AppCompatActivity {
                 for (int counter = 0; counter < syncedBotSubscriptionsBots.size(); counter++) {
                     DatabaseHelper.notifyBotSubscribed(syncedBotSubscriptionsBots.get(counter)
                             , syncedBotSubscriptions.get(counter));
+                }
+                for (Entities.Message message : syncedMessages) {
+                    if (message instanceof Entities.TextMessage) {
+                        DatabaseHelper.notifyTextMessageReceived((Entities.TextMessage) message);
+                    } else if (message instanceof Entities.PhotoMessage) {
+                        DatabaseHelper.notifyPhotoMessageReceived((Entities.PhotoMessage) message);
+                    } else if (message instanceof Entities.AudioMessage) {
+                        DatabaseHelper.notifyAudioMessageReceived((Entities.AudioMessage) message);
+                    } else if (message instanceof Entities.VideoMessage) {
+                        DatabaseHelper.notifyVideoMessageReceived((Entities.VideoMessage) message);
+                    } else if (message instanceof Entities.ServiceMessage) {
+                        DatabaseHelper.notifyServiceMessageReceived((Entities.ServiceMessage) message);
+                    }
                 }
                 runOnUiThread(this::syncDone);
             }

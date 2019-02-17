@@ -270,6 +270,13 @@ public class DatabaseHelper {
         return users;
     }
 
+    public static void notifyMembershipCreated(Entities.Membership membership) {
+        if (AsemanDB.getInstance().getMembershipDao().getMembershipById(membership.getMembershipId()) == null)
+            AsemanDB.getInstance().getMembershipDao().insert(membership);
+        else
+            AsemanDB.getInstance().getMembershipDao().update(membership);
+    }
+
     public static Entities.BaseUser getBaseUserById(long userId) {
         Entities.User user = AsemanDB.getInstance().getUserDao().getUserById(userId);
         if (user != null)
