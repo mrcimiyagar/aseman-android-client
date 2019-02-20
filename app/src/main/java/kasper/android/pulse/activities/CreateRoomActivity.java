@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
@@ -104,36 +106,35 @@ public class CreateRoomActivity extends AppCompatActivity {
                     if (selectedImageFile != null && selectedImageFile.exists()) {
                         Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
                         Entities.Photo file = (Entities.Photo) pair.first;
+                        Log.d("AsemanKasper", "hello keyhan 2");
                         NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath(),
-                                progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
-                                        progressBar.setProgress(progress))),
-                                (OnFileUploadListener) (fileId, fileUsageId) ->
-                                        Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                                            loadingView.setVisibility(View.GONE);
-                                            Packet packet2 = new Packet();
-                                            room.setAvatar(fileId);
-                                            packet2.setRoom(room);
-                                            packet2.setComplex(complex);
-                                            RoomHandler profileHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
-                                            Call<Packet> call2 = profileHandler.updateRoomProfile(packet2);
-                                            NetworkHelper.requestServer(call2, new ServerCallback() {
-                                                @Override
-                                                public void onRequestSuccess(Packet packet) {
-                                                    DatabaseHelper.updateRoom(room);
-                                                    taskDone(complex, room, message);
-                                                }
-                                                @Override
-                                                public void onServerFailure() {
-                                                    Toast.makeText(CreateRoomActivity.this, "Room profile update failure", Toast.LENGTH_SHORT).show();
-                                                    taskDone(complex, room, message);
-                                                }
-                                                @Override
-                                                public void onConnectionFailure() {
-                                                    Toast.makeText(CreateRoomActivity.this, "Room profile update failure", Toast.LENGTH_SHORT).show();
-                                                    taskDone(complex, room, message);
-                                                }
-                                            });
-                                        })));
+                                (OnFileUploadListener) (fileId, fileUsageId) -> {
+                                    Log.d("AsemanKasper", "hello keyhan 1");
+                                    loadingView.setVisibility(View.GONE);
+                                    Packet packet2 = new Packet();
+                                    room.setAvatar(fileId);
+                                    packet2.setRoom(room);
+                                    packet2.setComplex(complex);
+                                    RoomHandler profileHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
+                                    Call<Packet> call2 = profileHandler.updateRoomProfile(packet2);
+                                    NetworkHelper.requestServer(call2, new ServerCallback() {
+                                        @Override
+                                        public void onRequestSuccess(Packet packet) {
+                                            DatabaseHelper.updateRoom(room);
+                                            taskDone(complex, room, message);
+                                        }
+                                        @Override
+                                        public void onServerFailure() {
+                                            Toast.makeText(CreateRoomActivity.this, "Room profile update failure", Toast.LENGTH_SHORT).show();
+                                            taskDone(complex, room, message);
+                                        }
+                                        @Override
+                                        public void onConnectionFailure() {
+                                            Toast.makeText(CreateRoomActivity.this, "Room profile update failure", Toast.LENGTH_SHORT).show();
+                                            taskDone(complex, room, message);
+                                        }
+                                    });
+                                });
                     } else {
                         taskDone(complex, room, message);
                     }

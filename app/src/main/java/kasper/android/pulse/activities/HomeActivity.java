@@ -269,11 +269,6 @@ public class HomeActivity extends BaseActivity {
     }
 
     @Subscribe
-    public void onUiThreadRequested(UiThreadRequested uiThreadRequested) {
-        this.runOnUiThread(uiThreadRequested.getRunnable());
-    }
-
-    @Subscribe
     public void onProfileUpdated(UserProfileUpdated profileUpdated) {
         NetworkHelper.loadUserAvatar(profileUpdated.getUser().getAvatar(), myAvatarIV);
         myTitleTV.setText(profileUpdated.getUser().getTitle());

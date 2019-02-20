@@ -24,7 +24,10 @@ import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.Downloading;
+import kasper.android.pulse.models.extras.ProgressListener;
+import kasper.android.pulse.models.extras.ProgressRequestBody;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.FileHandler;
@@ -69,7 +72,8 @@ public class FilesService extends IntentService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("KasperLogger", "File service started");
+
+        Log.d("Aseman", "File service started");
 
         alive = true;
 
@@ -96,7 +100,8 @@ public class FilesService extends IntentService {
                                         new File(Environment.getExternalStorageDirectory(), DatabaseHelper.StorageDir)
                                         , "uploadTemp") : new File(uploading.getPath());
                                 if (file.exists()) {
-                                    MultipartBody.Part filePart = createFileBody(file.getPath());
+                                    MultipartBody.Part filePart = createFileBody(
+                                            currentUploadingFile.getFileId(), DocTypes.Photo, file.getPath());
                                     call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadPhoto(parts, filePart);
                                 } else {
                                     uploading.getUploadListener().fileUploaded(0, -1);
@@ -110,7 +115,8 @@ public class FilesService extends IntentService {
                                 parts.put("Duration", createRequestBody(audio.getDuration()));
                                 File file = new File(uploading.getPath());
                                 if (file.exists()) {
-                                    MultipartBody.Part filePart = createFileBody(file.getPath());
+                                    MultipartBody.Part filePart = createFileBody(
+                                            currentUploadingFile.getFileId(), DocTypes.Audio, file.getPath());
                                     call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadAudio(parts, filePart);
                                 } else {
                                     uploading.getUploadListener().fileUploaded(0, -1);
@@ -124,7 +130,8 @@ public class FilesService extends IntentService {
                                 parts.put("Duration", createRequestBody(video.getDuration()));
                                 File file = new File(uploading.getPath());
                                 if (file.exists()) {
-                                    MultipartBody.Part filePart = createFileBody(file.getPath());
+                                    MultipartBody.Part filePart = createFileBody(
+                                            currentUploadingFile.getFileId(), DocTypes.Video, file.getPath());
                                     call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadVideo(parts, filePart);
                                 } else {
                                     uploading.getUploadListener().fileUploaded(0, -1);
@@ -209,14 +216,14 @@ public class FilesService extends IntentService {
 
     @Override
     public void onDestroy() {
-        Log.d("KasperLogger", "File service destroyed");
+        Log.d("Aseman", "File service destroyed");
         alive = false;
         super.onDestroy();
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        Log.e("KasperLogger", "File service task removed");
+        Log.e("Aseman", "File service task removed");
     }
 
     public static void uploadFile(Uploading uploading) {
@@ -310,13 +317,10 @@ public class FilesService extends IntentService {
         }
     }
 
-    private MultipartBody.Part createFileBody(String filePath) {
+    private MultipartBody.Part createFileBody(long fileId, DocTypes docType, String filePath) {
         File file = new File(filePath);
         return MultipartBody.Part.createFormData("File", file.getName()
-                , RequestBody.create(
-                        MediaType.parse("multipart/form-data"),
-                        file
-                ));
+                , new ProgressRequestBody(fileId, docType, file, "*/*"));
     }
 
     private RequestBody createRequestBody(Object param) {

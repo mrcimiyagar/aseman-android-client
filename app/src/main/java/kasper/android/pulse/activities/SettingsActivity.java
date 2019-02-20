@@ -186,9 +186,7 @@ public class SettingsActivity extends BaseActivity {
                             true, path, 256, 256);
                     Entities.File file = pair.first;
                     NetworkHelper.uploadFile(file, -1, -1, true, path
-                            , progress -> {
-
-                            }, (OnFileUploadListener) (fileId, fileUsageId) -> {
+                            , (OnFileUploadListener) (fileId, fileUsageId) -> {
                                 if (me != null) {
                                     me.setAvatar(fileId);
                                     updateProfile();

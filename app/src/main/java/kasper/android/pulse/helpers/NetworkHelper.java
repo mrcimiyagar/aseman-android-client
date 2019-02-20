@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,6 +46,7 @@ import okhttp3.CipherSuite;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 import okhttp3.TlsVersion;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
@@ -71,6 +73,7 @@ public class NetworkHelper {
     public static ObjectMapper getMapper() {
         return mapper;
     }
+    private static OkHttpClient okHttpClient;
 
     public static void setup() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
@@ -84,7 +87,7 @@ public class NetworkHelper {
             return chain.proceed(newRequest.build());
         });
         HttpLoggingInterceptor loggerInterceptor = new HttpLoggingInterceptor();
-        loggerInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        loggerInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
         builder.addInterceptor(loggerInterceptor);
         builder.connectTimeout(60, TimeUnit.SECONDS);
         builder.writeTimeout(60, TimeUnit.SECONDS);
@@ -107,7 +110,7 @@ public class NetworkHelper {
                         CipherSuite.TLS_DHE_RSA_WITH_AES_256_CBC_SHA)
                 .build();
 
-        OkHttpClient client = builder.connectionSpecs(Arrays.asList(
+        okHttpClient = builder.connectionSpecs(Arrays.asList(
                 spec, ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)).build();
 
         mapper = new ObjectMapper()
@@ -115,20 +118,19 @@ public class NetworkHelper {
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         retrofit = new Retrofit.Builder()
                 .baseUrl(API_PATH)
-                .client(client)
+                .client(okHttpClient)
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(JacksonConverterFactory.create(mapper))
                 .build();
     }
 
-    public static void uploadFile(Entities.File file, long complexId, long roomId, boolean isAvatar, String path, ProgressListener progressListener, OnFileUploadListener uploadListener) {
+    public static void uploadFile(Entities.File file, long complexId, long roomId, boolean isAvatar, String path, OnFileUploadListener uploadListener) {
         Uploading uploading = new Uploading();
         uploading.setFile(file);
         uploading.setPath(path);
         uploading.setComplexId(complexId);
         uploading.setRoomId(roomId);
         uploading.setAvatarUsage(isAvatar);
-        uploading.setProgressListener(progressListener);
         uploading.setUploadListener(uploadListener);
         FilesService.uploadFile(uploading);
     }
@@ -172,19 +174,22 @@ public class NetworkHelper {
     }
 
     public static void requestServer(Call<Packet> call, ServerCallback callback) {
+        try {
+            Log.d("OkHttp", getMapper().writeValueAsString(call.request().body()));
+        } catch (Exception ignored) { }
         call.enqueue(new Callback<Packet>() {
             @Override
             public void onResponse(@NonNull Call<Packet> call, @NonNull Response<Packet> response) {
                 try {
-                    if (response.body() != null && response.body().getStatus().equals("success"))
+                    if (response.body() != null && response.body().getStatus().equals("success")) {
+                        Log.d("OkHttp", getMapper().writeValueAsString(response.body()));
                         callback.onRequestSuccess(response.body());
-                    else
+                    } else
                         callback.onServerFailure();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }
-
             @Override
             public void onFailure(@NonNull Call<Packet> call, @NonNull Throwable t) {
                 try {

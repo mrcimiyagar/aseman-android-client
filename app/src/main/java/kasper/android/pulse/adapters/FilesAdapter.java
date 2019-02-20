@@ -112,12 +112,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.Holder> impl
 
         holder.titleTV.setText(doc.getTitle());
 
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (selectCallback != null) {
-                    selectCallback.fileSelected(doc.getPath(), doc.getDocType());
-                }
+        holder.itemView.setOnClickListener(v -> {
+            if (selectCallback != null) {
+                selectCallback.fileSelected(doc.getPath(), doc.getDocType());
             }
         });
     }

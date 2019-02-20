@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
@@ -108,20 +110,29 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             if (message instanceof Entities.PhotoMessage) {
                 if (((Entities.PhotoMessage) message).getPhoto().getFileId() == fileId) {
                     Entities.FileLocal fileLocal = fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId());
-                    fileLocal.setProgress(progress);
+                    if (fileLocal != null) {
+                        fileLocal.setProgress(progress);
+                    }
                     notifyItemChanged(counter);
+                    break;
                 }
             } else if (message instanceof Entities.AudioMessage) {
                 if (((Entities.AudioMessage) message).getAudio().getFileId() == fileId) {
                     Entities.FileLocal fileLocal = fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId());
-                    fileLocal.setProgress(progress);
+                    if (fileLocal != null) {
+                        fileLocal.setProgress(progress);
+                    }
                     notifyItemChanged(counter);
+                    break;
                 }
             } else if (message instanceof Entities.VideoMessage) {
                 if (((Entities.VideoMessage) message).getVideo().getFileId() == fileId) {
                     Entities.FileLocal fileLocal = fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId());
-                    fileLocal.setProgress(progress);
+                    if (fileLocal != null) {
+                        fileLocal.setProgress(progress);
+                    }
                     notifyItemChanged(counter);
+                    break;
                 }
             }
             counter++;
@@ -135,18 +146,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         for (Entities.Message message : messages) {
             if (message instanceof Entities.PhotoMessage) {
                 if (((Entities.PhotoMessage) message).getPhoto().getFileId() == fileId) {
-                    fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId()).setTransferring(false);
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId());
+                    if (fileLocal != null)
+                        fileLocal.setTransferring(false);
                     notifyItemChanged(counter);
+                    break;
                 }
             } else if (message instanceof Entities.AudioMessage) {
                 if (((Entities.AudioMessage) message).getAudio().getFileId() == fileId) {
-                    fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId()).setTransferring(false);
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId());
+                    if (fileLocal != null)
+                        fileLocal.setTransferring(false);
                     notifyItemChanged(counter);
+                    break;
                 }
             } else if (message instanceof Entities.VideoMessage) {
                 if (((Entities.VideoMessage) message).getVideo().getFileId() == fileId) {
-                    fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId()).setTransferring(false);
+                    Entities.FileLocal fileLocal = fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId());
+                    if (fileLocal != null)
+                        fileLocal.setTransferring(false);
                     notifyItemChanged(counter);
+                    break;
                 }
             }
             counter++;
@@ -161,19 +181,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             if (message instanceof Entities.PhotoMessage) {
                 if (((Entities.PhotoMessage) message).getPhoto().getFileId() == localFileId) {
                     Entities.FileLocal fileLocal = fileLocals.get(((Entities.PhotoMessage) message).getPhoto().getFileId());
-                    fileLocal.setTransferring(false);
+                    if (fileLocal != null) {
+                        fileLocal.setTransferring(false);
+                    }
                     notifyItemChanged(counter);
                 }
             } else if (message instanceof Entities.AudioMessage) {
                 if (((Entities.AudioMessage) message).getAudio().getFileId() == localFileId) {
                     Entities.FileLocal fileLocal = fileLocals.get(((Entities.AudioMessage) message).getAudio().getFileId());
-                    fileLocal.setTransferring(false);
+                    if (fileLocal != null) {
+                        fileLocal.setTransferring(false);
+                    }
                     notifyItemChanged(counter);
                 }
             } else if (message instanceof Entities.VideoMessage) {
                 if (((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
                     Entities.FileLocal fileLocal = fileLocals.get(((Entities.VideoMessage) message).getVideo().getFileId());
-                    fileLocal.setTransferring(false);
+                    if (fileLocal != null) {
+                        fileLocal.setTransferring(false);
+                    }
                     notifyItemChanged(counter);
                 }
             }
@@ -191,23 +217,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         long onlineFileId = uploaded.getOnlineFileId();
         long localFileId = uploaded.getLocalFileId();
         Entities.FileLocal fileLocal = fileLocals.get(localFileId);
-        fileLocal.setFileId(onlineFileId);
-        fileLocal.setTransferring(false);
-        fileLocals.put(onlineFileId, fileLocal);
-        fileLocals.remove(localFileId);
-        int counter = 0;
-        for (Entities.Message message : messages) {
-            if (message instanceof Entities.PhotoMessage && ((Entities.PhotoMessage) message).getPhoto().getFileId() == localFileId) {
-                ((Entities.PhotoMessage) message).getPhoto().setFileId(onlineFileId);
-                notifyItemChanged(counter);
-            } else if (message instanceof Entities.AudioMessage && ((Entities.AudioMessage) message).getAudio().getFileId() == localFileId) {
-                ((Entities.AudioMessage) message).getAudio().setFileId(onlineFileId);
-                notifyItemChanged(counter);
-            } else if (message instanceof Entities.VideoMessage && ((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
-                ((Entities.VideoMessage) message).getVideo().setFileId(onlineFileId);
-                notifyItemChanged(counter);
+        if (fileLocal != null) {
+            fileLocal.setFileId(onlineFileId);
+            fileLocal.setTransferring(false);
+            fileLocals.put(onlineFileId, fileLocal);
+            fileLocals.remove(localFileId);
+            int counter = 0;
+            for (Entities.Message message : messages) {
+                if (message instanceof Entities.PhotoMessage && ((Entities.PhotoMessage) message).getPhoto().getFileId() == localFileId) {
+                    ((Entities.PhotoMessage) message).getPhoto().setFileId(onlineFileId);
+                    notifyItemChanged(counter);
+                    break;
+                } else if (message instanceof Entities.AudioMessage && ((Entities.AudioMessage) message).getAudio().getFileId() == localFileId) {
+                    ((Entities.AudioMessage) message).getAudio().setFileId(onlineFileId);
+                    notifyItemChanged(counter);
+                    break;
+                } else if (message instanceof Entities.VideoMessage && ((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
+                    ((Entities.VideoMessage) message).getVideo().setFileId(onlineFileId);
+                    notifyItemChanged(counter);
+                    break;
+                }
+                counter++;
             }
-            counter++;
         }
     }
 
@@ -262,18 +293,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         long onlineMessageId = messageSent.getOnlineMessageId();
         if (messageLocals.containsKey(localMessageId)) {
             Entities.MessageLocal messageLocal = messageLocals.get(localMessageId);
-            messageLocal.setMessageId(onlineMessageId);
-            messageLocal.setSent(true);
-            messageLocals.put(onlineMessageId, messageLocal);
-            messageLocals.remove(localMessageId);
-            int counter = 0;
-            for (Entities.Message message : messages) {
-                if (message.getMessageId() == localMessageId || message.getMessageId() == onlineMessageId) {
-                    message.setMessageId(onlineMessageId);
-                    notifyItemChanged(counter);
-                    break;
+            if (messageLocal != null) {
+                messageLocal.setMessageId(onlineMessageId);
+                messageLocal.setSent(true);
+                messageLocals.put(onlineMessageId, messageLocal);
+                messageLocals.remove(localMessageId);
+                int counter = 0;
+                for (Entities.Message message : messages) {
+                    if (message.getMessageId() == localMessageId || message.getMessageId() == onlineMessageId) {
+                        message.setMessageId(onlineMessageId);
+                        notifyItemChanged(counter);
+                        break;
+                    }
+                    counter++;
                 }
-                counter++;
             }
         }
     }
@@ -368,32 +401,46 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
 
+    private void handleSeenByMeResponse(Entities.Message rawMessage) {
+        Log.d("AsemanKeyhan", rawMessage.toString());
+        rawMessage.setSeenByMe(true);
+        if (rawMessage instanceof Entities.TextMessage)
+            DatabaseHelper.notifyTextMessageSeenByMe(rawMessage.getMessageId());
+        else if (rawMessage instanceof Entities.PhotoMessage)
+            DatabaseHelper.notifyPhotoMessageSeenByMe(rawMessage.getMessageId());
+        else if (rawMessage instanceof Entities.AudioMessage)
+            DatabaseHelper.notifyAudioMessageSeenByMe(rawMessage.getMessageId());
+        else if (rawMessage instanceof Entities.VideoMessage)
+            DatabaseHelper.notifyVideoMessageSeenByMe(rawMessage.getMessageId());
+        else if (rawMessage instanceof Entities.ServiceMessage)
+            DatabaseHelper.notifyServiceMessageSeenByMe(rawMessage.getMessageId());
+        Core.getInstance().bus().post(new RoomUnreadChanged(roomId));
+    }
+
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder rawHolder, int position) {
         final Entities.Message rawMessage = this.messages.get(position);
 
-        Packet packet = new Packet();
-        Entities.Message callMsg = new Entities.Message();
-        callMsg.setMessageId(rawMessage.getMessageId());
-        packet.setMessage(callMsg);
-        Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).notifyMessageSeen(packet);
-        NetworkHelper.requestServer(call, new ServerCallback() {
-            @Override
-            public void onRequestSuccess(Packet packet) {
-                rawMessage.setSeenByMe(true);
-                DatabaseHelper.notifyMessageUpdated(rawMessage);
-                Core.getInstance().bus().post(new RoomUnreadChanged(roomId));
-            }
-            @Override
-            public void onServerFailure() {
-                rawMessage.setSeenByMe(true);
-                DatabaseHelper.notifyMessageUpdated(rawMessage);
-                Core.getInstance().bus().post(new RoomUnreadChanged(roomId));
-            }
-            @Override
-            public void onConnectionFailure() { }
-        });
+        if (!rawMessage.isSeenByMe()) {
+            Packet packet = new Packet();
+            Entities.Message callMsg = new Entities.Message();
+            callMsg.setMessageId(rawMessage.getMessageId());
+            packet.setMessage(callMsg);
+            Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).notifyMessageSeen(packet);
+            NetworkHelper.requestServer(call, new ServerCallback() {
+                @Override
+                public void onRequestSuccess(Packet packet) {
+                    handleSeenByMeResponse(rawMessage);
+                }
+                @Override
+                public void onServerFailure() {
+                    handleSeenByMeResponse(rawMessage);
+                }
+                @Override
+                public void onConnectionFailure() { }
+            });
+        }
 
         int viewType = getItemViewType(position);
         if (viewType == 1 || viewType == 6) {
@@ -411,7 +458,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 if (messageLocal != null) {
                     if (messageLocal.isSent()) {
                         holder.signIV.setVisibility(View.VISIBLE);
-                        if (message.getSeenCount() > 0) {
+                        if (message.getSeenCount() > 0 || message.getRoom().getComplex().getMode() == 1) {
                             holder.signIV.setImageResource(R.drawable.ic_seen);
                         } else {
                             holder.signIV.setImageResource(R.drawable.ic_done);
@@ -492,7 +539,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 if (messageLocal != null) {
                     if (messageLocal.isSent()) {
                         holder.signIV.setVisibility(View.VISIBLE);
-                        if (message.getSeenCount() > 0) {
+                        if (message.getSeenCount() > 0 || message.getRoom().getComplex().getMode() == 1) {
                             holder.signIV.setImageResource(R.drawable.ic_seen);
                         } else {
                             holder.signIV.setImageResource(R.drawable.ic_done);
@@ -552,10 +599,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                             DatabaseHelper.notifyFileDownloaded(message.getPhoto().getFileId());
                                             activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileDownloaded(Photo, message.getPhoto().getFileId())));
                                         }
-
                                         @Override
                                         public void downloadFailed() {
-
+                                            Toast.makeText(activity, "File download failure", Toast.LENGTH_SHORT).show();
                                         }
                                     });
                         });
@@ -601,7 +647,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 if (messageLocal != null) {
                     if (messageLocal.isSent()) {
                         holder.signIV.setVisibility(View.VISIBLE);
-                        if (message.getSeenCount() > 0) {
+                        if (message.getSeenCount() > 0 || message.getRoom().getComplex().getMode() == 1) {
                             holder.signIV.setImageResource(R.drawable.ic_seen);
                         } else {
                             holder.signIV.setImageResource(R.drawable.ic_done);
@@ -660,7 +706,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
                                         @Override
                                         public void downloadFailed() {
-
+                                            Toast.makeText(activity, "File download failure", Toast.LENGTH_SHORT).show();
                                         }
                                     });
                         });
@@ -706,7 +752,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 if (messageLocal != null) {
                     if (messageLocal.isSent()) {
                         holder.signIV.setVisibility(View.VISIBLE);
-                        if (message.getSeenCount() > 0) {
+                        if (message.getSeenCount() > 0 || message.getRoom().getComplex().getMode() == 1) {
                             holder.signIV.setImageResource(R.drawable.ic_seen);
                         } else {
                             holder.signIV.setImageResource(R.drawable.ic_done);
@@ -773,7 +819,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                         }
                                         @Override
                                         public void downloadFailed() {
-
+                                            Toast.makeText(activity, "File download failure", Toast.LENGTH_SHORT).show();
                                         }
                                     });
                         });

@@ -214,7 +214,16 @@ public class NotificationsService extends IntentService {
         Entities.Message message = DatabaseHelper.getMessageById(msn.getMessageId());
         if (message != null) {
             message.setSeenCount(msn.getMessageSeenCount());
-            DatabaseHelper.notifyMessageUpdated(message);
+            if (message instanceof Entities.TextMessage)
+                DatabaseHelper.notifyTextMessageSeen(message.getMessageId(), message.getSeenCount());
+            else if (message instanceof Entities.PhotoMessage)
+                DatabaseHelper.notifyPhotoMessageSeen(message.getMessageId(), message.getSeenCount());
+            else if (message instanceof Entities.AudioMessage)
+                DatabaseHelper.notifyAudioMessageSeen(message.getMessageId(), message.getSeenCount());
+            else if (message instanceof Entities.VideoMessage)
+                DatabaseHelper.notifyVideoMessageSeen(message.getMessageId(), message.getSeenCount());
+            else if (message instanceof Entities.ServiceMessage)
+                DatabaseHelper.notifyServiceMessageSeen(message.getMessageId(), message.getSeenCount());
             Core.getInstance().bus().post(new MessageSeen(message));
         }
 

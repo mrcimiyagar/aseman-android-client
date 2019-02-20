@@ -109,9 +109,7 @@ public class CreateComplexActivity extends AppCompatActivity {
                         Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(
                                 true, selectedImageFile.getPath(), 56, 56);
                         Entities.File file = pair.first;
-                        NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath(),
-                                progress -> Core.getInstance().bus().post(new UiThreadRequested(() ->
-                                    progressBar.setProgress(progress)))
+                        NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath()
                                 , (OnFileUploadListener) (fileId, fileUsageId) -> {
                                     loadingView.setVisibility(View.GONE);
                                     complex.setAvatar(fileId);

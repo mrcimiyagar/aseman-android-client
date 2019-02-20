@@ -115,6 +115,26 @@ public abstract class MessageDao {
     abstract long getUnreadVideoMessagesCount(long myId, long roomId);
     @Query("select count(*) from servicemessage where roomId = :roomId and authorId != :myId and seenByMe = 0")
     abstract long getUnreadServiceMessagesCount(long myId, long roomId);
+    @Query("update textmessage set seenCount = :seenCount where messageId = :messageId")
+    public abstract void updateTextMessageSeenCount(long messageId, long seenCount);
+    @Query("update photomessage set seenCount = :seenCount where messageId = :messageId")
+    public abstract void updatePhotoMessageSeenCount(long messageId, long seenCount);
+    @Query("update audiomessage set seenCount = :seenCount where messageId = :messageId")
+    public abstract void updateAudioMessageSeenCount(long messageId, long seenCount);
+    @Query("update videomessage set seenCount = :seenCount where messageId = :messageId")
+    public abstract void updateVideoMessageSeenCount(long messageId, long seenCount);
+    @Query("update servicemessage set seenCount = :seenCount where messageId = :messageId")
+    public abstract void updateServiceMessageSeenCount(long messageId, long seenCount);
+    @Query("update textmessage set seenByMe = 1 where messageId = :messageId")
+    public abstract void notifyTextMessageSeenByMe(long messageId);
+    @Query("update photomessage set seenByMe = 1 where messageId = :messageId")
+    public abstract void notifyPhotoMessageSeenByMe(long messageId);
+    @Query("update audiomessage set seenByMe = 1 where messageId = :messageId")
+    public abstract void notifyAudioMessageSeenByMe(long messageId);
+    @Query("update videomessage set seenByMe = 1 where messageId = :messageId")
+    public abstract void notifyVideoMessageSeenByMe(long messageId);
+    @Query("update servicemessage set seenByMe = 1 where messageId = :messageId")
+    public abstract void notifyServiceMessageSeenByMe(long messageId);
     @Transaction
     public Entities.Message getMessageById(long mId) {
         Entities.TextMessage textMessage = getTextMessageById(mId);

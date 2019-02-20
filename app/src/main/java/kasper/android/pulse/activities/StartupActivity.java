@@ -3,6 +3,10 @@ package kasper.android.pulse.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.telephony.mbms.FileServiceInfo;
+import android.util.Log;
+
+import com.anadeainc.rxbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,18 +16,24 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.Pair;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.retrofit.AuthHandler;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.ContactHandler;
 import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.retrofit.RoomHandler;
+import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
+import kasper.android.pulse.services.FilesService;
+import kasper.android.pulse.services.MusicsService;
+import kasper.android.pulse.services.NotificationsService;
 import retrofit2.Call;
 
-public class StartupActivity extends AppCompatActivity {
+public class StartupActivity extends BaseActivity {
 
     long startTime;
 
@@ -43,18 +53,29 @@ public class StartupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_startup);
 
+        Core.getInstance().bus().register(this);
+
+        stopService(new Intent(this, FilesService.class));
+        stopService(new Intent(this, MusicsService.class));
+        stopService(new Intent(this, NotificationsService.class));
+
         startTime = System.currentTimeMillis();
 
-        Entities.Session session = DatabaseHelper.getSingleSession();
-        if (session != null && session.getBaseUserId() > 0)
+        if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("newUser"))
             startSyncing();
         else
             syncDone();
+    }
 
-        //if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("newUser"))
+    @Override
+    protected void onDestroy() {
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
+    }
 
-        //else
-          //  syncDone();
+    @Subscribe
+    public void onUiThreadRequested(UiThreadRequested uiThreadRequested) {
+        this.runOnUiThread(uiThreadRequested.getRunnable());
     }
 
     private void syncDone() {
@@ -282,7 +303,9 @@ public class StartupActivity extends AppCompatActivity {
         synchronized (TASKS_LOCK) {
             syncingRoomsCount--;
             if (syncingRoomsCount == 0) {
-                notifyTaskDone();
+                synchronized (TASKS_LOCK) {
+                    notifyTaskDone();
+                }
             }
         }
     }
@@ -290,7 +313,7 @@ public class StartupActivity extends AppCompatActivity {
     private void notifyTaskDone() {
         synchronized (TASKS_LOCK) {
             doneTasksCount++;
-            if (doneTasksCount == 4) {
+            if (doneTasksCount == 5) {
                 for (Entities.Contact contact : syncedContacts) {
                     DatabaseHelper.notifyContactCreated(contact);
                     DatabaseHelper.notifyUserCreated(contact.getPeer());

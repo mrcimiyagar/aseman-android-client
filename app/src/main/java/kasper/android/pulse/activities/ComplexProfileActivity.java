@@ -137,9 +137,7 @@ public class ComplexProfileActivity extends AppCompatActivity {
                             true, path, 256, 256);
                     Entities.File file = pair.first;
                     NetworkHelper.uploadFile(file, -1, -1, true, path
-                            , progress -> {
-
-                            }, (OnFileUploadListener) (fileId, fileUsageId) -> {
+                            , (OnFileUploadListener) (fileId, fileUsageId) -> {
                                 if (complex != null) {
                                     complex.setAvatar(fileId);
                                     updateProfile();
