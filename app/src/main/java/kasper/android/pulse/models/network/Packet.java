@@ -18,6 +18,7 @@ public class Packet {
     private Entities.Room Room;
     private Entities.Complex Complex;
     private Entities.ComplexSecret ComplexSecret;
+    private List<Entities.ComplexSecret> complexSecrets;
     private List<Entities.Workership> Workerships;
     private Entities.Workership Workership;
     private Entities.Bot Bot;
@@ -141,6 +142,14 @@ public class Packet {
 
     public void setComplexSecret(Entities.ComplexSecret complexSecret) {
         ComplexSecret = complexSecret;
+    }
+
+    public List<Entities.ComplexSecret> getComplexSecrets() {
+        return complexSecrets;
+    }
+
+    public void setComplexSecrets(List<Entities.ComplexSecret> complexSecrets) {
+        this.complexSecrets = complexSecrets;
     }
 
     public List<Entities.Workership> getWorkerships() {

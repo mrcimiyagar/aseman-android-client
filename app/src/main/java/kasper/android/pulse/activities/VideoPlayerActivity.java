@@ -42,6 +42,7 @@ import java.io.File;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.components.ZoomableExoPlayerView;
+import kasper.android.pulse.helpers.LogHelper;
 
 public class VideoPlayerActivity extends AppCompatActivity implements ExoPlayer.EventListener {
 
@@ -132,7 +133,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements ExoPlayer.
             case ExoPlayer.STATE_ENDED:
                 // do your processing after ending of video
 
-                Log.d("KasperLogger", "hello !");
+                LogHelper.log("KasperLogger", "hello !");
 
                 break;
         }

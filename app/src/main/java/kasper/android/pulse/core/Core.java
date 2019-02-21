@@ -10,6 +10,7 @@ import io.fabric.sdk.android.Fabric;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 
 /**
@@ -32,6 +33,7 @@ public class Core extends Application {
         Fabric.with(fabric);
         super.onCreate();
         instance = this;
+        LogHelper.start();
         CallbackHelper.setup();
         GraphicHelper.setup(this);
         DatabaseHelper.setup();

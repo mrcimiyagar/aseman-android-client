@@ -35,7 +35,7 @@ public class DatabaseHelper {
         java.io.File storageDir = new java.io.File(Environment.getExternalStorageDirectory(), DatabaseHelper.StorageDir);
         if (!storageDir.exists()) {
             if (storageDir.mkdirs()) {
-                Log.d("Aseman", "Storage Dir initialized or checked successfully");
+                LogHelper.log("Aseman", "Storage Dir initialized or checked successfully");
             }
         }
         KeyValueDao keyValueDao = AsemanDB.getInstance().getKeyValueDao();
@@ -216,18 +216,22 @@ public class DatabaseHelper {
 
     public static Entities.Complex getComplexById(long complexId) {
         Entities.Complex complex = AsemanDB.getInstance().getComplexDao().getComplexById(complexId);
-        complex.setComplexSecret(AsemanDB.getInstance().getComplexSecretDao().getComplexSecretByComplexId(complexId));
-        complex.setRooms(AsemanDB.getInstance().getRoomDao().getComplexRooms(complexId));
+        if (complex != null) {
+            complex.setComplexSecret(AsemanDB.getInstance().getComplexSecretDao().getComplexSecretByComplexId(complexId));
+            complex.setRooms(AsemanDB.getInstance().getRoomDao().getComplexRooms(complexId));
+        }
         return complex;
     }
 
     public static Entities.Room getRoomById(long roomId) {
         Entities.Room room = AsemanDB.getInstance().getRoomDao().getRoomById(roomId);
-        room.setComplex(AsemanDB.getInstance().getComplexDao().getComplexById(room.getComplexId()));
-        room.setLastAction(AsemanDB.getInstance().getMessageDao().getLastAction(roomId));
-        if (room.getLastAction() != null)
-            room.getLastAction().setAuthor(AsemanDB.getInstance().getUserDao()
-                    .getUserById(room.getLastAction().getAuthorId()));
+        if (room != null) {
+            room.setComplex(AsemanDB.getInstance().getComplexDao().getComplexById(room.getComplexId()));
+            room.setLastAction(AsemanDB.getInstance().getMessageDao().getLastAction(roomId));
+            if (room.getLastAction() != null)
+                room.getLastAction().setAuthor(AsemanDB.getInstance().getUserDao()
+                        .getUserById(room.getLastAction().getAuthorId()));
+        }
         return room;
     }
 
@@ -498,7 +502,7 @@ public class DatabaseHelper {
         msg.setTime(time);
         messageDao.insert(msg);
         try {
-            Log.d("AsemanTest", NetworkHelper.getMapper().writeValueAsString(AsemanDB.getInstance().getMessageDao().getMessageById(messageId)));
+            LogHelper.log("AsemanTest", NetworkHelper.getMapper().writeValueAsString(AsemanDB.getInstance().getMessageDao().getMessageById(messageId)));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -855,7 +859,7 @@ public class DatabaseHelper {
         java.io.File file = new java.io.File(getFilePath(fileId));
         if (file.exists()) {
             if (file.delete()) {
-                Log.d("Aseman", "Clearing cancelled download temp");
+                LogHelper.log("Aseman", "Clearing cancelled download temp");
             }
         }
     }
@@ -872,8 +876,8 @@ public class DatabaseHelper {
             localMessages.put(messageLocal.getMessageId(), messageLocal);
         }
         try {
-            Log.d("Aseman", NetworkHelper.getMapper().writeValueAsString(messages));
-            Log.d("Aseman", NetworkHelper.getMapper().writeValueAsString(localMessages));
+            LogHelper.log("Aseman", NetworkHelper.getMapper().writeValueAsString(messages));
+            LogHelper.log("Aseman", NetworkHelper.getMapper().writeValueAsString(localMessages));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -958,7 +962,7 @@ public class DatabaseHelper {
             usersTable.put(user.getBaseUserId(), user);
         HashSet<Long> fileIds = new HashSet<>();
         try {
-            Log.d("HelloAseman", NetworkHelper.getMapper().writeValueAsString(messages));
+            LogHelper.log("HelloAseman", NetworkHelper.getMapper().writeValueAsString(messages));
         } catch (Exception ignored) {
 
         }
@@ -1013,6 +1017,10 @@ public class DatabaseHelper {
 
     public static void notifyInviteReceived(Entities.Invite invite) {
         AsemanDB.getInstance().getInviteDao().insert(invite);
+    }
+
+    public static boolean doesInviteExist(long complexId, long userId) {
+        return AsemanDB.getInstance().getInviteDao().getInviteByComplexIdAndUserId(complexId, userId) != null;
     }
 
     public static void notifyInviteSent(Entities.Invite invite) {

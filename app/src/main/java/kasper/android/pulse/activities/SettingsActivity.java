@@ -104,11 +104,27 @@ public class SettingsActivity extends BaseActivity {
                             .setPositiveBackgroundColorResource(R.color.colorPrimary)
                             .setPositiveBackgroundColor(getResources().getColor(R.color.colorBlue))
                             .setPositiveTextColor(Color.WHITE)
-                            .onPositive(dialog -> {
-                                AsemanDB.deleteAllData();
-                                startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
-                            })
+                            .onPositive(dialog -> NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(AuthHandler.class).logout()
+                                    , new ServerCallback() {
+                                        @Override
+                                        public void onRequestSuccess(Packet packet) {
+                                            AsemanDB.deleteAllData();
+                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                        }
+                                        @Override
+                                        public void onServerFailure() {
+                                            AsemanDB.deleteAllData();
+                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                        }
+                                        @Override
+                                        public void onConnectionFailure() {
+                                            AsemanDB.deleteAllData();
+                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                        }
+                                    }))
                             .setNegativeText("Cancel")
                             .setNegativeTextColor(Color.WHITE)
                             .onNegative(BottomDialog::dismiss)

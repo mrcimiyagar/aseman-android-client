@@ -123,8 +123,9 @@ public class DataSyncer {
             @Override
             public void onRequestSuccess(Packet packet) {
                 Entities.User serverMe = packet.getUser();
+                Entities.UserSecret userSecret = packet.getUserSecret();
                 DatabaseHelper.updateMe(serverMe);
-                callback.meSynced(serverMe, serverMe.getUserSecret().getHomeId());
+                callback.meSynced(serverMe, userSecret.getHomeId());
             }
 
             @Override

@@ -176,7 +176,7 @@ public class HomeActivity extends BaseActivity {
                 (dialogInterface, i) -> {
                     if (i == 0) {
                         startActivity(new Intent(HomeActivity.this, ComplexProfileActivity.class)
-                                .putExtra("complex-id", chosenComplexId));
+                                .putExtra("complex", DatabaseHelper.getComplexById(chosenComplexId)));
                     } else if (i == 1) {
                         startActivity(new Intent(HomeActivity.this, CreateRoomActivity.class)
                                 .putExtra("complex_id", chosenComplexId));

@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
+import kasper.android.pulse.helpers.LogHelper;
+
 import android.util.Log;
 
 import java.io.File;
@@ -31,13 +33,13 @@ public class MusicsService extends IntentService {
 
     @Override
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
-        Log.d("KasperLogger", "Music service started");
+        LogHelper.log("KasperLogger", "Music service started");
         if (intent != null && intent.getExtras() != null) {
             String command = intent.getExtras().getString("command");
             if (command != null) {
                 switch (command) {
                     case "play":
-                        Log.d("KasperLogger", "play");
+                        LogHelper.log("KasperLogger", "play");
                         String path = intent.getExtras().getString("path");
                         try {
                             mediaPlayer.reset();
@@ -58,7 +60,7 @@ public class MusicsService extends IntentService {
                         }
                         break;
                     case "resume":
-                        Log.d("KasperLogger", "resume");
+                        LogHelper.log("KasperLogger", "resume");
                         try {
                             mediaPlayer.start();
                         } catch (Exception ignored) {
@@ -66,21 +68,21 @@ public class MusicsService extends IntentService {
                         }
                         break;
                     case "pause":
-                        Log.d("KasperLogger", "pause");
+                        LogHelper.log("KasperLogger", "pause");
                         try {
                             mediaPlayer.pause();
                         } catch (Exception ignored) {
                         }
                         break;
                     case "stop":
-                        Log.d("KasperLogger", "stop");
+                        LogHelper.log("KasperLogger", "stop");
                         try {
                             mediaPlayer.stop();
                         } catch (Exception ignored) {
                         }
                         break;
                     case "seek-to":
-                        Log.d("KasperLogger", "seek-to");
+                        LogHelper.log("KasperLogger", "seek-to");
                         int position = intent.getExtras().getInt("position");
                         try {
                             mediaPlayer.seekTo(position);
@@ -90,7 +92,7 @@ public class MusicsService extends IntentService {
                 }
             }
         }
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     @Override
@@ -101,7 +103,7 @@ public class MusicsService extends IntentService {
 
     @Override
     public void onDestroy() {
-        Log.d("KasperLogger", "Music service destroyed");
+        LogHelper.log("KasperLogger", "Music service destroyed");
         super.onDestroy();
     }
 

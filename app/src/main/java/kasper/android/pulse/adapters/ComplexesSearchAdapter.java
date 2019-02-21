@@ -44,7 +44,7 @@ public class ComplexesSearchAdapter extends RecyclerView.Adapter<ComplexesSearch
         holder.itemView.setOnClickListener(view -> {
             if (DatabaseHelper.isComplexInDatabase(complex.getComplexId())) {
                 activity.startActivity(new Intent(activity, ComplexProfileActivity.class)
-                        .putExtra("complex-id", complex.getComplexId()));
+                        .putExtra("complex", complex));
             }
         });
     }

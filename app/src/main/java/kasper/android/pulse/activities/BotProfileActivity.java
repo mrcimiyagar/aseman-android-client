@@ -46,7 +46,7 @@ public class BotProfileActivity extends AppCompatActivity {
             tokenTV.setOnLongClickListener(view -> {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("Bot Token", tokenTV.getText().toString());
-                Objects.requireNonNull(clipboard).setPrimaryClip(clip);
+                clipboard.setPrimaryClip(clip);
                 Toast.makeText(this, "Token copied to clipboard", Toast.LENGTH_SHORT).show();
                 return true;
             });

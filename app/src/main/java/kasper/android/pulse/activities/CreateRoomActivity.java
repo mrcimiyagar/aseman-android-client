@@ -23,6 +23,7 @@ import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
@@ -106,10 +107,10 @@ public class CreateRoomActivity extends AppCompatActivity {
                     if (selectedImageFile != null && selectedImageFile.exists()) {
                         Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
                         Entities.Photo file = (Entities.Photo) pair.first;
-                        Log.d("AsemanKasper", "hello keyhan 2");
+                        LogHelper.log("AsemanKasper", "hello keyhan 2");
                         NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath(),
                                 (OnFileUploadListener) (fileId, fileUsageId) -> {
-                                    Log.d("AsemanKasper", "hello keyhan 1");
+                                    LogHelper.log("AsemanKasper", "hello keyhan 1");
                                     loadingView.setVisibility(View.GONE);
                                     Packet packet2 = new Packet();
                                     room.setAvatar(fileId);

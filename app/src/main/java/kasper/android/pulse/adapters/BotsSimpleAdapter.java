@@ -43,8 +43,9 @@ public class BotsSimpleAdapter extends RecyclerView.Adapter<BotsSimpleAdapter.Bo
         holder.itemView.setOnClickListener(view ->
                 activity.startActivity(new Intent(activity, BotProfileActivity.class)
                         .putExtra("bot_id", bot.getBaseUserId())
-                        .putExtra("token", bot.getSessions().get(0).getSessionId() + " " +
-                                bot.getBotSecret().getToken())));
+                        .putExtra("token", bot.getSessions().size() > 0 && bot.getSessions()
+                                .get(0) != null ? bot.getSessions().get(0).getSessionId() + " " +
+                                bot.getBotSecret().getToken() : "")));
     }
 
     @Override

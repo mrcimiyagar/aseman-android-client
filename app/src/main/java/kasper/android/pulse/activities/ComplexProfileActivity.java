@@ -46,7 +46,6 @@ import retrofit2.Call;
 
 public class ComplexProfileActivity extends AppCompatActivity {
 
-    private long complexId;
     private Entities.Complex complex;
 
     private ImageView avatarIV;
@@ -72,20 +71,16 @@ public class ComplexProfileActivity extends AppCompatActivity {
         }
 
         if (getIntent().getExtras() != null)
-            complexId = getIntent().getExtras().getLong("complex-id");
+            complex = (Entities.Complex) getIntent().getExtras().getSerializable("complex");
         roomsRV.setLayoutManager(new LinearLayoutManager(ComplexProfileActivity.this
                 , RecyclerView.VERTICAL, false));
         roomsRV.addItemDecoration(new LinearDecoration(GraphicHelper.dpToPx(16), GraphicHelper.dpToPx(88)));
 
-        complex = DatabaseHelper.getComplexById(complexId);
-
-        if (complex.getComplexSecret() != null && !complex.getTitle().toLowerCase().equals("home"))
-            editFAB.show();
-        else
-            editFAB.hide();
+        if (complex.getComplexSecret() == null || complex.getMode() < 3)
+            editFAB.setVisibility(View.GONE);
 
         fillContent(complex);
-        DataSyncer.syncComplexWithServer(complexId, new OnComplexSyncListener() {
+        DataSyncer.syncComplexWithServer(complex.getComplexId(), new OnComplexSyncListener() {
             @Override
             public void complexSynced(Entities.Complex complex) {
                 ComplexProfileActivity.this.complex.setTitle(complex.getTitle());
@@ -95,8 +90,8 @@ public class ComplexProfileActivity extends AppCompatActivity {
             @Override
             public void syncFailed() { }
         });
-        fillRooms(DatabaseHelper.getRooms(complexId));
-        DataSyncer.syncRoomsWithServer(complexId, new OnRoomsSyncListener() {
+        fillRooms(DatabaseHelper.getRooms(complex.getComplexId()));
+        DataSyncer.syncRoomsWithServer(complex.getComplexId(), new OnRoomsSyncListener() {
             @Override
             public void roomsSynced(List<Entities.Room> rooms) {
                 fillRooms(rooms);
@@ -116,8 +111,13 @@ public class ComplexProfileActivity extends AppCompatActivity {
 
     @SuppressLint("SetTextI18n")
     private void fillContent(Entities.Complex complex) {
-        titleTV.setText(complex.getTitle());
-        long memCount = DatabaseHelper.getMembersCount(complexId);
+        if (complex.getMode() == 2) {
+            Entities.Contact contact = DatabaseHelper.getContactByComplexId(complex.getComplexId());
+            Entities.User user = contact.getPeer();
+            titleTV.setText(user.getTitle());
+        } else
+            titleTV.setText(complex.getTitle());
+        long memCount = DatabaseHelper.getMembersCount(complex.getComplexId());
         memberCountTV.setText(memCount + " " + (memCount == 1 ? "member" : "members"));
         NetworkHelper.loadComplexAvatar(complex.getAvatar(), avatarIV);
     }

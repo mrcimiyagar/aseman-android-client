@@ -38,6 +38,7 @@ import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
@@ -402,7 +403,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     private void handleSeenByMeResponse(Entities.Message rawMessage) {
-        Log.d("AsemanKeyhan", rawMessage.toString());
         rawMessage.setSeenByMe(true);
         if (rawMessage instanceof Entities.TextMessage)
             DatabaseHelper.notifyTextMessageSeenByMe(rawMessage.getMessageId());
@@ -422,7 +422,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder rawHolder, int position) {
         final Entities.Message rawMessage = this.messages.get(position);
 
-        if (!rawMessage.isSeenByMe()) {
+        if (!rawMessage.isSeenByMe() && rawMessage.getAuthorId() != myId) {
             Packet packet = new Packet();
             Entities.Message callMsg = new Entities.Message();
             callMsg.setMessageId(rawMessage.getMessageId());

@@ -34,6 +34,7 @@ import com.google.android.material.appbar.CollapsingToolbarLayout;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.ViewCompat;
 import kasper.android.pulse.R;
+import kasper.android.pulse.helpers.LogHelper;
 
 /**
  * Created by henrytao on 9/24/15.
@@ -44,7 +45,7 @@ public class SmoothCollapsingToolbarLayout extends LinearLayout {
 
   private static void log(String s, Object... args) {
     if (DEBUG) {
-      Log.d("debug", String.format(s, args));
+      LogHelper.log("debug", String.format(s, args));
     }
   }
 

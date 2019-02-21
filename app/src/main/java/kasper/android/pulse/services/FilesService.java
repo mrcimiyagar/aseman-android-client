@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.DocTypes;
@@ -73,7 +74,7 @@ public class FilesService extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        Log.d("Aseman", "File service started");
+        LogHelper.log("Aseman", "File service started");
 
         alive = true;
 
@@ -211,12 +212,12 @@ public class FilesService extends IntentService {
             downloaderThread.start();
         }
 
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        Log.d("Aseman", "File service destroyed");
+        LogHelper.log("Aseman", "File service destroyed");
         alive = false;
         super.onDestroy();
     }

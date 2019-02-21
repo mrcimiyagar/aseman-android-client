@@ -169,7 +169,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         Entities.Room room = rooms.get(position);
         RoomItem vh = (RoomItem) holder;
         NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
-        vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
+        vh.nameTV.setText(room.getTitle());
         Entities.Message lastAction = room.getLastAction();
         if (lastAction != null) {
             if (lastAction instanceof Entities.TextMessage)

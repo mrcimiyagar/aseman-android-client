@@ -83,27 +83,33 @@ public class ProfileActivity extends AppCompatActivity {
                     if (data.getExtras() != null) {
                         if (data.getExtras().containsKey("complex")) {
                             Entities.Complex complex = (Entities.Complex) data.getExtras().getSerializable("complex");
-                            Packet packet = new Packet();
-                            packet.setComplex(complex);
-                            Entities.User user = new Entities.User();
-                            user.setBaseUserId(humanId);
-                            packet.setUser(user);
-                            Call<Packet> call = NetworkHelper.getRetrofit().create(InviteHandler.class).createInvite(packet);
-                            NetworkHelper.requestServer(call, new ServerCallback() {
-                                @Override
-                                public void onRequestSuccess(Packet packet) {
-                                    DatabaseHelper.notifyInviteSent(packet.getInvite());
-                                    Toast.makeText(ProfileActivity.this, "Invite sent.", Toast.LENGTH_SHORT).show();
-                                }
-                                @Override
-                                public void onServerFailure() {
-                                    Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
-                                }
-                                @Override
-                                public void onConnectionFailure() {
-                                    Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            if (complex != null) {
+                                Packet packet = new Packet();
+                                Entities.Complex c = new Entities.Complex();
+                                c.setComplexId(complex.getComplexId());
+                                packet.setComplex(c);
+                                Entities.User user = new Entities.User();
+                                user.setBaseUserId(humanId);
+                                packet.setUser(user);
+                                Call<Packet> call = NetworkHelper.getRetrofit().create(InviteHandler.class).createInvite(packet);
+                                NetworkHelper.requestServer(call, new ServerCallback() {
+                                    @Override
+                                    public void onRequestSuccess(Packet packet) {
+                                        DatabaseHelper.notifyInviteSent(packet.getInvite());
+                                        Toast.makeText(ProfileActivity.this, "Invite sent.", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onServerFailure() {
+                                        Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onConnectionFailure() {
+                                        Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
                         }
                     }
                 }
@@ -208,7 +214,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public void onInviteBtnClicked(View view) {
-        startActivityForResult(new Intent(this, ComplexPickerActivity.class), 123);
+        startActivityForResult(new Intent(this, ComplexPickerActivity.class).putExtra("user_id", humanId), 123);
     }
 
     public void onBackBtnClicked(View view) {

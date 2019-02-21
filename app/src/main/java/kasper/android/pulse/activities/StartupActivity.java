@@ -41,6 +41,7 @@ public class StartupActivity extends BaseActivity {
     private final Object TASKS_LOCK = new Object();
     private List<Entities.Contact> syncedContacts = new ArrayList<>();
     private List<Entities.Complex> syncedComplexes = new ArrayList<>();
+    private List<Entities.ComplexSecret> syncedComplexSecrets = new ArrayList<>();
     private List<Entities.Bot> syncedBotCreationsBots = new ArrayList<>();
     private List<Entities.BotCreation> syncedBotCreations = new ArrayList<>();
     private List<Entities.Bot> syncedBotSubscriptionsBots = new ArrayList<>();
@@ -147,6 +148,7 @@ public class StartupActivity extends BaseActivity {
             public void onRequestSuccess(Packet p) {
                 new Thread(() -> {
                     syncedComplexes = p.getComplexes();
+                    syncedComplexSecrets = p.getComplexSecrets();
                     initMessages();
                     synchronized (TASKS_LOCK) {
                         notifyTaskDone();
@@ -327,6 +329,9 @@ public class StartupActivity extends BaseActivity {
                         DatabaseHelper.notifyMembershipCreated(mem);
                         DatabaseHelper.notifyUserCreated(mem.getUser());
                     }
+                }
+                for (Entities.ComplexSecret complexSecret : syncedComplexSecrets) {
+                    DatabaseHelper.notifyComplexSecretCreated(complexSecret);
                 }
                 for (int counter = 0; counter < syncedBotCreationsBots.size(); counter++) {
                     DatabaseHelper.notifyBotCreated(syncedBotCreationsBots.get(counter)
