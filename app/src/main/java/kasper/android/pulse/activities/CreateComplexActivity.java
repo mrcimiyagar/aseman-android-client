@@ -2,38 +2,38 @@ package kasper.android.pulse.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import com.anadeainc.rxbus.Subscribe;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
-
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
-import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.GlideApp;
+import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
-import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
+import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
-import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
+import kasper.android.pulse.rxbus.notifications.ShowToast;
+import kasper.android.pulse.services.FilesService;
 import retrofit2.Call;
 
 public class CreateComplexActivity extends AppCompatActivity {
@@ -44,19 +44,31 @@ public class CreateComplexActivity extends AppCompatActivity {
     private CircularProgressBar progressBar;
     private OneClickFAB saveFAB;
 
+    private long fileId;
+
     File selectedImageFile;
     Entities.Complex complex = null;
+    Entities.Room room = null;
+    Entities.ServiceMessage message = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_complex);
 
+        Core.getInstance().bus().register(this);
+
         avatarIV = findViewById(R.id.activity_create_room_avatar_image_view);
         nameET = findViewById(R.id.activity_create_room_name_edit_text);
         loadingView = findViewById(R.id.page_add_room_loading_view);
         progressBar = findViewById(R.id.page_add_room_progress_bar);
         saveFAB = findViewById(R.id.saveFAB);
+    }
+
+    @Override
+    protected void onDestroy() {
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
     }
 
     @Override
@@ -99,42 +111,15 @@ public class CreateComplexActivity extends AppCompatActivity {
                 public void onRequestSuccess(Packet packet) {
                     complex = packet.getComplex();
                     Entities.ComplexSecret complexSecret = packet.getComplexSecret();
-                    Entities.Room room = complex.getRooms().get(0);
-                    Entities.ServiceMessage message = packet.getServiceMessage();
+                    room = complex.getRooms().get(0);
+                    message = packet.getServiceMessage();
                     DatabaseHelper.notifyComplexCreated(complex);
                     DatabaseHelper.notifyComplexSecretCreated(complexSecret);
                     DatabaseHelper.notifyRoomCreated(room);
                     DatabaseHelper.notifyServiceMessageReceived(message);
                     if (selectedImageFile != null && selectedImageFile.exists()) {
-                        Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(
-                                true, selectedImageFile.getPath(), 56, 56);
-                        Entities.File file = pair.first;
-                        NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath()
-                                , (OnFileUploadListener) (fileId, fileUsageId) -> {
-                                    loadingView.setVisibility(View.GONE);
-                                    complex.setAvatar(fileId);
-                                    Packet packet2 = new Packet();
-                                    packet2.setComplex(complex);
-                                    ComplexHandler profileHandler = NetworkHelper.getRetrofit().create(ComplexHandler.class);
-                                    Call<Packet> call2 = profileHandler.updateComplexProfile(packet2);
-                                    NetworkHelper.requestServer(call2, new ServerCallback() {
-                                        @Override
-                                        public void onRequestSuccess(Packet packet) {
-                                            DatabaseHelper.updateComplex(complex);
-                                            taskDone(complex, room, message);
-                                        }
-                                        @Override
-                                        public void onServerFailure() {
-                                            Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
-                                            taskDone(complex, room, message);
-                                        }
-                                        @Override
-                                        public void onConnectionFailure() {
-                                            Toast.makeText(CreateComplexActivity.this, "Complex profile update failure", Toast.LENGTH_SHORT).show();
-                                            taskDone(complex, room, message);
-                                        }
-                                    });
-                                });
+                        fileId = FilesService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
+                                , -1, -1, true, false));
                     } else {
                         taskDone(complex, room, message);
                     }
@@ -148,6 +133,44 @@ public class CreateComplexActivity extends AppCompatActivity {
                 public void onConnectionFailure() {
                     Toast.makeText(CreateComplexActivity.this, "Complex creation failure", Toast.LENGTH_SHORT).show();
                     saveFAB.enable();
+                }
+            });
+        }
+    }
+
+    @Subscribe
+    public void onFileTransferProgressed(FileTransferProgressed progressed) {
+        if (progressed.getFileId() == fileId) {
+            progressBar.setProgress(progressed.getProgress());
+        }
+    }
+
+    @Subscribe
+    public void onFileUploaded(FileUploaded fileUploaded) {
+        if (fileUploaded.getLocalFileId() == fileId) {
+            loadingView.setVisibility(View.GONE);
+            complex.setAvatar(fileUploaded.getOnlineFileId());
+            Packet packet2 = new Packet();
+            packet2.setComplex(complex);
+            ComplexHandler profileHandler = NetworkHelper.getRetrofit().create(ComplexHandler.class);
+            Call<Packet> call2 = profileHandler.updateComplexProfile(packet2);
+            NetworkHelper.requestServer(call2, new ServerCallback() {
+                @Override
+                public void onRequestSuccess(Packet packet) {
+                    DatabaseHelper.updateComplex(complex);
+                    taskDone(complex, room, message);
+                }
+
+                @Override
+                public void onServerFailure() {
+                    Core.getInstance().bus().post(new ShowToast("Complex profile update failure"));
+                    taskDone(complex, room, message);
+                }
+
+                @Override
+                public void onConnectionFailure() {
+                    Core.getInstance().bus().post(new ShowToast("Complex profile update failure"));
+                    taskDone(complex, room, message);
                 }
             });
         }

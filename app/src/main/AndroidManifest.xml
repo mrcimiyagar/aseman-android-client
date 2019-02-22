@@ -87,6 +87,18 @@
         <activity
             android:name=".activities.ComplexProfileActivity"
             android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.CreateBotActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.BotProfileActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.BotsActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".activities.WorkershipDataActivity"
+            android:theme="@style/AppTheme" />
 
         <service
             android:name=".services.NotificationsService"
@@ -95,7 +107,13 @@
             android:name=".services.FilesService"
             android:stopWithTask="false" />
         <service
+            android:name=".services.MessagesService"
+            android:stopWithTask="false" />
+        <service
             android:name=".services.MusicsService"
+            android:stopWithTask="false" />
+        <service
+            android:name=".services.ProfileService"
             android:stopWithTask="false" />
 
         <receiver android:name=".services.Startup">
@@ -108,15 +126,10 @@
             android:name="io.fabric.ApiKey"
             android:value="150771ddf9d9dff9613be1ba467da98fae3e364d" />
 
-        <activity android:name=".activities.CreateBotActivity" />
-        <activity android:name=".activities.BotProfileActivity" />
-
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="150771ddf9d9dff9613be1ba467da98fae3e364d" />
 
-        <activity android:name=".activities.BotsActivity" />
-        <activity android:name=".activities.WorkershipDataActivity" />
     </application>
 
 </manifest>

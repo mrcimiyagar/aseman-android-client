@@ -11,20 +11,14 @@ import com.anadeainc.rxbus.Subscribe;
 
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
-import kasper.android.pulse.activities.ChatActivity;
 import kasper.android.pulse.activities.RoomActivity;
-import kasper.android.pulse.callbacks.ui.ContactListener;
-import kasper.android.pulse.callbacks.ui.MessageListener;
-import kasper.android.pulse.callbacks.ui.RoomListener;
 import kasper.android.pulse.core.Core;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;

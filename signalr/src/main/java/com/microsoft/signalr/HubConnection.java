@@ -445,6 +445,7 @@ public class HubConnection {
             }
             if (errorMessage != null) {
                 exception = new RuntimeException(errorMessage);
+                exception.printStackTrace();
                 logger.error("HubConnection disconnected with an error {}.", errorMessage);
             }
             if (connectionState != null) {
@@ -608,6 +609,7 @@ public class HubConnection {
             onClosedCallbackList = new ArrayList<>();
         }
 
+        onClosedCallbackList.clear();
         onClosedCallbackList.add(callback);
     }
 

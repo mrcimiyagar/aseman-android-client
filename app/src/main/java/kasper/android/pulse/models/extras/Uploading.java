@@ -1,24 +1,29 @@
 package kasper.android.pulse.models.extras;
 
-import kasper.android.pulse.callbacks.network.OnFileUploadListener;
-import kasper.android.pulse.models.entities.Entities;
-
 public class Uploading {
 
-    private Entities.File file;
+    private DocTypes docType;
     private String path;
     private long complexId;
     private long roomId;
-    private boolean avatarUsage;
-    private ProgressListener progressListener;
-    private OnFileUploadListener uploadListener;
+    private boolean compress;
+    private boolean attachToMessage;
 
-    public Entities.File getFile() {
-        return file;
+    public Uploading(DocTypes docType, String path, long complexId, long roomId, boolean compress, boolean attachToMessage) {
+        this.docType = docType;
+        this.path = path;
+        this.complexId = complexId;
+        this.roomId = roomId;
+        this.compress = compress;
+        this.attachToMessage = attachToMessage;
     }
 
-    public void setFile(Entities.File file) {
-        this.file = file;
+    public DocTypes getDocType() {
+        return docType;
+    }
+
+    public void setDocType(DocTypes docType) {
+        this.docType = docType;
     }
 
     public String getPath() {
@@ -45,27 +50,19 @@ public class Uploading {
         this.roomId = roomId;
     }
 
-    public ProgressListener getProgressListener() {
-        return progressListener;
+    public boolean isCompress() {
+        return compress;
     }
 
-    public void setProgressListener(ProgressListener progressListener) {
-        this.progressListener = progressListener;
+    public void setCompress(boolean compress) {
+        this.compress = compress;
     }
 
-    public OnFileUploadListener getUploadListener() {
-        return uploadListener;
+    public boolean isAttachToMessage() {
+        return attachToMessage;
     }
 
-    public void setUploadListener(OnFileUploadListener uploadListener) {
-        this.uploadListener = uploadListener;
-    }
-
-    public boolean isAvatarUsage() {
-        return avatarUsage;
-    }
-
-    public void setAvatarUsage(boolean avatarUsage) {
-        this.avatarUsage = avatarUsage;
+    public void setAttachToMessage(boolean attachToMessage) {
+        this.attachToMessage = attachToMessage;
     }
 }

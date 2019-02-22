@@ -32,13 +32,26 @@ public class PhotoViewerActivity extends AppCompatActivity {
 
         final ImageView photoIV = findViewById(R.id.activity_photo_viewer_image_view);
         photoIV.setOnTouchListener(new ImageMatrixTouchHandler(this));
-        File file = new File(DatabaseHelper.getFilePath(fileId));
-        if (!file.exists()) {
-            GlideApp.with(this).load(NetworkHelper.createFileLink(fileId)).into(photoIV);
+        Entities.FileLocal fileLocal = DatabaseHelper.getFileLocalByFileId(fileId);
+        if (fileLocal != null) {
+            if (fileLocal.getPath() != null && fileLocal.getPath().length() > 0) {
+                GlideApp.with(this).load(fileLocal.getPath()).into(photoIV);
+            } else {
+                File file = new File(DatabaseHelper.getFilePath(fileId));
+                if (!file.exists()) {
+                    GlideApp.with(this).load(NetworkHelper.createFileLink(fileId)).into(photoIV);
+                } else {
+                    GlideApp.with(this).load(file.getPath()).into(photoIV);
+                }
+            }
         } else {
-            GlideApp.with(this).load(DatabaseHelper.getFilePath(fileId)).into(photoIV);
+            File file = new File(DatabaseHelper.getFilePath(fileId));
+            if (!file.exists()) {
+                GlideApp.with(this).load(NetworkHelper.createFileLink(fileId)).into(photoIV);
+            } else {
+                GlideApp.with(this).load(file.getPath()).into(photoIV);
+            }
         }
-
     }
 
     public void onCloseBtnClicked(View view) {

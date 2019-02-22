@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +13,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
@@ -34,13 +32,12 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.activities.MusicPlayerActivity;
 import kasper.android.pulse.activities.PhotoViewerActivity;
 import kasper.android.pulse.activities.VideoPlayerActivity;
-import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.MessageHandler;
@@ -57,6 +54,7 @@ import kasper.android.pulse.rxbus.notifications.MessageSeen;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.rxbus.notifications.RoomUnreadChanged;
+import kasper.android.pulse.services.FilesService;
 import retrofit2.Call;
 
 import static kasper.android.pulse.models.extras.DocTypes.Audio;
@@ -565,11 +563,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     GlideApp.with(activity).load(filePath).into(holder.imageIV);
                     holder.loadingCancelBTN.setOnClickListener(v -> {
                         if (fileLocal.getPath().length() > 0) {
-                            NetworkHelper.cancelUploadFile(message.getPhoto().getFileId());
+                            FilesService.cancelUpload(message.getPhoto().getFileId());
                             DatabaseHelper.deletePhotoMessage(message.getMessageId());
                             Core.getInstance().bus().post(new MessageDeleted(message));
                         } else {
-                            NetworkHelper.cancelDownloadFile(message.getPhoto().getFileId());
+                            FilesService.cancelDownload(message.getPhoto().getFileId());
                             DatabaseHelper.notifyFileDownloadCancelled(message.getPhoto().getFileId());
                             Core.getInstance().bus().post(new FileDownloadCancelled(Photo, message.getPhoto().getFileId()));
                         }
@@ -586,24 +584,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         holder.blurView.setVisibility(View.VISIBLE);
                         holder.downloadBTN.setVisibility(View.VISIBLE);
                         holder.downloadBTN.setOnClickListener(v -> {
-                            DatabaseHelper.notifyFileDownloading(message.getPhoto().getFileId());
+                            FilesService.downloadFile(new Downloading(message.getPhoto(), message.getRoomId()));
                             fileLocal.setTransferring(true);
                             notifyItemChanged(holder.getAdapterPosition());
-                            NetworkHelper.downloadFile(message.getPhoto(), message.getRoomId()
-                                    , progress -> {
-                                        DatabaseHelper.notifyFileTransferProgressed(message.getPhoto().getFileId(), progress);
-                                        activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileTransferProgressed(Photo, message.getPhoto().getFileId(), progress)));
-                                    }, new OnFileDownloadListener() {
-                                        @Override
-                                        public void fileDownloaded() {
-                                            DatabaseHelper.notifyFileDownloaded(message.getPhoto().getFileId());
-                                            activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileDownloaded(Photo, message.getPhoto().getFileId())));
-                                        }
-                                        @Override
-                                        public void downloadFailed() {
-                                            Toast.makeText(activity, "File download failure", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
                         });
                         GlideApp.with(activity).load(NetworkHelper.createFileLink(message.getPhoto()
                                 .getFileId())).into(holder.imageIV);
@@ -666,11 +649,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     holder.loadingPB.setProgress(fileLocal.getProgress());
                     holder.loadingCancelBTN.setOnClickListener(v -> {
                         if (fileLocal.getPath().length() > 0) {
-                            NetworkHelper.cancelUploadFile(message.getAudio().getFileId());
+                            FilesService.cancelUpload(message.getAudio().getFileId());
                             DatabaseHelper.deleteAudioMessage(message.getMessageId());
                             Core.getInstance().bus().post(new MessageDeleted(message));
                         } else {
-                            NetworkHelper.cancelDownloadFile(message.getAudio().getFileId());
+                            FilesService.cancelDownload(message.getAudio().getFileId());
                             DatabaseHelper.notifyFileDownloadCancelled(message.getAudio().getFileId());
                             Core.getInstance().bus().post(new FileDownloadCancelled(Audio, message.getAudio().getFileId()));
                         }
@@ -687,28 +670,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         holder.downloadBTN.setVisibility(View.VISIBLE);
                         holder.playBTN.setVisibility(View.GONE);
                         holder.downloadBTN.setOnClickListener(v -> {
-                            DatabaseHelper.notifyFileDownloading(message.getAudio().getFileId());
+                            FilesService.downloadFile(new Downloading(message.getAudio(), message.getRoomId()));
                             fileLocal.setTransferring(true);
                             notifyItemChanged(holder.getAdapterPosition());
-                            DatabaseHelper.notifyFileDownloading(message.getAudio().getFileId());
-                            fileLocal.setTransferring(true);
-                            notifyItemChanged(holder.getAdapterPosition());
-                            NetworkHelper.downloadFile(message.getAudio(), message.getRoomId()
-                                    , progress -> {
-                                        DatabaseHelper.notifyFileTransferProgressed(message.getAudio().getFileId(), progress);
-                                        activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileTransferProgressed(Audio, message.getAudio().getFileId(), progress)));
-                                    }, new OnFileDownloadListener() {
-                                        @Override
-                                        public void fileDownloaded() {
-                                            DatabaseHelper.notifyFileDownloaded(message.getAudio().getFileId());
-                                            activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileDownloaded(Audio, message.getAudio().getFileId())));
-                                        }
-
-                                        @Override
-                                        public void downloadFailed() {
-                                            Toast.makeText(activity, "File download failure", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
                         });
                     } else {
                         holder.downloadBTN.setVisibility(View.GONE);
@@ -779,11 +743,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     GlideApp.with(activity).load(filePath).into(holder.imageIV);
                     holder.loadingCancelBTN.setOnClickListener(v -> {
                         if (fileLocal.getPath().length() > 0) {
-                            NetworkHelper.cancelUploadFile(message.getVideo().getFileId());
+                            FilesService.cancelUpload(message.getVideo().getFileId());
                             DatabaseHelper.deleteVideoMessage(message.getMessageId());
                             Core.getInstance().bus().post(new MessageDeleted(message));
                         } else {
-                            NetworkHelper.cancelDownloadFile(message.getVideo().getFileId());
+                            FilesService.cancelDownload(message.getVideo().getFileId());
                             DatabaseHelper.notifyFileDownloadCancelled(message.getVideo().getFileId());
                             Core.getInstance().bus().post(new FileDownloadCancelled(Video, message.getVideo().getFileId()));
                         }
@@ -803,25 +767,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         GlideApp.with(activity).load(NetworkHelper
                                 .createFileLink(message.getVideo().getFileId())).into(holder.imageIV);
                         holder.downloadBTN.setOnClickListener(v -> {
-                            DatabaseHelper.notifyFileDownloading(message.getVideo().getFileId());
+                            FilesService.downloadFile(new Downloading(message.getVideo(), message.getRoomId()));
                             fileLocal.setTransferring(true);
                             notifyItemChanged(holder.getAdapterPosition());
-                            NetworkHelper.downloadFile(message.getVideo(), message.getRoomId()
-                                    , progress -> {
-                                        DatabaseHelper.notifyFileTransferProgressed(message.getVideo().getFileId(), progress);
-                                        activity.runOnUiThread(() -> Core.getInstance().bus().post(new FileTransferProgressed(Video, message.getVideo().getFileId(), progress)));
-                                    }, new OnFileDownloadListener() {
-                                        @Override
-                                        public void fileDownloaded() {
-                                            DatabaseHelper.notifyFileDownloaded(message.getVideo().getFileId());
-                                            activity.runOnUiThread(() ->
-                                                    Core.getInstance().bus().post(new FileDownloaded(Video, message.getVideo().getFileId())));
-                                        }
-                                        @Override
-                                        public void downloadFailed() {
-                                            Toast.makeText(activity, "File download failure", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
                         });
                     } else {
                         holder.blurView.setVisibility(View.GONE);
@@ -830,7 +778,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         GlideApp.with(activity).load(filePath).into(holder.imageIV);
                         holder.playBTN.setOnClickListener(v ->
                                 activity.startActivity(new Intent(activity, VideoPlayerActivity.class)
-                                .putExtra("video-path", filePath)));
+                                        .putExtra("video-path", filePath)));
                     }
                 }
             }

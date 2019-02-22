@@ -107,18 +107,20 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         long localMessageId = messageSent.getLocalMessageId();
         long onlineMessageId = messageSent.getOnlineMessageId();
         Entities.Message message = sendingMessages.remove(localMessageId);
-        message.setMessageId(onlineMessageId);
-        int counter = 0;
-        for (Entities.Room room : rooms) {
-            if (message.getRoom().getRoomId() == room.getRoomId()) {
-                room.setLastAction(message);
-                notifyItemChanged(counter + 2);
-                rooms.add(0, room);
-                rooms.remove(counter + 1);
-                notifyItemMoved(counter + 2, 2);
-                break;
+        if (message != null) {
+            message.setMessageId(onlineMessageId);
+            int counter = 0;
+            for (Entities.Room room : rooms) {
+                if (message.getRoom().getRoomId() == room.getRoomId()) {
+                    room.setLastAction(message);
+                    notifyItemChanged(counter + 2);
+                    rooms.add(0, room);
+                    rooms.remove(counter + 1);
+                    notifyItemMoved(counter + 2, 2);
+                    break;
+                }
+                counter++;
             }
-            counter++;
         }
     }
 

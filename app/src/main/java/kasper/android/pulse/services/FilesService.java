@@ -7,33 +7,37 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
-import android.util.Log;
+import android.util.Pair;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.models.Tuple;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.Downloading;
-import kasper.android.pulse.models.extras.ProgressListener;
 import kasper.android.pulse.models.extras.ProgressRequestBody;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.FileHandler;
+import kasper.android.pulse.rxbus.notifications.FileDownloaded;
+import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
+import kasper.android.pulse.rxbus.notifications.FileUploaded;
+import kasper.android.pulse.rxbus.notifications.FileUploading;
+import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
-import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -48,10 +52,11 @@ public class FilesService extends IntentService {
     private static Entities.File currentDownloadingFile;
     private static Call currentDownloadingCall;
 
-    private static final BlockingQueue<Uploading> uploadingFiles = new LinkedBlockingQueue<>();
+    private static final LinkedBlockingDeque<Tuple<Entities.File, Entities.FileLocal, Entities.Message
+            , Entities.MessageLocal, Uploading>> uploadingFiles = new LinkedBlockingDeque<>();
     private static Thread uploaderThread;
 
-    private static final BlockingQueue<Downloading> downloadingFiles = new LinkedBlockingQueue<>();
+    private static final LinkedBlockingDeque<Downloading> downloadingFiles = new LinkedBlockingDeque<>();
     private static Thread downloaderThread;
 
     private static boolean skipDownload = false;
@@ -82,31 +87,36 @@ public class FilesService extends IntentService {
             uploaderThread = new Thread(() -> {
                 try {
                     while (alive) {
-                        Uploading uploading = uploadingFiles.take();
+                        Tuple<Entities.File, Entities.FileLocal, Entities.Message
+                                , Entities.MessageLocal, Uploading> tuple = uploadingFiles.take();
+                        Entities.File fileEntity = tuple.first;
+                        Entities.FileLocal fileLocalEntity = tuple.second;
+                        Entities.Message messageEntity = tuple.third;
+                        Entities.MessageLocal messageLocalEntity = tuple.fourth;
+                        Uploading uploading = tuple.fifth;
                         try {
-                            Entities.File fileEntity = uploading.getFile();
-                            currentUploadingFile = fileEntity;
                             retrofit2.Call<Packet> call = null;
                             if (fileEntity instanceof Entities.Photo) {
                                 Entities.Photo photo = (Entities.Photo) fileEntity;
-                                if (uploading.isAvatarUsage())
+                                if (uploading.isCompress())
                                     compressImage(uploading.getPath());
                                 Map<String, RequestBody> parts = new HashMap<>();
                                 parts.put("ComplexId", createRequestBody(uploading.getComplexId()));
                                 parts.put("RoomId", createRequestBody(uploading.getRoomId()));
                                 parts.put("Width", createRequestBody(photo.getWidth()));
                                 parts.put("Height", createRequestBody(photo.getHeight()));
-                                parts.put("IsAvatar", createRequestBody(uploading.isAvatarUsage()));
-                                File file = uploading.isAvatarUsage() ? new File(
+                                parts.put("IsAvatar", createRequestBody(uploading.isCompress()));
+                                File file = uploading.isCompress() ? new File(
                                         new File(Environment.getExternalStorageDirectory(), DatabaseHelper.StorageDir)
                                         , "uploadTemp") : new File(uploading.getPath());
                                 if (file.exists()) {
                                     MultipartBody.Part filePart = createFileBody(
                                             currentUploadingFile.getFileId(), DocTypes.Photo, file.getPath());
                                     call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadPhoto(parts, filePart);
-                                } else {
-                                    uploading.getUploadListener().fileUploaded(0, -1);
-                                }
+                                } else
+                                    Core.getInstance().bus().post(new FileUploaded(DocTypes.Photo
+                                            , fileEntity.getFileId(), 0, -1
+                                            , uploading.getComplexId(), uploading.getRoomId(), fileEntity, messageEntity));
                             } else if (fileEntity instanceof Entities.Audio) {
                                 Entities.Audio audio = (Entities.Audio) fileEntity;
                                 Map<String, RequestBody> parts = new HashMap<>();
@@ -119,9 +129,10 @@ public class FilesService extends IntentService {
                                     MultipartBody.Part filePart = createFileBody(
                                             currentUploadingFile.getFileId(), DocTypes.Audio, file.getPath());
                                     call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadAudio(parts, filePart);
-                                } else {
-                                    uploading.getUploadListener().fileUploaded(0, -1);
-                                }
+                                } else
+                                    Core.getInstance().bus().post(new FileUploaded(DocTypes.Photo
+                                            , fileEntity.getFileId(), 0, -1
+                                            , uploading.getComplexId(), uploading.getRoomId(), fileEntity, messageEntity));
                             } else if (fileEntity instanceof Entities.Video) {
                                 Entities.Video video = (Entities.Video) fileEntity;
                                 Map<String, RequestBody> parts = new HashMap<>();
@@ -134,49 +145,58 @@ public class FilesService extends IntentService {
                                     MultipartBody.Part filePart = createFileBody(
                                             currentUploadingFile.getFileId(), DocTypes.Video, file.getPath());
                                     call = NetworkHelper.getRetrofit().create(FileHandler.class).uploadVideo(parts, filePart);
-                                } else {
-                                    uploading.getUploadListener().fileUploaded(0, -1);
-                                }
+                                } else
+                                    Core.getInstance().bus().post(new FileUploaded(DocTypes.Photo
+                                            , fileEntity.getFileId(), 0, -1
+                                            , uploading.getComplexId(), uploading.getRoomId(), fileEntity, messageEntity));
                             }
                             currentUploadingCall = call;
                             if (call != null) {
+                                final long localFileId = fileEntity.getFileId();
                                 NetworkHelper.requestServer(call, new ServerCallback() {
                                     @Override
                                     public void onRequestSuccess(Packet packet) {
                                         Entities.File uploadedFile = packet.getFile();
                                         Entities.FileUsage createdFileUsage = packet.getFileUsage();
-                                        try {
-                                            uploading.getUploadListener().fileUploaded(
-                                                    uploadedFile.getFileId(),
-                                                    createdFileUsage != null ? createdFileUsage.getFileUsageId() : -1);
-                                        } catch (Exception ex) {
-                                            ex.printStackTrace();
-                                        }
+                                        if (fileEntity instanceof Entities.Photo)
+                                            DatabaseHelper.notifyPhotoUploaded(localFileId, uploadedFile.getFileId());
+                                        else if (fileEntity instanceof Entities.Audio)
+                                            DatabaseHelper.notifyAudioUploaded(localFileId, uploadedFile.getFileId());
+                                        else if (fileEntity instanceof Entities.Video)
+                                            DatabaseHelper.notifyVideoUploaded(localFileId, uploadedFile.getFileId());
+                                        DatabaseHelper.notifyUpdateMessageAfterFileUpload(messageEntity.getMessageId()
+                                                , uploadedFile.getFileId(), createdFileUsage.getFileUsageId());
+                                        Core.getInstance().bus().post(new FileUploaded(fileEntity instanceof
+                                                Entities.Photo ? DocTypes.Photo : fileEntity instanceof Entities.Audio
+                                                ? DocTypes.Audio : DocTypes.Video, localFileId, uploadedFile.getFileId()
+                                                , createdFileUsage == null ? -1 : createdFileUsage.getFileUsageId()
+                                                , uploading.getComplexId(), uploading.getRoomId(), fileEntity, messageEntity));
                                     }
-
                                     @Override
                                     public void onServerFailure() {
                                         Core.getInstance().bus().post(new ShowToast("File upload failure"));
+                                        uploadingFiles.offerFirst(tuple);
                                     }
-
                                     @Override
                                     public void onConnectionFailure() {
                                         Core.getInstance().bus().post(new ShowToast("File upload failure"));
+                                        uploadingFiles.offerFirst(tuple);
                                     }
                                 });
                             }
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            uploadingFiles.offer(uploading);
+                            uploadingFiles.offer(tuple);
                         }
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             });
-
-            uploaderThread.start();
         }
+
+        if (!uploaderThread.isAlive())
+            uploaderThread.start();
 
         if (downloaderThread == null) {
             downloaderThread = new Thread(() -> {
@@ -190,27 +210,30 @@ public class FilesService extends IntentService {
                         currentDownloadingCall = call;
                         ResponseBody body = call.execute().body();
                         try {
-                            if (body != null)
+                            if (body != null) {
                                 writeResponseBodyToDisk(body, downloading.getFile().getFileId(), downloading);
-                            if (!skipDownload)
-                                Core.getInstance().bus().post(new UiThreadRequested(() ->
-                                        downloading.getDownloadListener().fileDownloaded()));
-                            else
+                            }
+                            if (!skipDownload) {
+                                DatabaseHelper.notifyFileDownloaded(downloading.getFile().getFileId());
+                                Core.getInstance().bus().post(new FileDownloaded(downloading.getFile()
+                                        instanceof Entities.Photo ? DocTypes.Photo : downloading.getFile()
+                                        instanceof Entities.Audio ? DocTypes.Audio : DocTypes.Video, downloading.getFile().getFileId()));
+                            } else
                                 skipDownload = false;
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            downloadingFiles.offer(downloading);
-                            Core.getInstance().bus().post(new UiThreadRequested(() ->
-                                    downloading.getDownloadListener().downloadFailed()));
+                            downloadingFiles.offerFirst(downloading);
+                            Core.getInstance().bus().post(new ShowToast("File download failed."));
                         }
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             });
-
-            downloaderThread.start();
         }
+
+        if (!downloaderThread.isAlive())
+            downloaderThread.start();
 
         return START_STICKY;
     }
@@ -218,20 +241,97 @@ public class FilesService extends IntentService {
     @Override
     public void onDestroy() {
         LogHelper.log("Aseman", "File service destroyed");
-        alive = false;
         super.onDestroy();
     }
 
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        Log.e("Aseman", "File service task removed");
-    }
-
-    public static void uploadFile(Uploading uploading) {
-        uploadingFiles.offer(uploading);
+    public static long uploadFile(Uploading uploading) {
+        Entities.File fileEntity;
+        Entities.FileLocal fileLocalEntity;
+        Entities.Message messageEntity;
+        Entities.MessageLocal messageLocalEntity;
+        if (uploading.getDocType() == DocTypes.Photo) {
+            try {
+                FileInputStream inputStream = new FileInputStream(new File(uploading.getPath()));
+                BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+                bitmapOptions.inJustDecodeBounds = true;
+                BitmapFactory.decodeStream(inputStream, null, bitmapOptions);
+                int imageWidth = bitmapOptions.outWidth;
+                int imageHeight = bitmapOptions.outHeight;
+                inputStream.close();
+                Pair<Entities.File, Entities.FileLocal> filePair = DatabaseHelper
+                        .notifyPhotoUploading(false, uploading.getPath()
+                                , imageWidth, imageHeight);
+                fileEntity = filePair.first;
+                fileLocalEntity = filePair.second;
+                currentUploadingFile = fileEntity;
+                Core.getInstance().bus().post(new FileUploading(DocTypes.Photo, fileEntity, fileLocalEntity));
+                if (uploading.isAttachToMessage()) {
+                    Pair<Entities.Message, Entities.MessageLocal> msgPair = DatabaseHelper
+                            .notifyPhotoMessageSending(uploading.getRoomId(), fileEntity.getFileId());
+                    messageEntity = msgPair.first;
+                    messageLocalEntity = msgPair.second;
+                    Core.getInstance().bus().post(new MessageSending(messageEntity, messageLocalEntity));
+                } else {
+                    messageEntity = null;
+                    messageLocalEntity = null;
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                fileEntity = null;
+                fileLocalEntity = null;
+                messageEntity = null;
+                messageLocalEntity = null;
+            }
+        } else if (uploading.getDocType() == DocTypes.Audio) {
+            Pair<Entities.File, Entities.FileLocal> filePair = DatabaseHelper
+                    .notifyAudioUploading(false, uploading.getPath()
+                            , new File(uploading.getPath()).getName(), 60000);
+            fileEntity = filePair.first;
+            fileLocalEntity = filePair.second;
+            currentUploadingFile = fileEntity;
+            Core.getInstance().bus().post(new FileUploading(DocTypes.Audio, fileEntity, fileLocalEntity));
+            Core.getInstance().bus().post(new FileUploading(DocTypes.Audio, fileEntity, fileLocalEntity));
+            if (uploading.isAttachToMessage()) {
+                Pair<Entities.Message, Entities.MessageLocal> msgPair = DatabaseHelper
+                        .notifyAudioMessageSending(uploading.getRoomId(), fileEntity.getFileId());
+                messageEntity = msgPair.first;
+                messageLocalEntity = msgPair.second;
+                Core.getInstance().bus().post(new MessageSending(messageEntity, messageLocalEntity));
+            } else {
+                messageEntity = null;
+                messageLocalEntity = null;
+            }
+        } else if (uploading.getDocType() == DocTypes.Video) {
+            Pair<Entities.File, Entities.FileLocal> filePair = DatabaseHelper
+                    .notifyVideoUploading(false, uploading.getPath()
+                            , new File(uploading.getPath()).getName(), 60000);
+            fileEntity = filePair.first;
+            fileLocalEntity = filePair.second;
+            currentUploadingFile = fileEntity;
+            Core.getInstance().bus().post(new FileUploading(DocTypes.Video, fileEntity, fileLocalEntity));
+            Core.getInstance().bus().post(new FileUploading(DocTypes.Video, fileEntity, fileLocalEntity));
+            if (uploading.isAttachToMessage()) {
+                Pair<Entities.Message, Entities.MessageLocal> msgPair = DatabaseHelper
+                        .notifyVideoMessageSending(uploading.getRoomId(), fileEntity.getFileId());
+                messageEntity = msgPair.first;
+                messageLocalEntity = msgPair.second;
+                Core.getInstance().bus().post(new MessageSending(messageEntity, messageLocalEntity));
+            } else {
+                messageEntity = null;
+                messageLocalEntity = null;
+            }
+        } else {
+            fileEntity = null;
+            fileLocalEntity = null;
+            messageEntity = null;
+            messageLocalEntity = null;
+        }
+        uploadingFiles.offer(new Tuple<>(fileEntity, fileLocalEntity, messageEntity, messageLocalEntity, uploading));
+        return fileEntity != null ? fileEntity.getFileId() : 0;
     }
 
     public static void downloadFile(Downloading downloading) {
+        DatabaseHelper.notifyFileDownloading(downloading.getFile().getFileId());
         downloadingFiles.offer(downloading);
     }
 
@@ -240,9 +340,9 @@ public class FilesService extends IntentService {
             if (currentUploadingFile != null && currentUploadingFile.getFileId() == fileId) {
                 currentUploadingCall.cancel();
             } else {
-                for (Uploading uploading : uploadingFiles) {
-                    if (uploading.getFile().getFileId() == fileId) {
-                        uploadingFiles.remove(uploading);
+                for (Tuple<Entities.File, Entities.FileLocal, Entities.Message, Entities.MessageLocal, Uploading> tuple : uploadingFiles) {
+                    if (tuple.first.getFileId() == fileId) {
+                        uploadingFiles.remove(tuple);
                         break;
                     }
                 }
@@ -345,7 +445,12 @@ public class FilesService extends IntentService {
                         break;
                     outputStream.write(fileReader, 0, read);
                     fileSizeDownloaded += read;
-                    downloading.getProgressListener().transferred((int)(fileSizeDownloaded * 100 / fileSize));
+                    int progress = (int)(fileSizeDownloaded * 100 / fileSize);
+                    DatabaseHelper.notifyFileTransferProgressed(downloading.getFile().getFileId(), progress);
+                    Core.getInstance().bus().post(new FileTransferProgressed(downloading.getFile()
+                            instanceof Entities.Photo ? DocTypes.Photo : downloading.getFile()
+                            instanceof Entities.Audio ? DocTypes.Audio : DocTypes.Video,
+                            downloading.getFile().getFileId(), progress));
                 }
                 outputStream.flush();
             } catch (IOException e) {

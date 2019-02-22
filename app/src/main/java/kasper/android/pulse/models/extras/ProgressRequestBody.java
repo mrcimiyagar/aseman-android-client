@@ -48,7 +48,10 @@ public class ProgressRequestBody extends RequestBody {
             int read;
             while ((read = in.read(buffer)) != -1) {
                 int progress = (int) (100 * uploaded / fileLength);
-                Core.getInstance().bus().post(new FileTransferProgressed(docType, fileId, progress));
+                if (progress - notifiedProgress > 5) {
+                    Core.getInstance().bus().post(new FileTransferProgressed(docType, fileId, progress));
+                    notifiedProgress = progress;
+                }
                 uploaded += read;
                 sink.write(buffer, 0, read);
             }

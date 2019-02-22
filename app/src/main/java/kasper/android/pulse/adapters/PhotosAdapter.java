@@ -37,12 +37,12 @@ import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.PhotoViewerActivity;
-import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
 import kasper.android.pulse.callbacks.ui.OnDocSelectListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.rxbus.notifications.FileDownloadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileDownloaded;
@@ -52,6 +52,7 @@ import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.rxbus.notifications.FileUploading;
+import kasper.android.pulse.services.FilesService;
 
 import static kasper.android.pulse.models.extras.DocTypes.Photo;
 
@@ -244,22 +245,7 @@ public class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.Holder> {
                                 @Override
                                 public void onPermissionsChecked(MultiplePermissionsReport report) {
                                     if (report.areAllPermissionsGranted()) {
-                                        NetworkHelper.downloadFile(doc, roomId
-                                                , progress -> {
-                                                    DatabaseHelper.notifyFileTransferProgressed(doc.getFileId(), progress);
-                                                    Core.getInstance().bus().post(new FileTransferProgressed(Photo, doc.getFileId(), progress));
-                                                }, new OnFileDownloadListener() {
-                                                    @Override
-                                                    public void fileDownloaded() {
-                                                        DatabaseHelper.notifyFileDownloaded(doc.getFileId());
-                                                        Core.getInstance().bus().post(new FileDownloaded(Photo, doc.getFileId()));
-                                                    }
-
-                                                    @Override
-                                                    public void downloadFailed() {
-
-                                                    }
-                                                });
+                                        FilesService.downloadFile(new Downloading(doc, roomId));
                                     } else {
                                         activity.finish();
                                     }

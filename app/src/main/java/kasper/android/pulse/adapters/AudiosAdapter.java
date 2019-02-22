@@ -25,15 +25,11 @@ import java.util.Hashtable;
 import java.util.List;
 
 import kasper.android.pulse.R;
-import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
-import kasper.android.pulse.callbacks.ui.FileListener;
 import kasper.android.pulse.callbacks.ui.OnDocSelectListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
-import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.DocTypes;
+import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.rxbus.notifications.FileDownloadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileDownloaded;
 import kasper.android.pulse.rxbus.notifications.FileDownloading;
@@ -42,6 +38,7 @@ import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.rxbus.notifications.FileUploading;
+import kasper.android.pulse.services.FilesService;
 import kasper.android.pulse.services.MusicsService;
 
 import static kasper.android.pulse.models.extras.DocTypes.Audio;
@@ -215,24 +212,8 @@ public class AudiosAdapter extends RecyclerView.Adapter<AudiosAdapter.Holder> {
                                     @Override
                                     public void onPermissionsChecked(MultiplePermissionsReport report) {
                                         if (report.areAllPermissionsGranted()) {
-                                            DatabaseHelper.notifyFileDownloading(doc.getFileId());
+                                            FilesService.downloadFile(new Downloading(doc, roomId));
                                             Core.getInstance().bus().post(new FileDownloading(Audio, doc));
-                                            NetworkHelper.downloadFile(doc, roomId
-                                                    , progress -> {
-                                                        DatabaseHelper.notifyFileTransferProgressed(doc.getFileId(), progress);
-                                                        Core.getInstance().bus().post(new FileTransferProgressed(Audio, doc.getFileId(), progress));
-                                                    }, new OnFileDownloadListener() {
-                                                        @Override
-                                                        public void fileDownloaded() {
-                                                            DatabaseHelper.notifyFileDownloaded(doc.getFileId());
-                                                            Core.getInstance().bus().post(new FileDownloaded(Audio, doc.getFileId()));
-                                                        }
-
-                                                        @Override
-                                                        public void downloadFailed() {
-
-                                                        }
-                                                    });
                                         } else {
                                             activity.finish();
                                         }

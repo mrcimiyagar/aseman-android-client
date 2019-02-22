@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.anadeainc.rxbus.Subscribe;
 import com.github.javiersantos.bottomdialogs.BottomDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -30,7 +31,6 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.ComplexProfileAdapter;
 import kasper.android.pulse.callbacks.middleware.OnComplexSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnRoomsSyncListener;
-import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.extras.LinearDecoration;
@@ -39,9 +39,11 @@ import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.ComplexProfileUpdating;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
+import kasper.android.pulse.services.ProfileService;
 import retrofit2.Call;
 
 public class ComplexProfileActivity extends AppCompatActivity {
@@ -62,6 +64,8 @@ public class ComplexProfileActivity extends AppCompatActivity {
         titleTV = findViewById(R.id.complexProfileTitleTV);
         memberCountTV = findViewById(R.id.complexProfileSubTitleTV);
         roomsRV = findViewById(R.id.complexProfileRoomsRV);
+
+        Core.getInstance().bus().register(this);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -106,6 +110,7 @@ public class ComplexProfileActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (roomsRV.getAdapter() != null)
             ((ComplexProfileAdapter) roomsRV.getAdapter()).dispose();
+        Core.getInstance().bus().unregister(this);
         super.onDestroy();
     }
 
@@ -133,16 +138,7 @@ public class ComplexProfileActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 if (data.getExtras() != null) {
                     String path = data.getExtras().getString("path");
-                    Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(
-                            true, path, 256, 256);
-                    Entities.File file = pair.first;
-                    NetworkHelper.uploadFile(file, -1, -1, true, path
-                            , (OnFileUploadListener) (fileId, fileUsageId) -> {
-                                if (complex != null) {
-                                    complex.setAvatar(fileId);
-                                    updateProfile();
-                                }
-                            });
+                    ProfileService.updateComplexProfileAvatar(new ComplexProfileUpdating(path, complex));
                 }
             }
         } else if (requestCode == 456) {
@@ -238,6 +234,12 @@ public class ComplexProfileActivity extends AppCompatActivity {
                         .show();
             }
         }
+    }
+
+    @Subscribe
+    public void onComplexProfileUpdated(ComplexProfileUpdated updated) {
+        complex.setAvatar(updated.getComplex().getAvatar());
+        NetworkHelper.loadComplexAvatar(complex.getAvatar(), avatarIV);
     }
 
     private void updateProfile() {

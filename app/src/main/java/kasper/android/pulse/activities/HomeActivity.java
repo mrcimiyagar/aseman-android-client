@@ -45,6 +45,7 @@ import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
 import kasper.android.pulse.services.FilesService;
+import kasper.android.pulse.services.MessagesService;
 import kasper.android.pulse.services.MusicsService;
 import kasper.android.pulse.services.NotificationsService;
 import retrofit2.Call;
@@ -274,11 +275,6 @@ public class HomeActivity extends BaseActivity {
         myTitleTV.setText(profileUpdated.getUser().getTitle());
     }
 
-    @Subscribe
-    public void onShowingTost(ShowToast showToast) {
-        Toast.makeText(this, showToast.getText(), Toast.LENGTH_SHORT).show();
-    }
-
     private void initUiData() {
         homeRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         homeRV.setAdapter(new HomeAdapter(this, DatabaseHelper.getAllRooms()));
@@ -347,6 +343,7 @@ public class HomeActivity extends BaseActivity {
         startService(new Intent(HomeActivity.this, NotificationsService.class));
         startService(new Intent(HomeActivity.this, FilesService.class));
         startService(new Intent(HomeActivity.this, MusicsService.class));
+        startService(new Intent(HomeActivity.this, MessagesService.class));
         hideSnack();
     }
 }

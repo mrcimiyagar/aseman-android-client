@@ -1,14 +1,16 @@
 package kasper.android.pulse.models.extras;
 
-import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
 import kasper.android.pulse.models.entities.Entities;
 
 public class Downloading {
 
     private Entities.File file;
     private long roomId;
-    private ProgressListener progressListener;
-    private OnFileDownloadListener downloadListener;
+
+    public Downloading(Entities.File file, long roomId) {
+        this.file = file;
+        this.roomId = roomId;
+    }
 
     public Entities.File getFile() {
         return file;
@@ -24,21 +26,5 @@ public class Downloading {
 
     public void setRoomId(long roomId) {
         this.roomId = roomId;
-    }
-
-    public ProgressListener getProgressListener() {
-        return progressListener;
-    }
-
-    public void setProgressListener(ProgressListener progressListener) {
-        this.progressListener = progressListener;
-    }
-
-    public OnFileDownloadListener getDownloadListener() {
-        return downloadListener;
-    }
-
-    public void setDownloadListener(OnFileDownloadListener downloadListener) {
-        this.downloadListener = downloadListener;
     }
 }

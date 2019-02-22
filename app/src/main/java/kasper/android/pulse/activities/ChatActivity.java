@@ -1,19 +1,15 @@
 package kasper.android.pulse.activities;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 
-import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
@@ -21,22 +17,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
-import android.util.Pair;
-import android.view.MenuInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -44,29 +33,19 @@ import java.util.ListIterator;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.MessagesAdapter;
-import kasper.android.pulse.callbacks.network.OnFileUploadListener;
-import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.callbacks.ui.OnFileSelectListener;
-import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.extras.LinearDecoration;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.retrofit.MessageHandler;
-import kasper.android.pulse.helpers.NetworkHelper;
-import kasper.android.pulse.models.extras.DocTypes;
-import kasper.android.pulse.models.extras.ProgressListener;
-import kasper.android.pulse.models.network.Packet;
-import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
-import kasper.android.pulse.rxbus.notifications.FileUploaded;
-import kasper.android.pulse.rxbus.notifications.FileUploading;
+import kasper.android.pulse.models.extras.FileMessageSending;
+import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
-import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
-import retrofit2.Call;
+import kasper.android.pulse.services.MessagesService;
 
 public class ChatActivity extends BaseActivity {
 
@@ -236,182 +215,13 @@ public class ChatActivity extends BaseActivity {
         });
         sendBTN.setOnClickListener(v -> {
             final String text = chatET.getText().toString();
-            if (text.length() == 0) {
-                return;
-            }
-            final Pair<Entities.Message, Entities.MessageLocal> pair = DatabaseHelper.notifyTextMessageSending(roomId, text);
-            final Entities.Message message = pair.first;
-            final Entities.MessageLocal messageLocal = pair.second;
-            final long messageLocalId = message.getMessageId();
-            Core.getInstance().bus().post(new MessageSending(message, messageLocal));
-            final Packet packet = new Packet();
-            Entities.Complex complex = new Entities.Complex();
-            complex.setComplexId(complexId);
-            packet.setComplex(complex);
-            Entities.Room room = new Entities.Room();
-            room.setRoomId(roomId);
-            packet.setRoom(room);
-            packet.setTextMessage((Entities.TextMessage) message);
-            MessageHandler messageHandler = NetworkHelper.getRetrofit().create(MessageHandler.class);
-            Call<Packet> call = messageHandler.createTextMessage(packet);
-            NetworkHelper.requestServer(call, new ServerCallback() {
-                @Override
-                public void onRequestSuccess(Packet packet) {
-                    final Entities.TextMessage msg = packet.getTextMessage();
-                    DatabaseHelper.notifyTextMessageSent(messageLocalId, msg.getMessageId(), msg.getTime());
-                    if (DatabaseHelper.getComplexById(complexId).getMode() == 1) {
-                        msg.setSeenCount(1);
-                        DatabaseHelper.notifyMessageUpdated(msg);
-                    }
-                    Core.getInstance().bus().post(new MessageSent(messageLocalId, msg.getMessageId()));
-                }
-
-                @Override
-                public void onServerFailure() {
-                    Toast.makeText(ChatActivity.this, "Message delivery failure", Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onConnectionFailure() {
-                    Toast.makeText(ChatActivity.this, "Message delivery failure", Toast.LENGTH_SHORT).show();
-                }
-            });
+            if (text.length() == 0) return;
+            MessagesService.enqueueMessage(new TextMessageSending(complexId, roomId, text));
             chatET.setText("");
         });
         filesBTN.setOnClickListener(v -> {
             OnFileSelectListener selectListener = (path, docType) -> {
-                String fileName = new File(path).getName();
-                Entities.File file;
-                Entities.FileLocal fileLocal;
-                Entities.Message message;
-                Entities.MessageLocal messageLocal;
-                if (docType == DocTypes.Photo) {
-                    try {
-                        FileInputStream inputStream = new FileInputStream(new File(path));
-                        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-                        bitmapOptions.inJustDecodeBounds = true;
-                        BitmapFactory.decodeStream(inputStream, null, bitmapOptions);
-                        int imageWidth = bitmapOptions.outWidth;
-                        int imageHeight = bitmapOptions.outHeight;
-                        inputStream.close();
-                        Pair<Entities.File, Entities.FileLocal> filePair = DatabaseHelper.notifyPhotoUploading(false, path, imageWidth, imageHeight);
-                        file = filePair.first;
-                        fileLocal = filePair.second;
-                        Pair<Entities.Message, Entities.MessageLocal> msgPair = DatabaseHelper.notifyPhotoMessageSending(roomId, file.getFileId());
-                        message = msgPair.first;
-                        messageLocal = msgPair.second;
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        message = null;
-                        messageLocal = null;
-                        file = null;
-                        fileLocal = null;
-                    }
-                } else if (docType == DocTypes.Audio) {
-                    Pair<Entities.File, Entities.FileLocal> filePair = DatabaseHelper.notifyAudioUploading(false, path, fileName, 60000);
-                    file = filePair.first;
-                    fileLocal = filePair.second;
-                    Pair<Entities.Message, Entities.MessageLocal> msgPair = DatabaseHelper.notifyAudioMessageSending(roomId, file.getFileId());
-                    message = msgPair.first;
-                    messageLocal = msgPair.second;
-                } else if (docType == DocTypes.Video) {
-                    Pair<Entities.File, Entities.FileLocal> filePair = DatabaseHelper.notifyVideoUploading(false, path, fileName, 60000);
-                    file = filePair.first;
-                    fileLocal = filePair.second;
-                    Pair<Entities.Message, Entities.MessageLocal> msgPair = DatabaseHelper.notifyVideoMessageSending(roomId, file.getFileId());
-                    message = msgPair.first;
-                    messageLocal = msgPair.second;
-                } else {
-                    file = null;
-                    fileLocal = null;
-                    message = null;
-                    messageLocal = null;
-                }
-
-                final Entities.File finalFile = file;
-                final Entities.Message finalMessage = message;
-                final long localMessageId;
-
-                if (message != null)
-                    localMessageId = messageLocal.getMessageId();
-                else
-                    localMessageId = 0;
-
-                Core.getInstance().bus().post(new FileUploading(docType, file, fileLocal));
-                Core.getInstance().bus().post(new MessageSending(message, messageLocal));
-
-                OnFileUploadListener uploadListener = (OnFileUploadListener) (fileId, fileUsageId) -> {
-                    if (finalFile != null) {
-                        final long localFileId = finalFile.getFileId();
-                        if (docType == DocTypes.Photo)
-                            DatabaseHelper.notifyPhotoUploaded(localFileId, fileId);
-                        else if (docType == DocTypes.Audio)
-                            DatabaseHelper.notifyAudioUploaded(localFileId, fileId);
-                        else if (docType == DocTypes.Video)
-                            DatabaseHelper.notifyVideoUploaded(localFileId, fileId);
-                        DatabaseHelper.notifyUpdateMessageAfterFileUpload(finalMessage.getMessageId(), fileId, fileUsageId);
-                        Core.getInstance().bus().post(new FileUploaded(docType, localFileId, fileId));
-                        Packet packet = new Packet();
-                        Entities.Complex complex = new Entities.Complex();
-                        complex.setComplexId(complexId);
-                        packet.setComplex(complex);
-                        Entities.Room room = new Entities.Room();
-                        room.setRoomId(roomId);
-                        packet.setRoom(room);
-                        finalFile.setFileId(fileId);
-                        packet.setFile(finalFile);
-                        MessageHandler messageHandler = NetworkHelper.getRetrofit().create(MessageHandler.class);
-                        Call<Packet> call = messageHandler.createFileMessage(packet);
-                        NetworkHelper.requestServer(call, new ServerCallback() {
-                            @Override
-                            public void onRequestSuccess(Packet packet) {
-                                long messageId = -1;
-                                long time;
-                                Entities.Message msg;
-                                if (docType == DocTypes.Photo) {
-                                    msg = packet.getPhotoMessage();
-                                    messageId = msg.getMessageId();
-                                    time = packet.getPhotoMessage().getTime();
-                                    DatabaseHelper.notifyPhotoMessageSent(localMessageId, messageId, time);
-                                } else if (docType == DocTypes.Audio) {
-                                    msg = packet.getAudioMessage();
-                                    messageId = msg.getMessageId();
-                                    time = packet.getAudioMessage().getTime();
-                                    DatabaseHelper.notifyAudioMessageSent(localMessageId, messageId, time);
-                                } else if (docType == DocTypes.Video) {
-                                    msg = packet.getVideoMessage();
-                                    messageId = msg.getMessageId();
-                                    time = packet.getVideoMessage().getTime();
-                                    DatabaseHelper.notifyVideoMessageSent(localMessageId, messageId, time);
-                                }
-                                if (DatabaseHelper.getComplexById(complexId).getMode() == 1) {
-                                    finalMessage.setSeenCount(1);
-                                    if (finalMessage instanceof Entities.TextMessage)
-                                        DatabaseHelper.notifyTextMessageSeen(finalMessage.getMessageId(), finalMessage.getSeenCount());
-                                    else if (finalMessage instanceof Entities.PhotoMessage)
-                                        DatabaseHelper.notifyPhotoMessageSeen(finalMessage.getMessageId(), finalMessage.getSeenCount());
-                                    else if (finalMessage instanceof Entities.AudioMessage)
-                                        DatabaseHelper.notifyAudioMessageSeen(finalMessage.getMessageId(), finalMessage.getSeenCount());
-                                    else if (finalMessage instanceof Entities.VideoMessage)
-                                        DatabaseHelper.notifyVideoMessageSeen(finalMessage.getMessageId(), finalMessage.getSeenCount());
-                                    else if (finalMessage instanceof Entities.ServiceMessage)
-                                        DatabaseHelper.notifyServiceMessageSeen(finalMessage.getMessageId(), finalMessage.getSeenCount());
-                                }
-                                Core.getInstance().bus().post(new MessageSent(localMessageId, messageId));
-                            }
-                            @Override
-                            public void onServerFailure() {
-                                Toast.makeText(ChatActivity.this, "Message delivery failure", Toast.LENGTH_SHORT).show();
-                            }
-                            @Override
-                            public void onConnectionFailure() {
-                                Toast.makeText(ChatActivity.this, "Message delivery failure", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                };
-
-                NetworkHelper.uploadFile(file, complexId, roomId, false, path, uploadListener);
+                MessagesService.enqueueMessage(new FileMessageSending(complexId, roomId, docType, path));
             };
             long selectCallbackId = CallbackHelper.register(selectListener);
             startActivity(new Intent(ChatActivity.this, FilesActivity.class)

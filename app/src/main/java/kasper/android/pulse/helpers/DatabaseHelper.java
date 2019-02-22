@@ -501,11 +501,6 @@ public class DatabaseHelper {
         msg.setMessageId(messageId);
         msg.setTime(time);
         messageDao.insert(msg);
-        try {
-            LogHelper.log("AsemanTest", NetworkHelper.getMapper().writeValueAsString(AsemanDB.getInstance().getMessageDao().getMessageById(messageId)));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
         AsemanDB.getInstance().getMessageLocalDao().deleteMessageById(localMessageId);
         Entities.MessageLocal messageLocal = new Entities.MessageLocal();
         messageLocal.setMessageId(messageId);
@@ -543,6 +538,10 @@ public class DatabaseHelper {
 
     public static Entities.File getFileById(long fileId) {
         return AsemanDB.getInstance().getFileDao().getFileById(fileId);
+    }
+
+    public static Entities.FileLocal getFileLocalByFileId(long fileId) {
+        return AsemanDB.getInstance().getFileLocalDao().getFileLocalById(fileId);
     }
 
     public static void notifyTextMessageSeen(long messageId, long seenCount) {

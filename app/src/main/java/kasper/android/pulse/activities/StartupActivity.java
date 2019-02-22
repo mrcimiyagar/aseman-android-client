@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.telephony.mbms.FileServiceInfo;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 
@@ -27,6 +28,7 @@ import kasper.android.pulse.retrofit.ContactHandler;
 import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.retrofit.RoomHandler;
+import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.services.FilesService;
 import kasper.android.pulse.services.MusicsService;
@@ -77,6 +79,11 @@ public class StartupActivity extends BaseActivity {
     @Subscribe
     public void onUiThreadRequested(UiThreadRequested uiThreadRequested) {
         this.runOnUiThread(uiThreadRequested.getRunnable());
+    }
+
+    @Subscribe
+    public void onShowingToast(ShowToast showToast) {
+        Toast.makeText(this, showToast.getText(), Toast.LENGTH_SHORT).show();
     }
 
     private void syncDone() {

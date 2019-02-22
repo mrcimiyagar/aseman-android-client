@@ -23,7 +23,6 @@ import androidx.appcompat.widget.Toolbar;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnMeSyncListener;
-import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.core.Core;
@@ -31,12 +30,14 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.UserProfileUpdating;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.AuthHandler;
 import kasper.android.pulse.retrofit.UserHandler;
 import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
 import kasper.android.pulse.services.NotificationsService;
+import kasper.android.pulse.services.ProfileService;
 import retrofit2.Call;
 
 public class SettingsActivity extends BaseActivity {
@@ -198,16 +199,7 @@ public class SettingsActivity extends BaseActivity {
             if (resultCode == RESULT_OK) {
                 if (data.getExtras() != null) {
                     String path = data.getExtras().getString("path");
-                    Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper.notifyPhotoUploading(
-                            true, path, 256, 256);
-                    Entities.File file = pair.first;
-                    NetworkHelper.uploadFile(file, -1, -1, true, path
-                            , (OnFileUploadListener) (fileId, fileUsageId) -> {
-                                if (me != null) {
-                                    me.setAvatar(fileId);
-                                    updateProfile();
-                                }
-                            });
+                    ProfileService.updateUserProfileAvatar(new UserProfileUpdating(path, me));
                 }
             }
         } else if (requestCode == 456) {

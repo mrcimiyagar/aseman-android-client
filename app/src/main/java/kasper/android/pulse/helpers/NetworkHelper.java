@@ -1,6 +1,5 @@
 package kasper.android.pulse.helpers;
 
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
@@ -18,15 +17,11 @@ import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
-import io.fabric.sdk.android.Logger;
 import kasper.android.pulse.R;
-import kasper.android.pulse.callbacks.network.OnFileDownloadListener;
-import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.Downloading;
-import kasper.android.pulse.models.extras.ProgressListener;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.services.FilesService;
@@ -67,7 +62,7 @@ public class NetworkHelper {
         return retrofit;
     }
     private static ObjectMapper mapper;
-    static ObjectMapper getMapper() {
+    public static ObjectMapper getMapper() {
         return mapper;
     }
 
@@ -292,34 +287,6 @@ public class NetworkHelper {
         return contentEncoding != null
                 && !contentEncoding.equalsIgnoreCase("identity")
                 && !contentEncoding.equalsIgnoreCase("gzip");
-    }
-
-    public static void uploadFile(Entities.File file, long complexId, long roomId, boolean isAvatar, String path, OnFileUploadListener uploadListener) {
-        Uploading uploading = new Uploading();
-        uploading.setFile(file);
-        uploading.setPath(path);
-        uploading.setComplexId(complexId);
-        uploading.setRoomId(roomId);
-        uploading.setAvatarUsage(isAvatar);
-        uploading.setUploadListener(uploadListener);
-        FilesService.uploadFile(uploading);
-    }
-
-    public static void downloadFile(Entities.File file, long roomId, ProgressListener progressListener, OnFileDownloadListener downloadListener) {
-        Downloading downloading = new Downloading();
-        downloading.setFile(file);
-        downloading.setRoomId(roomId);
-        downloading.setProgressListener(progressListener);
-        downloading.setDownloadListener(downloadListener);
-        FilesService.downloadFile(downloading);
-    }
-
-    public static void cancelUploadFile(long fileId) {
-        FilesService.cancelUpload(fileId);
-    }
-
-    public static void cancelDownloadFile(long fileId) {
-        FilesService.cancelDownload(fileId);
     }
 
     public static String createFileLink(long fileId) {

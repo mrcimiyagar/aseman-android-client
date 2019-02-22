@@ -4,12 +4,12 @@ import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import com.anadeainc.rxbus.Subscribe;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 
 import java.io.File;
@@ -17,17 +17,20 @@ import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
-import kasper.android.pulse.callbacks.network.OnFileUploadListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.GlideApp;
+import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RobotHandler;
-import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
+import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
+import kasper.android.pulse.rxbus.notifications.FileUploaded;
+import kasper.android.pulse.services.FilesService;
 import retrofit2.Call;
 
 public class CreateBotActivity extends AppCompatActivity {
@@ -39,18 +42,31 @@ public class CreateBotActivity extends AppCompatActivity {
     private CircularProgressBar progressBar;
     private OneClickFAB saveFAB;
 
+    private String botName;
+    private String botDesc;
+    private long fileId;
+
     File selectedImageFile = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_bot);
+
+        Core.getInstance().bus().register(this);
+
         avatarIV = findViewById(R.id.createBotAvatarIV);
         descET = findViewById(R.id.createBotDescET);
         nameET = findViewById(R.id.createBotNameET);
         loadingView = findViewById(R.id.createBotLoadingView);
         progressBar = findViewById(R.id.createBotProgressBar);
         saveFAB = findViewById(R.id.saveFAB);
+    }
+
+    @Override
+    protected void onDestroy() {
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
     }
 
     @Override
@@ -74,8 +90,8 @@ public class CreateBotActivity extends AppCompatActivity {
     }
 
     public void onSaveBtnClicked(View view) {
-        final String botName = nameET.getText().toString();
-        final String botDesc = descET.getText().toString();
+        botName = nameET.getText().toString();
+        botDesc = descET.getText().toString();
         if (botName.length() > 0 && botDesc.length() > 0) {
             if (selectedImageFile != null && selectedImageFile.exists()) {
                 loadingView.setVisibility(View.VISIBLE);
@@ -83,15 +99,25 @@ public class CreateBotActivity extends AppCompatActivity {
                 loadingView.setVisibility(View.GONE);
             }
             if (selectedImageFile != null && selectedImageFile.exists()) {
-                Pair<Entities.File, Entities.FileLocal> pair = DatabaseHelper
-                        .notifyPhotoUploading(true, selectedImageFile.getPath(), 56, 56);
-                Entities.Photo file = (Entities.Photo) pair.first;
-                NetworkHelper.uploadFile(file, -1, -1, true, selectedImageFile.getPath()
-                        , (OnFileUploadListener) (fileId, fileUsageId) -> createBot(botName, fileId, botDesc));
+                fileId = FilesService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
+                        , -1, -1, true, false));
             } else {
                 createBot(botName, 0, botDesc);
             }
         }
+    }
+
+    @Subscribe
+    public void onFileTransferProgressed(FileTransferProgressed progressed) {
+        if (progressed.getFileId() == fileId) {
+            progressBar.setProgress(progressed.getProgress());
+        }
+    }
+
+    @Subscribe
+    public void onFileUploaded(FileUploaded fileUploaded) {
+        if (fileUploaded.getLocalFileId() == fileId)
+            createBot(botName, fileUploaded.getOnlineFileId(), botDesc);
     }
 
     private void createBot(String botName, long botAvatar, String description) {
