@@ -134,9 +134,10 @@ public final class RxBus implements Bus {
     public void unregister(@NonNull Object observer) {
         ObjectHelper.requireNonNull(observer, "Observer to unregister must not be null.");
         CompositeDisposable composite = OBSERVERS.get(observer.getClass());
-        ObjectHelper.requireNonNull(composite, "Missing observer, it was registered?");
-        composite.dispose();
-        OBSERVERS.remove(observer.getClass());
+        if (composite != null) {
+            composite.dispose();
+            OBSERVERS.remove(observer.getClass());
+        }
 
         Set<CustomSubscriber<?>> subscribers = SUBSCRIBERS.get(observer.getClass());
         if (subscribers != null) {

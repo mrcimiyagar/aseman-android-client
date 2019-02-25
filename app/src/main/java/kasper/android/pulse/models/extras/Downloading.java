@@ -1,23 +1,39 @@
 package kasper.android.pulse.models.extras;
 
-import kasper.android.pulse.models.entities.Entities;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
+@Entity
 public class Downloading {
 
-    private Entities.File file;
+    @PrimaryKey
+    private long downloadingId;
+    private long fileId;
     private long roomId;
 
-    public Downloading(Entities.File file, long roomId) {
-        this.file = file;
+    public Downloading(long fileId, long roomId) {
+        this.fileId = fileId;
         this.roomId = roomId;
     }
 
-    public Entities.File getFile() {
-        return file;
+    public Downloading() {
+
     }
 
-    public void setFile(Entities.File file) {
-        this.file = file;
+    public long getDownloadingId() {
+        return downloadingId;
+    }
+
+    public void setDownloadingId(long downloadingId) {
+        this.downloadingId = downloadingId;
+    }
+
+    public long getFileId() {
+        return fileId;
+    }
+
+    public void setFileId(long fileId) {
+        this.fileId = fileId;
     }
 
     public long getRoomId() {

@@ -61,6 +61,7 @@ public class MessagesService extends IntentService {
                 try {
                     while (alive) {
                         TextMessageSending sending = txtMsgQueue.take();
+                        txtMsgQueue.offerFirst(sending);
                         try {
                             final Pair<Entities.Message, Entities.MessageLocal> pair = DatabaseHelper.notifyTextMessageSending(sending.getRoomId(), sending.getText());
                             final Entities.Message message = pair.first;
@@ -79,33 +80,20 @@ public class MessagesService extends IntentService {
                             packet.setTextMessage((Entities.TextMessage) message);
                             MessageHandler messageHandler = NetworkHelper.getRetrofit().create(MessageHandler.class);
                             Call<Packet> call = messageHandler.createTextMessage(packet);
-                            NetworkHelper.requestServer(call, new ServerCallback() {
-                                @Override
-                                public void onRequestSuccess(Packet packet) {
-                                    final Entities.TextMessage msg = packet.getTextMessage();
-                                    DatabaseHelper.notifyTextMessageSent(messageLocalId, msg.getMessageId(), msg.getTime());
-                                    if (DatabaseHelper.getComplexById(sending.getComplexId()).getMode() == 1) {
-                                        msg.setSeenCount(1);
-                                        DatabaseHelper.notifyMessageUpdated(msg);
-                                    }
-                                    Core.getInstance().bus().post(new MessageSent(messageLocalId, msg.getMessageId()));
+                            Packet p = call.execute().body();
+                            if (p != null) {
+                                final Entities.TextMessage msg = p.getTextMessage();
+                                DatabaseHelper.notifyTextMessageSent(messageLocalId, msg.getMessageId(), msg.getTime());
+                                if (DatabaseHelper.getComplexById(sending.getComplexId()).getMode() == 1) {
+                                    msg.setSeenCount(1);
+                                    DatabaseHelper.notifyMessageUpdated(msg);
                                 }
+                                Core.getInstance().bus().post(new MessageSent(messageLocalId, msg.getMessageId()));
 
-                                @Override
-                                public void onServerFailure() {
-                                    Core.getInstance().bus().post(new ShowToast("Message delivery failure"));
-                                    txtMsgQueue.offer(sending);
-                                }
-
-                                @Override
-                                public void onConnectionFailure() {
-                                    Core.getInstance().bus().post(new ShowToast("Message delivery failure"));
-                                    txtMsgQueue.offerFirst(sending);
-                                }
-                            });
+                                txtMsgQueue.take();
+                            }
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            txtMsgQueue.offerFirst(sending);
                         }
                     }
                 } catch (Exception ex) {
@@ -122,12 +110,15 @@ public class MessagesService extends IntentService {
                 try {
                     while (alive) {
                         FileMessageSending sending = fileMsgQueue.take();
+                        fileMsgQueue.offerFirst(sending);
                         try {
                             FilesService.uploadFile(new Uploading(sending.getDocType(), sending.getPath()
                                     , sending.getComplexId(), sending.getRoomId(), false, true));
+
+                            fileMsgQueue.take();
+
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            fileMsgQueue.offerFirst(sending);
                         }
                     }
                 } catch (Exception ex) {
@@ -144,15 +135,9 @@ public class MessagesService extends IntentService {
 
     @Override
     public void onDestroy() {
-        alive = false;
         Core.getInstance().bus().unregister(this);
         LogHelper.log("Aseman", "Messages service destroyed");
         super.onDestroy();
-    }
-
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        Log.e("Aseman", "Messages service task removed");
     }
 
     @Subscribe

@@ -91,8 +91,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter {
         Locks.runSafeOnIdTable(() -> {
             for (String id : ((ItemHolder) holder).containerIds) {
                 Pair<Controls.Control, View> value = idTable.remove(id);
-                value = new Pair<>(value.first, null);
-                idTable.put(id, value);
+                if (value != null) {
+                    value = new Pair<>(value.first, null);
+                    idTable.put(id, value);
+                }
             }
         });
     }

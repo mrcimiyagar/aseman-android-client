@@ -6,10 +6,15 @@ import java.io.IOException;
 
 import androidx.annotation.NonNull;
 import kasper.android.pulse.core.Core;
+import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.retrofit.FileHandler;
 import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okio.BufferedSink;
+import retrofit2.Call;
 
 public class ProgressRequestBody extends RequestBody {
     private long fileId;
@@ -40,15 +45,25 @@ public class ProgressRequestBody extends RequestBody {
 
     @Override
     public void writeTo(@NonNull BufferedSink sink) throws IOException {
+        Packet packet = new Packet();
+        Entities.File f = new Entities.File();
+        f.setFileId(fileId);
+        packet.setFile(f);
+        Call<Packet> fileSizeCall = NetworkHelper.getRetrofit().create(FileHandler.class).getFileSize(packet);
+        Packet res = fileSizeCall.execute().body();
+        long writePos = 0;
+        if (res != null)
+            writePos = res.getFile().getSize();
         long fileLength = mFile.length();
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
 
         try (FileInputStream in = new FileInputStream(mFile)) {
-            long uploaded = 0;
+            in.skip(writePos);
+            long uploaded = writePos;
             int read;
             while ((read = in.read(buffer)) != -1) {
                 int progress = (int) (100 * uploaded / fileLength);
-                if (progress - notifiedProgress > 5) {
+                if (progress - notifiedProgress > 10) {
                     Core.getInstance().bus().post(new FileTransferProgressed(docType, fileId, progress));
                     notifiedProgress = progress;
                 }

@@ -13,6 +13,8 @@ import java.util.List;
 
 import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.Downloading;
+import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.repositories.BotDao;
 import kasper.android.pulse.repositories.BotSecretDao;
 import kasper.android.pulse.repositories.ComplexDao;
@@ -791,46 +793,38 @@ public class DatabaseHelper {
         AsemanDB.getInstance().getFileUsageDao().insert(fileUsage);
     }
 
-    public static void notifyPhotoUploaded(long localFileId, long fileId) {
-        Entities.Photo file = AsemanDB.getInstance().getFileDao().getPhotoById(localFileId);
-        AsemanDB.getInstance().getFileDao().delete(file);
-        file.setFileId(fileId);
-        AsemanDB.getInstance().getFileDao().insert(file);
-        Entities.FileLocal fileLocal = AsemanDB.getInstance().getFileLocalDao().getFileLocalById(localFileId);
+    public static void notifyFileUploaded(long fileId) {
+        Entities.FileLocal fileLocal = AsemanDB.getInstance().getFileLocalDao().getFileLocalById(fileId);
         if (fileLocal != null) {
-            AsemanDB.getInstance().getFileLocalDao().delete(fileLocal);
-            fileLocal.setFileId(fileId);
             fileLocal.setTransferring(false);
-            AsemanDB.getInstance().getFileLocalDao().insert(fileLocal);
+            AsemanDB.getInstance().getFileLocalDao().update(fileLocal);
         }
     }
 
-    public static void notifyAudioUploaded(long localFileId, long fileId) {
-        Entities.Audio file = AsemanDB.getInstance().getFileDao().getAudioById(localFileId);
-        AsemanDB.getInstance().getFileDao().delete(file);
-        file.setFileId(fileId);
-        AsemanDB.getInstance().getFileDao().insert(file);
-        Entities.FileLocal fileLocal = AsemanDB.getInstance().getFileLocalDao().getFileLocalById(localFileId);
-        if (fileLocal != null) {
-            AsemanDB.getInstance().getFileLocalDao().delete(fileLocal);
-            fileLocal.setFileId(fileId);
-            fileLocal.setTransferring(false);
-            AsemanDB.getInstance().getFileLocalDao().insert(fileLocal);
-        }
+    public static Uploading notifyUploadingCreated(Uploading uploading) {
+        AsemanDB.getInstance().getUploadingDao().insert(uploading);
+        return uploading;
     }
 
-    public static void notifyVideoUploaded(long localFileId, long fileId) {
-        Entities.Video file = AsemanDB.getInstance().getFileDao().getVideoById(localFileId);
-        AsemanDB.getInstance().getFileDao().delete(file);
-        file.setFileId(fileId);
-        AsemanDB.getInstance().getFileDao().insert(file);
-        Entities.FileLocal fileLocal = AsemanDB.getInstance().getFileLocalDao().getFileLocalById(localFileId);
-        if (fileLocal != null) {
-            AsemanDB.getInstance().getFileLocalDao().delete(fileLocal);
-            fileLocal.setFileId(fileId);
-            fileLocal.setTransferring(false);
-            AsemanDB.getInstance().getFileLocalDao().insert(fileLocal);
-        }
+    public static List<Uploading> fetchUploadings() {
+        return AsemanDB.getInstance().getUploadingDao().getUploadings();
+    }
+
+    public static void deleteUploadingById(long uploadingId) {
+        AsemanDB.getInstance().getUploadingDao().deleteUploadingById(uploadingId);
+    }
+
+    public static Downloading notifyDownloadingCreated(Downloading downloading) {
+        AsemanDB.getInstance().getDownloadingDao().insert(downloading);
+        return downloading;
+    }
+
+    public static List<Downloading> fetchDownloadings() {
+        return AsemanDB.getInstance().getDownloadingDao().getDownloadings();
+    }
+
+    public static void deleteDownloadingById(long downloadingId) {
+        AsemanDB.getInstance().getDownloadingDao().deleteUploadingById(downloadingId);
     }
 
     public static void notifyFileDownloading(long fileId) {
@@ -846,6 +840,35 @@ public class DatabaseHelper {
         if (fileLocal != null) {
             fileLocal.setTransferring(false);
             AsemanDB.getInstance().getFileLocalDao().update(fileLocal);
+        }
+    }
+
+    public static List<Entities.FileUsage> getFileUsages(long fileId) {
+        return AsemanDB.getInstance().getFileUsageDao().getFileUsagesOfFile(fileId);
+    }
+
+    public static void notifyFileRegistered(long localFileId, long onlineFileId) {
+        Entities.File file = AsemanDB.getInstance().getFileDao().getFileById(localFileId);
+        if (file != null) {
+            if (file instanceof Entities.Photo) {
+                AsemanDB.getInstance().getFileDao().delete((Entities.Photo) file);
+                file.setFileId(onlineFileId);
+                AsemanDB.getInstance().getFileDao().insert((Entities.Photo) file);
+            } else if (file instanceof Entities.Audio) {
+                AsemanDB.getInstance().getFileDao().delete((Entities.Audio) file);
+                file.setFileId(onlineFileId);
+                AsemanDB.getInstance().getFileDao().insert((Entities.Audio) file);
+            } else if (file instanceof Entities.Video) {
+                AsemanDB.getInstance().getFileDao().delete((Entities.Video) file);
+                file.setFileId(onlineFileId);
+                AsemanDB.getInstance().getFileDao().insert((Entities.Video) file);
+            }
+        }
+        Entities.FileLocal fileLocal = AsemanDB.getInstance().getFileLocalDao().getFileLocalById(localFileId);
+        if (fileLocal != null) {
+            AsemanDB.getInstance().getFileLocalDao().delete(fileLocal);
+            fileLocal.setFileId(onlineFileId);
+            AsemanDB.getInstance().getFileLocalDao().insert(fileLocal);
         }
     }
 

@@ -618,6 +618,7 @@ public class Entities {
     public static class File implements Serializable, Cloneable {
         @PrimaryKey
         private long fileId;
+        private long size;
         private boolean isPublic;
         @Ignore
         private List<FileUsage> fileUsages;
@@ -641,6 +642,14 @@ public class Entities {
 
         public void setFileId(long fileId) {
             this.fileId = fileId;
+        }
+
+        public long getSize() {
+            return size;
+        }
+
+        public void setSize(long size) {
+            this.size = size;
         }
 
         public boolean isPublic() {

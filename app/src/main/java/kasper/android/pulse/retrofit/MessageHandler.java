@@ -14,4 +14,6 @@ public interface MessageHandler {
     Call<Packet> notifyMessageSeen(@Body Packet packet);
     @POST("message/get_messages")
     Call<Packet> getMessages(@Body Packet packet);
+    @POST("message/get_last_actions")
+    Call<Packet> getLastActions(@Body Packet packet);
 }

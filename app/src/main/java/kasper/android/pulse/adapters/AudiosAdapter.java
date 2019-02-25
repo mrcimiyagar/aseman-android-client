@@ -212,7 +212,7 @@ public class AudiosAdapter extends RecyclerView.Adapter<AudiosAdapter.Holder> {
                                     @Override
                                     public void onPermissionsChecked(MultiplePermissionsReport report) {
                                         if (report.areAllPermissionsGranted()) {
-                                            FilesService.downloadFile(new Downloading(doc, roomId));
+                                            FilesService.downloadFile(new Downloading(doc.getFileId(), roomId));
                                             Core.getInstance().bus().post(new FileDownloading(Audio, doc));
                                         } else {
                                             activity.finish();

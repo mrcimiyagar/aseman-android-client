@@ -3,7 +3,6 @@ package kasper.android.pulse.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.telephony.mbms.FileServiceInfo;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -12,22 +11,19 @@ import com.anadeainc.rxbus.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import androidx.core.util.Pair;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
-import kasper.android.pulse.retrofit.AuthHandler;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.ContactHandler;
 import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
-import kasper.android.pulse.retrofit.RoomHandler;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.services.FilesService;
@@ -48,7 +44,6 @@ public class StartupActivity extends BaseActivity {
     private List<Entities.BotCreation> syncedBotCreations = new ArrayList<>();
     private List<Entities.Bot> syncedBotSubscriptionsBots = new ArrayList<>();
     private List<Entities.BotSubscription> syncedBotSubscriptions = new ArrayList<>();
-    private long syncingRoomsCount = 0;
     private List<Entities.Message> syncedMessages = new ArrayList<>();
 
     @Override
@@ -156,7 +151,7 @@ public class StartupActivity extends BaseActivity {
                 new Thread(() -> {
                     syncedComplexes = p.getComplexes();
                     syncedComplexSecrets = p.getComplexSecrets();
-                    initMessages();
+                    initLastActions();
                     synchronized (TASKS_LOCK) {
                         notifyTaskDone();
                     }
@@ -254,36 +249,30 @@ public class StartupActivity extends BaseActivity {
         });
     }
 
-    private void initMessages() {
-        syncingRoomsCount = 0;
-        List<Pair<Long, Long>> messageContainers = new ArrayList<>();
+    private void initLastActions() {
+        List<Entities.Room> rooms = new ArrayList<>();
         for (Entities.Complex complex : syncedComplexes) {
-            syncingRoomsCount += complex.getRooms().size();
             for (Entities.Room room : complex.getRooms()) {
-                messageContainers.add(new Pair<>(complex.getComplexId(), room.getRoomId()));
+                Entities.Room r = new Entities.Room();
+                r.setComplexId(room.getComplexId());
+                r.setRoomId(room.getRoomId());
+                rooms.add(r);
             }
         }
-        for (Pair<Long, Long> messageContainer : messageContainers)
-            if (messageContainer.first != null && messageContainer.second != null)
-                fetchRoomMessages(messageContainer.first, messageContainer.second);
-    }
-
-    private void fetchRoomMessages(long complexId, long roomId) {
         Packet packet = new Packet();
-        Entities.Complex complex = new Entities.Complex();
-        complex.setComplexId(complexId);
-        packet.setComplex(complex);
-        Entities.Room room = new Entities.Room();
-        room.setRoomId(roomId);
-        packet.setRoom(room);
-        Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).getMessages(packet);
+        packet.setRooms(rooms);
+        Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).getLastActions(packet);
         NetworkHelper.requestServer(call, new ServerCallback() {
             @Override
             public void onRequestSuccess(Packet packet) {
                 new Thread(() -> {
-                    syncedMessages.addAll(packet.getMessages());
+                    syncedMessages = new ArrayList<>();
+                    for (Entities.Room room : packet.getRooms()) {
+                        if (room.getLastAction() != null)
+                            syncedMessages.add(room.getLastAction());
+                    }
                     synchronized (TASKS_LOCK) {
-                        notifyMessageTaskDone();
+                        notifyTaskDone();
                     }
                 }).start();
             }
@@ -293,7 +282,7 @@ public class StartupActivity extends BaseActivity {
                     try {
                         Thread.sleep(500);
                     } catch (Exception ignored) { }
-                    fetchRoomMessages(complexId, roomId);
+                    initLastActions();
                 }).start();
             }
             @Override
@@ -302,27 +291,17 @@ public class StartupActivity extends BaseActivity {
                     try {
                         Thread.sleep(500);
                     } catch (Exception ignored) { }
-                    fetchRoomMessages(complexId, roomId);
+                    initLastActions();
                 }).start();
             }
         });
     }
 
-    private void notifyMessageTaskDone() {
-        synchronized (TASKS_LOCK) {
-            syncingRoomsCount--;
-            if (syncingRoomsCount == 0) {
-                synchronized (TASKS_LOCK) {
-                    notifyTaskDone();
-                }
-            }
-        }
-    }
-
     private void notifyTaskDone() {
         synchronized (TASKS_LOCK) {
             doneTasksCount++;
-            if (doneTasksCount == 5) {
+            LogHelper.log("AsemanLogger", doneTasksCount + "");
+            if (doneTasksCount >= 5) {
                 for (Entities.Contact contact : syncedContacts) {
                     DatabaseHelper.notifyContactCreated(contact);
                     DatabaseHelper.notifyUserCreated(contact.getPeer());

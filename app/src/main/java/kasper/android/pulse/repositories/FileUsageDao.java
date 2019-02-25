@@ -1,5 +1,7 @@
 package kasper.android.pulse.repositories;
 
+import java.util.List;
+
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -18,6 +20,8 @@ public interface FileUsageDao {
     void delete(Entities.FileUsage... fileUsages);
     @Query("select * from fileusage where fileUsageId = :fuId")
     Entities.FileUsage getFileUsageById(long fuId);
+    @Query("select * from fileusage where fileId = :fileId")
+    List<Entities.FileUsage> getFileUsagesOfFile(long fileId);
     @Query("delete from fileusage")
     void deleteAll();
 }

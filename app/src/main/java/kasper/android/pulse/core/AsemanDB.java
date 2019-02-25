@@ -6,6 +6,8 @@ import androidx.room.RoomDatabase;
 
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.Downloading;
+import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.repositories.BotCreationDao;
 import kasper.android.pulse.repositories.BotDao;
 import kasper.android.pulse.repositories.BotSecretDao;
@@ -13,6 +15,7 @@ import kasper.android.pulse.repositories.BotSubscriptionDao;
 import kasper.android.pulse.repositories.ComplexDao;
 import kasper.android.pulse.repositories.ComplexSecretDao;
 import kasper.android.pulse.repositories.ContactDao;
+import kasper.android.pulse.repositories.DownloadingDao;
 import kasper.android.pulse.repositories.FileDao;
 import kasper.android.pulse.repositories.FileLocalDao;
 import kasper.android.pulse.repositories.FileUsageDao;
@@ -23,6 +26,7 @@ import kasper.android.pulse.repositories.MessageDao;
 import kasper.android.pulse.repositories.MessageLocalDao;
 import kasper.android.pulse.repositories.RoomDao;
 import kasper.android.pulse.repositories.SessionDao;
+import kasper.android.pulse.repositories.UploadingDao;
 import kasper.android.pulse.repositories.UserDao;
 import kasper.android.pulse.repositories.UserSecretDao;
 import kasper.android.pulse.repositories.WorkershipDao;
@@ -36,7 +40,7 @@ import kasper.android.pulse.repositories.WorkershipDao;
         , Entities.VideoMessage.class, Entities.ServiceMessage.class, Entities.Complex.class
         , Entities.ComplexSecret.class, Entities.Room.class, Entities.Membership.class
         , Entities.Workership.class, Entities.MessageLocal.class, Entities.FileLocal.class
-        , Entities.IdKeeper.class}, version = 1, exportSchema = false)
+        , Entities.IdKeeper.class, Uploading.class, Downloading.class}, version = 1, exportSchema = false)
 public abstract class AsemanDB extends RoomDatabase {
     public abstract BotCreationDao getBotCreationDao();
     public abstract BotDao getBotDao();
@@ -58,6 +62,8 @@ public abstract class AsemanDB extends RoomDatabase {
     public abstract UserSecretDao getUserSecretDao();
     public abstract WorkershipDao getWorkershipDao();
     public abstract KeyValueDao getKeyValueDao();
+    public abstract UploadingDao getUploadingDao();
+    public abstract DownloadingDao getDownloadingDao();
 
     public static void deleteAllData() {
         getInstance().getBotCreationDao().deleteAll();
@@ -80,6 +86,8 @@ public abstract class AsemanDB extends RoomDatabase {
         getInstance().getUserSecretDao().deleteAll();
         getInstance().getWorkershipDao().deleteAll();
         getInstance().getKeyValueDao().deleteAll();
+        getInstance().getUploadingDao().deleteAll();
+        getInstance().getDownloadingDao().deleteAll();
 
         DatabaseHelper.setup();
     }

@@ -73,13 +73,16 @@ public class ProfileService extends IntentService {
                 try {
                     while (alive) {
                         UserProfileUpdating updating = userQueue.take();
+                        userQueue.offerFirst(updating);
                         try {
                             long fileId = FilesService.uploadFile(new Uploading(DocTypes.Photo, updating.getPath()
                                     , -1, -1, true, false));
                             map.put(fileId, updating.getUser());
+
+                            userQueue.take();
+
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            userQueue.offerFirst(updating);
                         }
                     }
                 } catch (Exception ex) {
@@ -96,13 +99,16 @@ public class ProfileService extends IntentService {
                 try {
                     while (alive) {
                         BotProfileUpdating updating = botQueue.take();
+                        botQueue.offerFirst(updating);
                         try {
                             long fileId = FilesService.uploadFile(new Uploading(DocTypes.Photo, updating.getPath()
                                     , -1, -1, true, false));
                             map.put(fileId, updating.getBot());
+
+                            botQueue.take();
+
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            botQueue.offerFirst(updating);
                         }
                     }
                 } catch (Exception ex) {
@@ -119,13 +125,16 @@ public class ProfileService extends IntentService {
                 try {
                     while (alive) {
                         ComplexProfileUpdating updating = complexQueue.take();
+                        complexQueue.offerFirst(updating);
                         try {
                             long fileId = FilesService.uploadFile(new Uploading(DocTypes.Photo, updating.getPath()
                                     , -1, -1, true, false));
                             map.put(fileId, updating.getComplex());
+
+                            complexQueue.take();
+
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            complexQueue.offerFirst(updating);
                         }
                     }
                 } catch (Exception ex) {
@@ -142,13 +151,16 @@ public class ProfileService extends IntentService {
                 try {
                     while (alive) {
                         RoomProfileUpdating updating = roomQueue.take();
+                        roomQueue.offerFirst(updating);
                         try {
                             long fileId = FilesService.uploadFile(new Uploading(DocTypes.Photo, updating.getPath()
                                     , -1, -1, true, false));
                             map.put(fileId, updating.getRoom());
+
+                            roomQueue.take();
+
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            roomQueue.offerFirst(updating);
                         }
                     }
                 } catch (Exception ex) {
@@ -167,7 +179,6 @@ public class ProfileService extends IntentService {
     public void onDestroy() {
         LogHelper.log("Aseman", "File service destroyed");
         Core.getInstance().bus().unregister(this);
-        alive = false;
         super.onDestroy();
     }
 

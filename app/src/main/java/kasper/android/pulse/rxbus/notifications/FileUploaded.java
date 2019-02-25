@@ -6,7 +6,6 @@ import kasper.android.pulse.models.extras.DocTypes;
 public class FileUploaded {
 
     private DocTypes docType;
-    private long localFileId;
     private long onlineFileId;
     private long fileUsageId;
     private long complexId;
@@ -14,10 +13,9 @@ public class FileUploaded {
     private Entities.File file;
     private Entities.Message message;
 
-    public FileUploaded(DocTypes docType, long localFileId, long onlineFileId, long fileUsageId
+    public FileUploaded(DocTypes docType, long onlineFileId, long fileUsageId
             , long complexId, long roomId, Entities.File file, Entities.Message message) {
         this.docType = docType;
-        this.localFileId = localFileId;
         this.onlineFileId = onlineFileId;
         this.fileUsageId = fileUsageId;
         this.complexId = complexId;
@@ -28,10 +26,6 @@ public class FileUploaded {
 
     public DocTypes getDocType() {
         return docType;
-    }
-
-    public long getLocalFileId() {
-        return localFileId;
     }
 
     public long getOnlineFileId() {
