@@ -22,15 +22,17 @@ import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.models.Tuple;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RobotHandler;
+import kasper.android.pulse.rxbus.notifications.FileRegistered;
 import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
-import kasper.android.pulse.services.FilesService;
+import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
 public class CreateBotActivity extends AppCompatActivity {
@@ -99,8 +101,10 @@ public class CreateBotActivity extends AppCompatActivity {
                 loadingView.setVisibility(View.GONE);
             }
             if (selectedImageFile != null && selectedImageFile.exists()) {
-                fileId = FilesService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
-                        , -1, -1, true, false));
+                Tuple<Entities.File, Entities.FileLocal, Entities.Message, Entities.MessageLocal, Uploading> uploadData =
+                        AsemanService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
+                                , -1, -1, true, false));
+                fileId = uploadData.fifth.getFileId();
             } else {
                 createBot(botName, 0, botDesc);
             }
@@ -115,8 +119,14 @@ public class CreateBotActivity extends AppCompatActivity {
     }
 
     @Subscribe
+    public void onFileRegistered(FileRegistered fileRegistered) {
+        if (fileRegistered.getLocalFileId() == fileId)
+            fileId = fileRegistered.getOnlineFileId();
+    }
+
+    @Subscribe
     public void onFileUploaded(FileUploaded fileUploaded) {
-        if (fileUploaded.getLocalFileId() == fileId)
+        if (fileUploaded.getOnlineFileId() == fileId)
             createBot(botName, fileUploaded.getOnlineFileId(), botDesc);
     }
 

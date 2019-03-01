@@ -51,7 +51,6 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:2.2.0'
     implementation 'com.imankur.library:analogclockview:1.0.0'
     implementation 'com.squareup.picasso:picasso:2.5.2'
-    implementation 'com.android.volley:volley:1.1.0'
     implementation 'com.squareup.okhttp3:okhttp:3.11.0'
     implementation 'com.klinkerapps:sliding-activity:1.5.2'
     implementation 'com.github.nirhart:parallaxscroll:1.0'

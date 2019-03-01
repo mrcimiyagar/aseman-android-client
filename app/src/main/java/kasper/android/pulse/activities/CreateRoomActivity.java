@@ -28,11 +28,12 @@ import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RoomHandler;
+import kasper.android.pulse.rxbus.notifications.FileRegistered;
 import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
-import kasper.android.pulse.services.FilesService;
+import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
 public class CreateRoomActivity extends AppCompatActivity {
@@ -120,7 +121,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                     DatabaseHelper.notifyRoomCreated(room);
                     DatabaseHelper.notifyServiceMessageReceived(message);
                     if (selectedImageFile != null && selectedImageFile.exists()) {
-                        FilesService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
+                        AsemanService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
                                 , -1, -1, true, false));
                     } else {
                         taskDone(complex, room, message);
@@ -152,8 +153,14 @@ public class CreateRoomActivity extends AppCompatActivity {
     }
 
     @Subscribe
+    public void onFileRegistered(FileRegistered fileRegistered) {
+        if (fileRegistered.getLocalFileId() == fileId)
+            fileId = fileRegistered.getOnlineFileId();
+    }
+
+    @Subscribe
     public void onFileUploaded(FileUploaded fileUploaded) {
-        if (fileUploaded.getLocalFileId() == fileId) {
+        if (fileUploaded.getOnlineFileId() == fileId) {
             loadingView.setVisibility(View.GONE);
             Packet packet2 = new Packet();
             room.setAvatar(fileUploaded.getOnlineFileId());

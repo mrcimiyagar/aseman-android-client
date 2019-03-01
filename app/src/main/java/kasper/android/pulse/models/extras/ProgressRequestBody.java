@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import androidx.annotation.NonNull;
 import kasper.android.pulse.core.Core;
+import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
@@ -21,6 +22,7 @@ public class ProgressRequestBody extends RequestBody {
     private DocTypes docType;
     private File mFile;
     private String content_type;
+    private boolean cancel = false;
 
     private static final int DEFAULT_BUFFER_SIZE = 2048;
 
@@ -43,33 +45,48 @@ public class ProgressRequestBody extends RequestBody {
 
     private int notifiedProgress = 0;
 
+    public void cancelStream(){
+        cancel = true;
+    }
+
     @Override
     public void writeTo(@NonNull BufferedSink sink) throws IOException {
-        Packet packet = new Packet();
-        Entities.File f = new Entities.File();
-        f.setFileId(fileId);
-        packet.setFile(f);
-        Call<Packet> fileSizeCall = NetworkHelper.getRetrofit().create(FileHandler.class).getFileSize(packet);
-        Packet res = fileSizeCall.execute().body();
-        long writePos = 0;
-        if (res != null)
-            writePos = res.getFile().getSize();
-        long fileLength = mFile.length();
-        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-
-        try (FileInputStream in = new FileInputStream(mFile)) {
-            in.skip(writePos);
-            long uploaded = writePos;
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                int progress = (int) (100 * uploaded / fileLength);
-                if (progress - notifiedProgress > 10) {
-                    Core.getInstance().bus().post(new FileTransferProgressed(docType, fileId, progress));
-                    notifiedProgress = progress;
+        try {
+            Packet packet = new Packet();
+            Entities.File f = new Entities.File();
+            f.setFileId(fileId);
+            packet.setFile(f);
+            Call<Packet> fileSizeCall = NetworkHelper.getRetrofit().create(FileHandler.class).getFileSize(packet);
+            if (cancel) return;
+            Packet res = fileSizeCall.execute().body();
+            long writePos = 0;
+            if (res != null)
+                writePos = res.getFile().getSize();
+            long fileLength = mFile.length();
+            byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+            if (cancel) return;
+            try (FileInputStream in = new FileInputStream(mFile)) {
+                in.skip(writePos);
+                long uploaded = writePos;
+                int read;
+                while ((read = in.read(buffer)) != -1 && !cancel) {
+                    int progress = (int) (100 * uploaded / fileLength);
+                    if (progress - notifiedProgress > 0) {
+                        DatabaseHelper.notifyFileTransferProgressed(fileId, progress);
+                        Core.getInstance().bus().post(new FileTransferProgressed(docType, fileId, progress));
+                        notifiedProgress = progress;
+                    }
+                    uploaded += read;
+                    try {
+                        sink.write(buffer, 0, read);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        break;
+                    }
                 }
-                uploaded += read;
-                sink.write(buffer, 0, read);
             }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 }

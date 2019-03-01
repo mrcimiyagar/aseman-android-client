@@ -11,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Member;
+
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
@@ -170,6 +172,10 @@ public class ProfileActivity extends AppCompatActivity {
                             room.setComplex(complex);
                             Entities.ServiceMessage message = packet.getServiceMessage();
                             DatabaseHelper.notifyComplexCreated(complex);
+                            for (Entities.Membership mem : complex.getMembers()) {
+                                DatabaseHelper.notifyUserCreated(mem.getUser());
+                                DatabaseHelper.notifyMembershipCreated(mem);
+                            }
                             DatabaseHelper.notifyRoomCreated(room);
                             DatabaseHelper.notifyContactCreated(contact);
                             DatabaseHelper.notifyServiceMessageReceived(message);

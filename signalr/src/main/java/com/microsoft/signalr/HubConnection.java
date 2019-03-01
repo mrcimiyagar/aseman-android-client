@@ -824,6 +824,10 @@ public class HubConnection {
         return new Subscription(handlers, handler, target);
     }
 
+    public void clearHandlers() {
+        this.handlers.clear();
+    }
+
     private final class ConnectionState implements InvocationBinder {
         private final HubConnection connection;
         private final AtomicInteger nextId = new AtomicInteger(0);

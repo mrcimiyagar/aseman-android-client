@@ -7,6 +7,8 @@ import androidx.room.RoomDatabase;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.Downloading;
+import kasper.android.pulse.models.extras.FileMessageSending;
+import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.repositories.BotCreationDao;
 import kasper.android.pulse.repositories.BotDao;
@@ -24,6 +26,7 @@ import kasper.android.pulse.repositories.KeyValueDao;
 import kasper.android.pulse.repositories.MembershipDao;
 import kasper.android.pulse.repositories.MessageDao;
 import kasper.android.pulse.repositories.MessageLocalDao;
+import kasper.android.pulse.repositories.MessageSendingDao;
 import kasper.android.pulse.repositories.RoomDao;
 import kasper.android.pulse.repositories.SessionDao;
 import kasper.android.pulse.repositories.UploadingDao;
@@ -40,7 +43,8 @@ import kasper.android.pulse.repositories.WorkershipDao;
         , Entities.VideoMessage.class, Entities.ServiceMessage.class, Entities.Complex.class
         , Entities.ComplexSecret.class, Entities.Room.class, Entities.Membership.class
         , Entities.Workership.class, Entities.MessageLocal.class, Entities.FileLocal.class
-        , Entities.IdKeeper.class, Uploading.class, Downloading.class}, version = 1, exportSchema = false)
+        , Entities.IdKeeper.class, Uploading.class, Downloading.class, TextMessageSending.class
+        , FileMessageSending.class}, version = 1, exportSchema = false)
 public abstract class AsemanDB extends RoomDatabase {
     public abstract BotCreationDao getBotCreationDao();
     public abstract BotDao getBotDao();
@@ -64,6 +68,7 @@ public abstract class AsemanDB extends RoomDatabase {
     public abstract KeyValueDao getKeyValueDao();
     public abstract UploadingDao getUploadingDao();
     public abstract DownloadingDao getDownloadingDao();
+    public abstract MessageSendingDao getMessageSendingDao();
 
     public static void deleteAllData() {
         getInstance().getBotCreationDao().deleteAll();
@@ -88,6 +93,7 @@ public abstract class AsemanDB extends RoomDatabase {
         getInstance().getKeyValueDao().deleteAll();
         getInstance().getUploadingDao().deleteAll();
         getInstance().getDownloadingDao().deleteAll();
+        getInstance().getMessageSendingDao().deleteAll();
 
         DatabaseHelper.setup();
     }

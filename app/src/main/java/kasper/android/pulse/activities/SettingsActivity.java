@@ -36,8 +36,7 @@ import kasper.android.pulse.retrofit.AuthHandler;
 import kasper.android.pulse.retrofit.UserHandler;
 import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
-import kasper.android.pulse.services.NotificationsService;
-import kasper.android.pulse.services.ProfileService;
+import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
 public class SettingsActivity extends BaseActivity {
@@ -72,7 +71,7 @@ public class SettingsActivity extends BaseActivity {
             NetworkHelper.loadUserAvatar(me.getAvatar(), avatarIV);
         }
 
-        subtitleTV.setText(NotificationsService.getConnectionState());
+        subtitleTV.setText(AsemanService.getConnectionState());
 
         DataSyncer.syncMeWithServer(new OnMeSyncListener() {
             @Override
@@ -192,6 +191,12 @@ public class SettingsActivity extends BaseActivity {
         }
     }
 
+    @Subscribe
+    public void onProfileUpdated(UserProfileUpdated updated) {
+        if (updated.getUser().getBaseUserId() == me.getBaseUserId())
+            NetworkHelper.loadUserAvatar(updated.getUser().getAvatar(), avatarIV);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, final int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -199,7 +204,7 @@ public class SettingsActivity extends BaseActivity {
             if (resultCode == RESULT_OK) {
                 if (data.getExtras() != null) {
                     String path = data.getExtras().getString("path");
-                    ProfileService.updateUserProfileAvatar(new UserProfileUpdating(path, me));
+                    AsemanService.updateUserProfileAvatar(new UserProfileUpdating(path, me));
                 }
             }
         } else if (requestCode == 456) {

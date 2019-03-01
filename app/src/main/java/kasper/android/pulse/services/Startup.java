@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import kasper.android.pulse.activities.StartupActivity;
+
 public class Startup extends BroadcastReceiver {
 
     public Startup() {
@@ -12,8 +14,13 @@ public class Startup extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        context.startService(new Intent(context, NotificationsService.class));
-        context.startService(new Intent(context, FilesService.class));
+        new Thread(() -> {
+            Intent i = new Intent(context, AsemanService.class);
+            context.startService(i);
+        }).start();
+        new Thread(() -> {
+            Intent i = new Intent(context, MusicsService.class);
+            context.startService(i);
+        }).start();
     }
-
 }

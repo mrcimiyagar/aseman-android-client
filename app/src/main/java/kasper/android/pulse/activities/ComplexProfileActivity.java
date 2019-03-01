@@ -43,7 +43,7 @@ import kasper.android.pulse.models.extras.ComplexProfileUpdating;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
-import kasper.android.pulse.services.ProfileService;
+import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
 public class ComplexProfileActivity extends AppCompatActivity {
@@ -138,7 +138,7 @@ public class ComplexProfileActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 if (data.getExtras() != null) {
                     String path = data.getExtras().getString("path");
-                    ProfileService.updateComplexProfileAvatar(new ComplexProfileUpdating(path, complex));
+                    AsemanService.updateComplexProfileAvatar(new ComplexProfileUpdating(path, complex));
                 }
             }
         } else if (requestCode == 456) {

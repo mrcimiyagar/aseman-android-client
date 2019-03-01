@@ -13,7 +13,7 @@ import kasper.android.pulse.models.extras.Uploading;
 @Dao
 public interface DownloadingDao {
     @Insert
-    void insert(Downloading... downloadings);
+    long insert(Downloading downloading);
     @Update
     void update(Downloading... downloadings);
     @Delete

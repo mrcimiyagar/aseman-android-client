@@ -1,16 +1,18 @@
 package kasper.android.pulse.models.extras;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity
 public class Downloading {
 
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     private long downloadingId;
     private long fileId;
     private long roomId;
 
+    @Ignore
     public Downloading(long fileId, long roomId) {
         this.fileId = fileId;
         this.roomId = roomId;

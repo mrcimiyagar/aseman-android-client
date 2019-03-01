@@ -3,7 +3,6 @@ package kasper.android.pulse.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
@@ -11,7 +10,6 @@ import com.anadeainc.rxbus.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.core.util.Pair;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
@@ -26,9 +24,8 @@ import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
-import kasper.android.pulse.services.FilesService;
+import kasper.android.pulse.services.AsemanService;
 import kasper.android.pulse.services.MusicsService;
-import kasper.android.pulse.services.NotificationsService;
 import retrofit2.Call;
 
 public class StartupActivity extends BaseActivity {
@@ -52,10 +49,6 @@ public class StartupActivity extends BaseActivity {
         setContentView(R.layout.activity_startup);
 
         Core.getInstance().bus().register(this);
-
-        stopService(new Intent(this, FilesService.class));
-        stopService(new Intent(this, MusicsService.class));
-        stopService(new Intent(this, NotificationsService.class));
 
         startTime = System.currentTimeMillis();
 
@@ -103,6 +96,16 @@ public class StartupActivity extends BaseActivity {
     }
 
     private void startSyncing() {
+        new Thread(() -> {
+            Intent i = new Intent(StartupActivity.this, AsemanService.class);
+            i.putExtra("reset", true);
+            startService(i);
+        }).start();
+        new Thread(() -> {
+            Intent i = new Intent(StartupActivity.this, MusicsService.class);
+            i.putExtra("reset", true);
+            startService(i);
+        }).start();
         initContacts();
         initBots();
         initComplexes();

@@ -42,6 +42,7 @@ import kasper.android.pulse.activities.VideoPlayerActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.Downloading;
@@ -51,6 +52,7 @@ import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.rxbus.notifications.FileDownloadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileDownloaded;
 import kasper.android.pulse.rxbus.notifications.FileReceived;
+import kasper.android.pulse.rxbus.notifications.FileRegistered;
 import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
@@ -61,7 +63,7 @@ import kasper.android.pulse.rxbus.notifications.MessageSeen;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.rxbus.notifications.RoomUnreadChanged;
-import kasper.android.pulse.services.FilesService;
+import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
 import static kasper.android.pulse.models.extras.DocTypes.Audio;
@@ -220,13 +222,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     @Subscribe
-    public void onFileUploaded(FileUploaded uploaded) {
-        long onlineFileId = uploaded.getOnlineFileId();
-        long localFileId = uploaded.getLocalFileId();
+    public void onFileRegistered(FileRegistered fileRegistered) {
+        long onlineFileId = fileRegistered.getOnlineFileId();
+        long localFileId = fileRegistered.getLocalFileId();
         Entities.FileLocal fileLocal = fileLocals.get(localFileId);
         if (fileLocal != null) {
             fileLocal.setFileId(onlineFileId);
-            fileLocal.setTransferring(false);
             fileLocals.put(onlineFileId, fileLocal);
             fileLocals.remove(localFileId);
             int counter = 0;
@@ -241,6 +242,29 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     break;
                 } else if (message instanceof Entities.VideoMessage && ((Entities.VideoMessage) message).getVideo().getFileId() == localFileId) {
                     ((Entities.VideoMessage) message).getVideo().setFileId(onlineFileId);
+                    notifyItemChanged(counter);
+                    break;
+                }
+                counter++;
+            }
+        }
+    }
+
+    @Subscribe
+    public void onFileUploaded(FileUploaded uploaded) {
+        long onlineFileId = uploaded.getOnlineFileId();
+        Entities.FileLocal fileLocal = fileLocals.get(onlineFileId);
+        if (fileLocal != null) {
+            fileLocal.setTransferring(false);
+            int counter = 0;
+            for (Entities.Message message : messages) {
+                if (message instanceof Entities.PhotoMessage && ((Entities.PhotoMessage) message).getPhoto().getFileId() == onlineFileId) {
+                    notifyItemChanged(counter);
+                    break;
+                } else if (message instanceof Entities.AudioMessage && ((Entities.AudioMessage) message).getAudio().getFileId() == onlineFileId) {
+                    notifyItemChanged(counter);
+                    break;
+                } else if (message instanceof Entities.VideoMessage && ((Entities.VideoMessage) message).getVideo().getFileId() == onlineFileId) {
                     notifyItemChanged(counter);
                     break;
                 }
@@ -571,11 +595,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     GlideApp.with(activity).load(filePath).into(holder.imageIV);
                     holder.loadingCancelBTN.setOnClickListener(v -> {
                         if (fileLocal.getPath().length() > 0) {
-                            FilesService.cancelUpload(message.getPhoto().getFileId());
-                            DatabaseHelper.deletePhotoMessage(message.getMessageId());
-                            Core.getInstance().bus().post(new MessageDeleted(message));
+                            AsemanService.cancelFileMessage(message.getMessageId());
+                            AsemanService.cancelUpload(message.getPhoto().getFileId());
                         } else {
-                            FilesService.cancelDownload(message.getPhoto().getFileId());
+                            AsemanService.cancelDownload(message.getPhoto().getFileId());
                             DatabaseHelper.notifyFileDownloadCancelled(message.getPhoto().getFileId());
                             Core.getInstance().bus().post(new FileDownloadCancelled(Photo, message.getPhoto().getFileId()));
                         }
@@ -600,7 +623,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                         @Override
                                         public void onPermissionsChecked(MultiplePermissionsReport report) {
                                             if (report.areAllPermissionsGranted()) {
-                                                FilesService.downloadFile(new Downloading(message.getPhoto().getFileId(), message.getRoomId()));
+                                                AsemanService.downloadFile(new Downloading(message.getPhoto().getFileId(), message.getRoomId()));
                                                 fileLocal.setTransferring(true);
                                                 notifyItemChanged(holder.getAdapterPosition());
                                             }
@@ -675,11 +698,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     holder.loadingPB.setProgress(fileLocal.getProgress());
                     holder.loadingCancelBTN.setOnClickListener(v -> {
                         if (fileLocal.getPath().length() > 0) {
-                            FilesService.cancelUpload(message.getAudio().getFileId());
-                            DatabaseHelper.deleteAudioMessage(message.getMessageId());
-                            Core.getInstance().bus().post(new MessageDeleted(message));
+                            AsemanService.cancelFileMessage(message.getMessageId());
+                            AsemanService.cancelUpload(message.getAudio().getFileId());
                         } else {
-                            FilesService.cancelDownload(message.getAudio().getFileId());
+                            AsemanService.cancelDownload(message.getAudio().getFileId());
                             DatabaseHelper.notifyFileDownloadCancelled(message.getAudio().getFileId());
                             Core.getInstance().bus().post(new FileDownloadCancelled(Audio, message.getAudio().getFileId()));
                         }
@@ -704,7 +726,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                         @Override
                                         public void onPermissionsChecked(MultiplePermissionsReport report) {
                                             if (report.areAllPermissionsGranted()) {
-                                                FilesService.downloadFile(new Downloading(message.getAudio().getFileId(), message.getRoomId()));
+                                                AsemanService.downloadFile(new Downloading(message.getAudio().getFileId(), message.getRoomId()));
                                                 fileLocal.setTransferring(true);
                                                 notifyItemChanged(holder.getAdapterPosition());
                                             }
@@ -787,11 +809,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     GlideApp.with(activity).load(filePath).into(holder.imageIV);
                     holder.loadingCancelBTN.setOnClickListener(v -> {
                         if (fileLocal.getPath().length() > 0) {
-                            FilesService.cancelUpload(message.getVideo().getFileId());
-                            DatabaseHelper.deleteVideoMessage(message.getMessageId());
-                            Core.getInstance().bus().post(new MessageDeleted(message));
+                            AsemanService.cancelFileMessage(message.getMessageId());
+                            AsemanService.cancelUpload(message.getVideo().getFileId());
                         } else {
-                            FilesService.cancelDownload(message.getVideo().getFileId());
+                            AsemanService.cancelDownload(message.getVideo().getFileId());
                             DatabaseHelper.notifyFileDownloadCancelled(message.getVideo().getFileId());
                             Core.getInstance().bus().post(new FileDownloadCancelled(Video, message.getVideo().getFileId()));
                         }
@@ -819,7 +840,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                         @Override
                                         public void onPermissionsChecked(MultiplePermissionsReport report) {
                                             if (report.areAllPermissionsGranted()) {
-                                                FilesService.downloadFile(new Downloading(message.getVideo().getFileId(), message.getRoomId()));
+                                                AsemanService.downloadFile(new Downloading(message.getVideo().getFileId(), message.getRoomId()));
                                                 fileLocal.setTransferring(true);
                                                 notifyItemChanged(holder.getAdapterPosition());
                                             }

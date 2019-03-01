@@ -1,17 +1,36 @@
 package kasper.android.pulse.models.extras;
 
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+@Entity
 public class FileMessageSending {
 
+    @PrimaryKey(autoGenerate = true)
+    private long sendingId;
     private long complexId;
     private long roomId;
-    private DocTypes docType;
+    private long messageId;
+    private String docType;
     private String path;
 
     public FileMessageSending(long complexId, long roomId, DocTypes docType, String path) {
         this.complexId = complexId;
         this.roomId = roomId;
-        this.docType = docType;
+        this.docType = docType.toString();
         this.path = path;
+    }
+
+    public FileMessageSending() {
+
+    }
+
+    public long getSendingId() {
+        return sendingId;
+    }
+
+    public void setSendingId(long sendingId) {
+        this.sendingId = sendingId;
     }
 
     public long getComplexId() {
@@ -30,12 +49,24 @@ public class FileMessageSending {
         this.roomId = roomId;
     }
 
-    public DocTypes getDocType() {
+    public long getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(long messageId) {
+        this.messageId = messageId;
+    }
+
+    public String getDocType() {
         return docType;
     }
 
-    public void setDocType(DocTypes docType) {
+    public void setDocType(String docType) {
         this.docType = docType;
+    }
+
+    public DocTypes getDocTypeEnum() {
+        return DocTypes.valueOf(this.docType);
     }
 
     public String getPath() {

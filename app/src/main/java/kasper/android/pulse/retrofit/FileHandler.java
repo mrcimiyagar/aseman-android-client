@@ -34,5 +34,5 @@ public interface FileHandler {
     Call<Packet> uploadVideo(@PartMap() Map<String, RequestBody> partMap);
     @Streaming
     @GET("file/download_file")
-    Call<ResponseBody> downloadFile(@Query("fileId") long fileId);
+    Call<ResponseBody> downloadFile(@Query("fileId") long fileId, @Query("offset") long offset);
 }

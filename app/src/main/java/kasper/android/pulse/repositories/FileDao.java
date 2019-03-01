@@ -32,6 +32,12 @@ public abstract class FileDao {
     public abstract void delete(Entities.Audio... audios);
     @Delete
     public abstract void delete(Entities.Video... videos);
+    @Query("delete from photo where fileId = :fileId")
+    public abstract void deletePhotoById(long fileId);
+    @Query("delete from audio where fileId = :fileId")
+    public abstract void deleteAudioById(long fileId);
+    @Query("delete from video where fileId = :fileId")
+    public abstract void deleteVideoById(long fileId);
     @Query("delete from photo")
     abstract void deleteAllPhotos();
     @Query("delete from audio")
@@ -68,6 +74,12 @@ public abstract class FileDao {
         if (video != null)
             return video;
         return null;
+    }
+    @Transaction
+    public void deleteFileById(long fileId) {
+        deletePhotoById(fileId);
+        deleteAudioById(fileId);
+        deleteVideoById(fileId);
     }
     @Transaction
     public List<Entities.File> getFiles(long roomId) {

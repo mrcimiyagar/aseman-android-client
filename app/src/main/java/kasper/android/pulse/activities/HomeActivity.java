@@ -1,7 +1,6 @@
 package kasper.android.pulse.activities;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -17,7 +16,6 @@ import android.widget.Toast;
 import com.anadeainc.rxbus.Subscribe;
 import com.crashlytics.android.Crashlytics;
 import com.github.javiersantos.bottomdialogs.BottomDialog;
-import com.google.android.gms.common.BlockingServiceConnection;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
@@ -43,14 +41,9 @@ import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
 import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
-import kasper.android.pulse.rxbus.notifications.ShowToast;
-import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
-import kasper.android.pulse.services.FilesService;
-import kasper.android.pulse.services.MessagesService;
+import kasper.android.pulse.services.AsemanService;
 import kasper.android.pulse.services.MusicsService;
-import kasper.android.pulse.services.NotificationsService;
-import kasper.android.pulse.services.ProfileService;
 import retrofit2.Call;
 
 public class HomeActivity extends BaseActivity {
@@ -344,23 +337,11 @@ public class HomeActivity extends BaseActivity {
     private void startServices() {
         showSnack("Starting services...");
         new Thread(() -> {
-            Intent intent = new Intent(HomeActivity.this, NotificationsService.class);
-            startService(intent);
-        }).start();
-        new Thread(() -> {
-            Intent intent = new Intent(HomeActivity.this, FilesService.class);
+            Intent intent = new Intent(HomeActivity.this, AsemanService.class);
             startService(intent);
         }).start();
         new Thread(() -> {
             Intent intent = new Intent(HomeActivity.this, MusicsService.class);
-            startService(intent);
-        }).start();
-        new Thread(() -> {
-            Intent intent = new Intent(HomeActivity.this, MessagesService.class);
-            startService(intent);
-        }).start();
-        new Thread(() -> {
-            Intent intent = new Intent(HomeActivity.this, ProfileService.class);
             startService(intent);
         }).start();
         hideSnack();

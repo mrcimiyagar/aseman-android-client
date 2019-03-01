@@ -60,6 +60,10 @@ public class RegisterActivity extends AppCompatActivity {
                         DatabaseHelper.notifyUserSecretCreated(userSecret);
                         DatabaseHelper.notifyComplexCreated(userSecret.getHome());
                         DatabaseHelper.notifyComplexSecretCreated(complexSecret);
+                        for (Entities.Membership mem : userSecret.getHome().getMembers()) {
+                            DatabaseHelper.notifyUserCreated(mem.getUser());
+                            DatabaseHelper.notifyMembershipCreated(mem);
+                        }
                         gotoStartupPage();
                     }
 

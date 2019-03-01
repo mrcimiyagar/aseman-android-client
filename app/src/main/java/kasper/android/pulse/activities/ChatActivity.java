@@ -1,5 +1,6 @@
 package kasper.android.pulse.activities;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
@@ -25,6 +26,11 @@ import android.widget.TextView;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -40,12 +46,13 @@ import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.FileMessageSending;
 import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
-import kasper.android.pulse.services.MessagesService;
+import kasper.android.pulse.services.AsemanService;
 
 public class ChatActivity extends BaseActivity {
 
@@ -101,19 +108,35 @@ public class ChatActivity extends BaseActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-        initViews();
-        initDecorations();
-        initListeners();
-        initMessages();
+        Dexter.withActivity(this)
+                .withPermissions(
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .withListener(new MultiplePermissionsListener() {
+                    @Override
+                    public void onPermissionsChecked(MultiplePermissionsReport report) {
+                        initViews();
+                        initDecorations();
+                        initListeners();
+                        initMessages();
 
-        if (startFileId > 0) {
-            new Handler().postDelayed(() -> {
-                if (chatRV.getAdapter() != null) {
-                    int pos = ((MessagesAdapter) chatRV.getAdapter()).findFilePosition(startFileId);
-                    scrollChatToPosition(pos);
-                }
-            }, 1000);
-        }
+                        if (startFileId > 0) {
+                            new Handler().postDelayed(() -> {
+                                if (chatRV.getAdapter() != null) {
+                                    int pos = ((MessagesAdapter) chatRV.getAdapter()).findFilePosition(startFileId);
+                                    scrollChatToPosition(pos);
+                                }
+                            }, 1000);
+                        }
+                    }
+
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                        token.continuePermissionRequest();
+                    }
+                })
+                .onSameThread()
+                .check();
     }
 
     @Override
@@ -216,12 +239,12 @@ public class ChatActivity extends BaseActivity {
         sendBTN.setOnClickListener(v -> {
             final String text = chatET.getText().toString();
             if (text.length() == 0) return;
-            MessagesService.enqueueMessage(new TextMessageSending(complexId, roomId, text));
+            AsemanService.enqueueMessage(new TextMessageSending(complexId, roomId, text));
             chatET.setText("");
         });
         filesBTN.setOnClickListener(v -> {
             OnFileSelectListener selectListener = (path, docType) -> {
-                MessagesService.enqueueMessage(new FileMessageSending(complexId, roomId, docType, path));
+                AsemanService.enqueueMessage(new FileMessageSending(complexId, roomId, docType, path));
             };
             long selectCallbackId = CallbackHelper.register(selectListener);
             startActivity(new Intent(ChatActivity.this, FilesActivity.class)

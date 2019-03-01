@@ -21,10 +21,7 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.Downloading;
-import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.network.Packet;
-import kasper.android.pulse.services.FilesService;
 import okhttp3.CipherSuite;
 import okhttp3.Connection;
 import okhttp3.ConnectionSpec;
@@ -117,7 +114,7 @@ public class NetworkHelper {
                     log += "\n" + ("--> END " + request.method());
                 } else if (bodyHasUnknownEncoding(request.headers())) {
                     log += "\n" + ("--> END " + request.method() + " (encoded body omitted)");
-                } else {
+                } else if (requestBody.contentLength() < 256) {
                     Buffer buffer = new Buffer();
                     requestBody.writeTo(buffer);
 
@@ -136,6 +133,9 @@ public class NetworkHelper {
                         log += "\n" + ("--> END " + request.method() + " (binary "
                                 + requestBody.contentLength() + "-byte body omitted)");
                     }
+                } else if (requestBody.contentLength() > 256) {
+                    log += "\n" + ("--> END " + request.method()
+                            + " (" + requestBody.contentLength() + "-byte body)");
                 }
             }
 
@@ -177,42 +177,47 @@ public class NetworkHelper {
             } else {
                 BufferedSource source;
                 if (responseBody != null) {
-                    source = responseBody.source();
-                    source.request(Long.MAX_VALUE); // Buffer the entire body.
-                    Buffer buffer = source.buffer();
+                    if (responseBody.contentLength() < 256) {
+                        source = responseBody.source();
+                        source.request(Long.MAX_VALUE); // Buffer the entire body.
+                        Buffer buffer = source.buffer();
 
-                    Long gzippedLength = null;
-                    if ("gzip".equalsIgnoreCase(headers.get("Content-Encoding"))) {
-                        gzippedLength = buffer.size();
-                        try (GzipSource gzippedResponseBody = new GzipSource(buffer.clone())) {
-                            buffer = new Buffer();
-                            buffer.writeAll(gzippedResponseBody);
+                        Long gzippedLength = null;
+                        if ("gzip".equalsIgnoreCase(headers.get("Content-Encoding"))) {
+                            gzippedLength = buffer.size();
+                            try (GzipSource gzippedResponseBody = new GzipSource(buffer.clone())) {
+                                buffer = new Buffer();
+                                buffer.writeAll(gzippedResponseBody);
+                            }
                         }
-                    }
 
-                    Charset charset = UTF8;
-                    MediaType contentType = responseBody.contentType();
-                    if (contentType != null) {
-                        charset = contentType.charset(UTF8);
-                    }
-
-                    if (!isPlaintext(buffer)) {
-                        log += "\n" + ("<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
-                        LogHelper.log("OkHttp", log);
-                        return response;
-                    }
-
-                    if (contentLength != 0) {
-                        if (charset != null) {
-                            log += "\n" + (buffer.clone().readString(charset));
+                        Charset charset = UTF8;
+                        MediaType contentType = responseBody.contentType();
+                        if (contentType != null) {
+                            charset = contentType.charset(UTF8);
                         }
-                    }
 
-                    if (gzippedLength != null) {
-                        log += "\n" + ("<-- END HTTP (" + buffer.size() + "-byte, "
-                                + gzippedLength + "-gzipped-byte body)");
+                        if (!isPlaintext(buffer)) {
+                            log += "\n" + ("<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
+                            LogHelper.log("OkHttp", log);
+                            return response;
+                        }
+
+                        if (contentLength != 0) {
+                            if (charset != null) {
+                                log += "\n" + (buffer.clone().readString(charset));
+                            }
+                        }
+
+                        if (gzippedLength != null) {
+                            log += "\n" + ("<-- END HTTP (" + buffer.size() + "-byte, "
+                                    + gzippedLength + "-gzipped-byte body)");
+                        } else {
+                            log += "\n" + ("<-- END HTTP (" + buffer.size() + "-byte body)");
+                        }
                     } else {
-                        log += "\n" + ("<-- END HTTP (" + buffer.size() + "-byte body)");
+                        log += "\n" + ("--> END " + request.method()
+                                + " (" + responseBody.contentLength() + "-byte body)");
                     }
                 }
             }

@@ -12,11 +12,13 @@ import kasper.android.pulse.models.extras.Uploading;
 @Dao
 public interface UploadingDao {
     @Insert
-    void insert(Uploading... uploadings);
+    long insert(Uploading uploading);
     @Update
     void update(Uploading... uploadings);
     @Delete
     void delete(Uploading... uploadings);
+    @Query("select * from uploading where uploadingId = :uploadingId")
+    Uploading getUploadingById(long uploadingId);
     @Query("select * from uploading")
     List<Uploading> getUploadings();
     @Query("delete from uploading where uploadingId = :uploadingId")

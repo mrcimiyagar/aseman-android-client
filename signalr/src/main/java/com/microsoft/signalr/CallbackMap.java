@@ -27,6 +27,15 @@ class CallbackMap {
         }
     }
 
+    public void clear() {
+        try {
+            lock.lock();
+            handlers.clear();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public List<InvocationHandler> get(String key) {
         try {
             lock.lock();

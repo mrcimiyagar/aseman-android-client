@@ -45,11 +45,12 @@ import kasper.android.pulse.rxbus.notifications.FileDownloadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileDownloaded;
 import kasper.android.pulse.rxbus.notifications.FileDownloading;
 import kasper.android.pulse.rxbus.notifications.FileReceived;
+import kasper.android.pulse.rxbus.notifications.FileRegistered;
 import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploadCancelled;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.rxbus.notifications.FileUploading;
-import kasper.android.pulse.services.FilesService;
+import kasper.android.pulse.services.AsemanService;
 
 import static kasper.android.pulse.models.extras.DocTypes.Video;
 
@@ -146,17 +147,36 @@ public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.Holder> {
     @Subscribe
     public void onFileUploaded(FileUploaded uploaded) {
         if (uploaded.getDocType() == Video) {
-            Entities.FileLocal fileLocal = fileLocals.remove(uploaded.getLocalFileId());
-            fileLocal.setFileId(uploaded.getOnlineFileId());
-            fileLocal.setTransferring(false);
-            fileLocals.put(uploaded.getOnlineFileId(), fileLocal);
-            int counter = 0;
-            for (Entities.File f : docs) {
-                if (f.getFileId() == uploaded.getLocalFileId()) {
-                    f.setFileId(uploaded.getOnlineFileId());
-                    notifyItemChanged(counter);
+            Entities.FileLocal fileLocal = fileLocals.get(uploaded.getOnlineFileId());
+            if (fileLocal != null) {
+                fileLocal.setTransferring(false);
+                int counter = 0;
+                for (Entities.File f : docs) {
+                    if (f.getFileId() == uploaded.getOnlineFileId()) {
+                        notifyItemChanged(counter);
+                    }
+                    counter++;
                 }
-                counter++;
+            }
+        }
+    }
+
+    @Subscribe
+    public void onFileRegistered(FileRegistered fileRegistered) {
+        if (fileRegistered.getDocType() == Video) {
+            Entities.FileLocal fileLocal = fileLocals.get(fileRegistered.getLocalFileId());
+            if (fileLocal != null) {
+                fileLocal.setFileId(fileRegistered.getOnlineFileId());
+                fileLocals.put(fileRegistered.getOnlineFileId(), fileLocal);
+                fileLocals.remove(fileRegistered.getLocalFileId());
+                int counter = 0;
+                for (Entities.File f : docs) {
+                    if (f.getFileId() == fileRegistered.getLocalFileId()) {
+                        f.setFileId(fileRegistered.getOnlineFileId());
+                        notifyItemChanged(counter);
+                    }
+                    counter++;
+                }
             }
         }
     }
@@ -235,7 +255,7 @@ public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.Holder> {
                                     @Override
                                     public void onPermissionsChecked(MultiplePermissionsReport report) {
                                         if (report.areAllPermissionsGranted()) {
-                                            FilesService.downloadFile(new Downloading(doc.getFileId(), roomId));
+                                            AsemanService.downloadFile(new Downloading(doc.getFileId(), roomId));
                                             Core.getInstance().bus().post(new FileDownloading(Video, doc));
                                         } else {
                                             activity.finish();
