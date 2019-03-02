@@ -476,23 +476,23 @@ public class Notifications {
     }
 
     public static class UserJointComplexNotification extends Notification {
-        private long userId;
-        private long complexId;
+        private long membershipId;
+        private Entities.Membership membership;
 
-        public long getUserId() {
-            return userId;
+        public long getMembershipId() {
+            return membershipId;
         }
 
-        public void setUserId(long userId) {
-            this.userId = userId;
+        public void setMembershipId(long membershipId) {
+            this.membershipId = membershipId;
         }
 
-        public long getComplexId() {
-            return complexId;
+        public Entities.Membership getMembership() {
+            return membership;
         }
 
-        public void setComplexId(long complexId) {
-            this.complexId = complexId;
+        public void setMembership(Entities.Membership membership) {
+            this.membership = membership;
         }
     }
 }

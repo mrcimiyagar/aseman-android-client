@@ -20,7 +20,7 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning"
         tools:replace="android:allowBackup">
-        <activity android:name=".activities.ComplexPickerActivity"></activity>
+        <activity android:name=".activities.ComplexesInviteActivity"></activity>
         <activity android:name=".activities.TitleEditorActivity" />
         <activity android:name=".activities.BotStoreBotActivity" />
         <activity

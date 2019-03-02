@@ -12,14 +12,23 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 
 public class InvitesActivity extends AppCompatActivity {
 
+    RecyclerView recyclerView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_invites);
 
-        RecyclerView recyclerView = findViewById(R.id.activity_invites_recycler_view);
+        recyclerView = findViewById(R.id.activity_invites_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         recyclerView.setAdapter(new InviteAdapter(this, DatabaseHelper.getMyInvites()));
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (recyclerView.getAdapter() != null)
+            ((InviteAdapter) recyclerView.getAdapter()).dispose();
+        super.onDestroy();
     }
 
     public void onBackBtnClicked(View view) {

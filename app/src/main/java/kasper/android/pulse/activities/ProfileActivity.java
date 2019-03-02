@@ -2,7 +2,7 @@ package kasper.android.pulse.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
@@ -10,8 +10,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.lang.reflect.Member;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
@@ -83,31 +81,7 @@ public class ProfileActivity extends AppCompatActivity {
                         if (data.getExtras().containsKey("complex")) {
                             Entities.Complex complex = (Entities.Complex) data.getExtras().getSerializable("complex");
                             if (complex != null) {
-                                Packet packet = new Packet();
-                                Entities.Complex c = new Entities.Complex();
-                                c.setComplexId(complex.getComplexId());
-                                packet.setComplex(c);
-                                Entities.User user = new Entities.User();
-                                user.setBaseUserId(humanId);
-                                packet.setUser(user);
-                                Call<Packet> call = NetworkHelper.getRetrofit().create(InviteHandler.class).createInvite(packet);
-                                NetworkHelper.requestServer(call, new ServerCallback() {
-                                    @Override
-                                    public void onRequestSuccess(Packet packet) {
-                                        DatabaseHelper.notifyInviteSent(packet.getInvite());
-                                        Toast.makeText(ProfileActivity.this, "Invite sent.", Toast.LENGTH_SHORT).show();
-                                    }
 
-                                    @Override
-                                    public void onServerFailure() {
-                                        Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
-                                    }
-
-                                    @Override
-                                    public void onConnectionFailure() {
-                                        Toast.makeText(ProfileActivity.this, "Invite Sending failure", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
                             }
                         }
                     }
@@ -217,7 +191,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public void onInviteBtnClicked(View view) {
-        startActivityForResult(new Intent(this, ComplexPickerActivity.class).putExtra("user_id", humanId), 123);
+        startActivity(new Intent(this, ComplexesInviteActivity.class).putExtra("user_id", humanId));
     }
 
     public void onBackBtnClicked(View view) {

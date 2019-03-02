@@ -11,7 +11,6 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
-import android.util.Log;
 import android.util.Pair;
 
 import com.microsoft.signalr.HubConnection;
@@ -75,6 +74,10 @@ import kasper.android.pulse.rxbus.notifications.FileRegistered;
 import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.rxbus.notifications.FileUploading;
+import kasper.android.pulse.rxbus.notifications.InviteResolved;
+import kasper.android.pulse.rxbus.notifications.InviteCancelled;
+import kasper.android.pulse.rxbus.notifications.InviteCreated;
+import kasper.android.pulse.rxbus.notifications.MembershipCreated;
 import kasper.android.pulse.rxbus.notifications.MessageDeleted;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSeen;
@@ -1249,7 +1252,11 @@ public class AsemanService extends IntentService {
 
         Entities.Invite invite = icn.getInvite();
 
+        DatabaseHelper.notifyComplexCreated(invite.getComplex());
+        DatabaseHelper.notifyUserCreated(invite.getUser());
         DatabaseHelper.notifyInviteReceived(invite);
+
+        Core.getInstance().bus().post(new InviteCreated(invite));
 
         showInviteNotification(invite);
 
@@ -1259,11 +1266,22 @@ public class AsemanService extends IntentService {
     private void onInviteCancelled(final Notifications.InviteCancellationNotification icn) {
         LogHelper.log("Aseman", "Received Invite Cancellation notification");
 
+        DatabaseHelper.notifyInviteResolved(icn.getInvite());
+
+        Core.getInstance().bus().post(new InviteCancelled(icn.getInvite()));
+
+        showNotification("Invite cancelled.",
+                "Invite from [" + icn.getInvite().getComplex().getTitle() + "] complex cancelled.",
+                null);
+
         notifyServerNotifReceived(icn.getNotificationId());
     }
 
     private void onInviteAccepted(final Notifications.InviteAcceptanceNotification ian) {
         LogHelper.log("Aseman", "Received Invite Acceptance notification");
+
+        DatabaseHelper.notifyInviteResolved(ian.getInvite());
+        Core.getInstance().bus().post(new InviteResolved(ian.getInvite()));
 
         notifyServerNotifReceived(ian.getNotificationId());
     }
@@ -1271,11 +1289,21 @@ public class AsemanService extends IntentService {
     private void onInviteIgnored(final Notifications.InviteIgnoranceNotification iin) {
         LogHelper.log("Aseman", "Received Invite Ignorance notification");
 
+        DatabaseHelper.notifyInviteResolved(iin.getInvite());
+        Core.getInstance().bus().post(new InviteResolved(iin.getInvite()));
+
         notifyServerNotifReceived(iin.getNotificationId());
     }
 
     private void onUserJointComplex(final Notifications.UserJointComplexNotification ujcn) {
         LogHelper.log("Aseman", "Received User Joint Complex notification");
+
+        Entities.Membership mem = ujcn.getMembership();
+
+        DatabaseHelper.notifyUserCreated(mem.getUser());
+        DatabaseHelper.notifyMembershipCreated(mem);
+
+        Core.getInstance().bus().post(new MembershipCreated(mem));
 
         notifyServerNotifReceived(ujcn.getNotificationId());
     }
@@ -1467,14 +1495,15 @@ public class AsemanService extends IntentService {
                 .setAutoCancel(true);
         mBuilder.setPriority(Notification.PRIORITY_HIGH);
         if (Build.VERSION.SDK_INT >= 21) {
-            mBuilder.setVibrate(new long[] { 1000, 1000 });
+            mBuilder.setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 });
         }
         mBuilder.setLights(getResources().getColor(R.color.colorBlue), 3000, 3000);
-        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.setContentIntent(pIntent);
+        if (intent != null) {
+            PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            mBuilder.setContentIntent(pIntent);
+        }
         NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        assert mNotificationManager != null;
         mNotificationManager.notify(1, mBuilder.build());
     }
 

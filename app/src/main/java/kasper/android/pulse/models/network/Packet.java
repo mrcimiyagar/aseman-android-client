@@ -18,7 +18,7 @@ public class Packet {
     private Entities.Room Room;
     private Entities.Complex Complex;
     private Entities.ComplexSecret ComplexSecret;
-    private List<Entities.ComplexSecret> complexSecrets;
+    private List<Entities.ComplexSecret> ComplexSecrets;
     private List<Entities.Workership> Workerships;
     private Entities.Workership Workership;
     private Entities.Bot Bot;
@@ -29,6 +29,7 @@ public class Packet {
     private List<Entities.User> Users;
     private List<Entities.Session> Sessions;
     private List<Entities.Membership> Memberships;
+    private Entities.Membership membership;
     private List<Entities.File> Files;
     private List<Entities.Message> Messages;
     private Entities.File File;
@@ -44,6 +45,7 @@ public class Packet {
     private Entities.BotCreation BotCreation;
     private List<Entities.BotCreation> botCreations;
     private Entities.Invite Invite;
+    private List<Entities.Invite> Invites;
     private Entities.FileUsage FileUsage;
     private Entities.BaseUser BaseUser;
     private Notifications.Notification Notif;
@@ -145,11 +147,11 @@ public class Packet {
     }
 
     public List<Entities.ComplexSecret> getComplexSecrets() {
-        return complexSecrets;
+        return ComplexSecrets;
     }
 
     public void setComplexSecrets(List<Entities.ComplexSecret> complexSecrets) {
-        this.complexSecrets = complexSecrets;
+        this.ComplexSecrets = complexSecrets;
     }
 
     public List<Entities.Workership> getWorkerships() {
@@ -230,6 +232,14 @@ public class Packet {
 
     public void setMemberships(List<Entities.Membership> memberships) {
         Memberships = memberships;
+    }
+
+    public Entities.Membership getMembership() {
+        return membership;
+    }
+
+    public void setMembership(Entities.Membership membership) {
+        this.membership = membership;
     }
 
     public List<Entities.File> getFiles() {
@@ -330,6 +340,14 @@ public class Packet {
 
     public Entities.Invite getInvite() {
         return Invite;
+    }
+
+    public List<Entities.Invite> getInvites() {
+        return Invites;
+    }
+
+    public void setInvites(List<Entities.Invite> invites) {
+        Invites = invites;
     }
 
     public void setInvite(Entities.Invite invite) {

@@ -14,4 +14,6 @@ public interface InviteHandler {
     Call<Packet> acceptInvite(@Body Packet packet);
     @POST("invite/ignore_invite")
     Call<Packet> ignoreInvite(@Body Packet packet);
+    @POST("invite/get_invites")
+    Call<Packet> getInvites();
 }

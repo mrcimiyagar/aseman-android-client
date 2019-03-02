@@ -120,11 +120,13 @@ public class ComplexProfileActivity extends AppCompatActivity {
             Entities.Contact contact = DatabaseHelper.getContactByComplexId(complex.getComplexId());
             Entities.User user = contact.getPeer();
             titleTV.setText(user.getTitle());
-        } else
+            NetworkHelper.loadUserAvatar(user.getAvatar(), avatarIV);
+        } else {
             titleTV.setText(complex.getTitle());
+            NetworkHelper.loadComplexAvatar(complex.getAvatar(), avatarIV);
+        }
         long memCount = DatabaseHelper.getMembersCount(complex.getComplexId());
         memberCountTV.setText(memCount + " " + (memCount == 1 ? "member" : "members"));
-        NetworkHelper.loadComplexAvatar(complex.getAvatar(), avatarIV);
     }
 
     public void fillRooms(List<Entities.Room> rooms) {
@@ -160,79 +162,106 @@ public class ComplexProfileActivity extends AppCompatActivity {
     }
 
     public void onAvatarImageClicked(View view) {
-        if (!complex.getTitle().toLowerCase().equals("home")) {
-            Drawable editDrawable = getResources().getDrawable(R.drawable.ic_edit);
-            editDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-            Drawable viewDrawable = getResources().getDrawable(R.drawable.ic_view);
-            viewDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-            Drawable deleteDrawable = getResources().getDrawable(R.drawable.ic_delete);
-            deleteDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable editDrawable = getResources().getDrawable(R.drawable.ic_edit);
+        editDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable viewDrawable = getResources().getDrawable(R.drawable.ic_view);
+        viewDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable deleteDrawable = getResources().getDrawable(R.drawable.ic_delete);
+        deleteDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
 
-            Drawable[] itemIcons;
-            String[] itemTitles;
+        Runnable setNewPhotoRunnable = () -> startActivityForResult(new Intent(ComplexProfileActivity.this, PickImageActivity.class), 123);
 
-            if (complex != null) {
-                if (complex.getAvatar() > 0) {
-                    itemIcons = new Drawable[]{
-                            editDrawable,
-                            deleteDrawable,
-                            viewDrawable
-                    };
-                    itemTitles = new String[]{
-                            "Set new photo",
-                            "Delete photo",
-                            "View photo"
-                    };
-                } else {
-                    itemIcons = new Drawable[]{
-                            editDrawable
-                    };
-                    itemTitles = new String[]{
-                            "Set new photo"
-                    };
-                }
-                BottomSheet.Builder builder = new BottomSheet.Builder(this);
-                builder.setItems(itemTitles, itemIcons,
-                        (dialogInterface, i) -> {
-                            if (i == 0) {
-                                startActivityForResult(new Intent(this, PickImageActivity.class), 123);
-                            } else if (i == 1) {
-                                new BottomDialog.Builder(this)
-                                        .setTitle("Delete complex")
-                                        .setContent("Do you really want to delete profile photo ?")
-                                        .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
-                                        .setTitleColor(Color.WHITE)
-                                        .setTextColor(Color.WHITE)
-                                        .setPositiveText("Delete")
-                                        .setPositiveBackgroundColorResource(R.color.colorPrimary)
-                                        .setPositiveBackgroundColor(getResources().getColor(R.color.colorBlue))
-                                        .setPositiveTextColor(Color.WHITE)
-                                        .onPositive(dialog -> {
-                                            complex.setAvatar(-1L);
-                                            updateProfile();
-                                        })
-                                        .setNegativeText("Cancel")
-                                        .setNegativeTextColor(Color.WHITE)
-                                        .onNegative(BottomDialog::dismiss)
-                                        .show();
-                            } else if (i == 2) {
-                                Pair<View, String> picture = Pair.create(avatarIV, "photo");
-                                ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(ComplexProfileActivity.this, picture);
-                                Intent intent = new Intent(ComplexProfileActivity.this, PhotoViewerActivity.class);
-                                if (complex.getAvatar() > 0) {
-                                    intent.putExtra("fileId", complex.getAvatar());
-                                    ComplexProfileActivity.this.startActivity(intent, options.toBundle());
-                                }
-                            }
-                        })
-                        .setTitle("Profile photo")
-                        .setDarkTheme(true)
-                        .setTitleTextColor(Color.WHITE)
-                        .setContentType(BottomSheet.LIST)
-                        .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
-                        .setItemTextColor(Color.WHITE)
-                        .show();
+        Runnable deletePhotoRunnable = () -> new BottomDialog.Builder(ComplexProfileActivity.this)
+                .setTitle("Delete complex")
+                .setContent("Do you really want to delete profile photo ?")
+                .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                .setTitleColor(Color.WHITE)
+                .setTextColor(Color.WHITE)
+                .setPositiveText("Delete")
+                .setPositiveBackgroundColorResource(R.color.colorPrimary)
+                .setPositiveBackgroundColor(getResources().getColor(R.color.colorBlue))
+                .setPositiveTextColor(Color.WHITE)
+                .onPositive(dialog -> {
+                    complex.setAvatar(-1L);
+                    updateProfile();
+                })
+                .setNegativeText("Cancel")
+                .setNegativeTextColor(Color.WHITE)
+                .onNegative(BottomDialog::dismiss)
+                .show();
+
+        Runnable viewPhotoRunnable = () -> {
+            Pair<View, String> picture = Pair.create(avatarIV, "photo");
+            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(ComplexProfileActivity.this, picture);
+            Intent intent = new Intent(ComplexProfileActivity.this, PhotoViewerActivity.class);
+            if (complex.getAvatar() > 0) {
+                intent.putExtra("fileId", complex.getAvatar());
+                ComplexProfileActivity.this.startActivity(intent, options.toBundle());
             }
+        };
+
+        Drawable[] itemIcons;
+        String[] itemTitles;
+        Runnable[] itemClicks;
+
+        if (!complex.getTitle().toLowerCase().equals("home") &&
+                DatabaseHelper.getComplexSecretByComplexId(complex.getComplexId()) != null) {
+            if (complex.getAvatar() > 0) {
+                itemIcons = new Drawable[]{
+                        editDrawable,
+                        deleteDrawable,
+                        viewDrawable
+                };
+                itemTitles = new String[]{
+                        "Set new photo",
+                        "Delete photo",
+                        "View photo"
+                };
+                itemClicks = new Runnable[] {
+                        setNewPhotoRunnable,
+                        deletePhotoRunnable,
+                        viewPhotoRunnable
+                };
+            } else {
+                itemIcons = new Drawable[]{
+                        editDrawable
+                };
+                itemTitles = new String[]{
+                        "Set new photo"
+                };
+                itemClicks = new Runnable[] {
+                        setNewPhotoRunnable
+                };
+            }
+        } else {
+            if (complex.getAvatar() > 0) {
+                itemIcons = new Drawable[]{
+                        viewDrawable
+                };
+                itemTitles = new String[]{
+                        "View photo"
+                };
+                itemClicks = new Runnable[] {
+                        viewPhotoRunnable
+                };
+            } else {
+                itemIcons = new Drawable[0];
+                itemTitles = new String[0];
+                itemClicks = new Runnable[0];
+            }
+        }
+
+        if (itemClicks.length > 0) {
+            BottomSheet.Builder builder = new BottomSheet.Builder(this);
+            builder.setItems(itemTitles, itemIcons,
+                    (dialogInterface, i) -> itemClicks[i].run())
+                    .setTitle("Profile photo")
+                    .setDarkTheme(true)
+                    .setTitleTextColor(Color.WHITE)
+                    .setContentType(BottomSheet.LIST)
+                    .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                    .setItemTextColor(Color.WHITE)
+                    .show();
         }
     }
 

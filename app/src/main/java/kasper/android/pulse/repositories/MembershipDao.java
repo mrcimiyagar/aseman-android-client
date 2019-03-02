@@ -24,6 +24,8 @@ public interface MembershipDao {
     List<Entities.Membership> getComplexMemberships(long complexId);
     @Query("select * from membership where membershipId = :membershipId")
     Entities.Membership getMembershipById(long membershipId);
+    @Query("select * from membership where userId = :userId and complexId = :complexId")
+    Entities.Membership getMembershipByUserAndComplexId(long userId, long complexId);
     @Query("delete from membership")
     void deleteAll();
 }

@@ -122,6 +122,10 @@ public class DatabaseHelper {
             dao.insert(complexSecret);
     }
 
+    public static Entities.ComplexSecret getComplexSecretByComplexId(long complexId) {
+        return AsemanDB.getInstance().getComplexSecretDao().getComplexSecretByComplexId(complexId);
+    }
+
     public static void notifyComplexRemoved(long complexId) {
         AsemanDB.getInstance().getComplexDao().deleteComplexById(complexId);
         AsemanDB.getInstance().getRoomDao().deleteComplexRooms(complexId);
@@ -195,6 +199,10 @@ public class DatabaseHelper {
                 membership.setUser((Entities.User) baseUser);
         }
         return memberships;
+    }
+
+    public static boolean isUserMemberOfComplex(long complexId, long userId) {
+        return AsemanDB.getInstance().getMembershipDao().getMembershipByUserAndComplexId(userId, complexId) != null;
     }
 
     public static List<Entities.Room> getAllRooms() {
@@ -1078,12 +1086,16 @@ public class DatabaseHelper {
     }
 
     public static List<Entities.Invite> getMyInvites() {
-        List<Entities.Invite> invites = AsemanDB.getInstance().getInviteDao().getInvites();
-        for (Entities.Invite invite : invites) {
-            invite.setUser(AsemanDB.getInstance().getUserDao().getUserById(invite.getUserId()));
-            invite.setComplex(AsemanDB.getInstance().getComplexDao().getComplexById(invite.getComplexId()));
+        Entities.User user = DatabaseHelper.getMe();
+        if (user != null) {
+            List<Entities.Invite> invites = AsemanDB.getInstance().getInviteDao().getUserInvites(user.getBaseUserId());
+            for (Entities.Invite invite : invites) {
+                invite.setUser(AsemanDB.getInstance().getUserDao().getUserById(invite.getUserId()));
+                invite.setComplex(AsemanDB.getInstance().getComplexDao().getComplexById(invite.getComplexId()));
+            }
+            return invites;
         }
-        return invites;
+        return new ArrayList<>();
     }
 
     public static List<Entities.Invite> getComplexInvites(long complexId) {
@@ -1096,18 +1108,28 @@ public class DatabaseHelper {
     }
 
     public static void notifyInviteReceived(Entities.Invite invite) {
-        AsemanDB.getInstance().getInviteDao().insert(invite);
+        if (AsemanDB.getInstance().getInviteDao().getInviteByComplexIdAndUserId(invite.getComplexId(), invite.getUserId()) == null)
+            AsemanDB.getInstance().getInviteDao().insert(invite);
+        else
+            AsemanDB.getInstance().getInviteDao().update(invite);
     }
 
     public static boolean doesInviteExist(long complexId, long userId) {
         return AsemanDB.getInstance().getInviteDao().getInviteByComplexIdAndUserId(complexId, userId) != null;
     }
 
-    public static void notifyInviteSent(Entities.Invite invite) {
-        AsemanDB.getInstance().getInviteDao().insert(invite);
+    public static Entities.Invite getInviteByComplexAndUserId(long userId, long complexId) {
+        return AsemanDB.getInstance().getInviteDao().getInviteByComplexIdAndUserId(complexId, userId);
     }
 
-    public void notifyInviteResolved(Entities.Invite invite) {
+    public static void notifyInviteSent(Entities.Invite invite) {
+        if (AsemanDB.getInstance().getInviteDao().getInviteByComplexIdAndUserId(invite.getComplexId(), invite.getUserId()) == null)
+            AsemanDB.getInstance().getInviteDao().insert(invite);
+        else
+            AsemanDB.getInstance().getInviteDao().update(invite);
+    }
+
+    public static void notifyInviteResolved(Entities.Invite invite) {
         AsemanDB.getInstance().getInviteDao().delete(invite);
     }
 

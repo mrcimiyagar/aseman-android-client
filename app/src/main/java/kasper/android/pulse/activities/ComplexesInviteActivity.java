@@ -4,14 +4,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import kasper.android.pulse.R;
-import kasper.android.pulse.adapters.ComplexSelectorAdapter;
+import kasper.android.pulse.adapters.ComplexesInviteAdapter;
 import kasper.android.pulse.helpers.DatabaseHelper;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-public class ComplexPickerActivity extends AppCompatActivity {
+public class ComplexesInviteActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,10 +29,7 @@ public class ComplexPickerActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.selectComplexRV);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-        recyclerView.setAdapter(new ComplexSelectorAdapter(userId, DatabaseHelper.getAdminedComplexes(), complex -> {
-            setResult(RESULT_OK, new Intent().putExtra("complex", complex));
-            finish();
-        }));
+        recyclerView.setAdapter(new ComplexesInviteAdapter(userId, DatabaseHelper.getAdminedComplexes()));
     }
 
     public void onBackBtnClicked(View view) {

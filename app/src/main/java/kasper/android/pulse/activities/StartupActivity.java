@@ -20,6 +20,7 @@ import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.ContactHandler;
+import kasper.android.pulse.retrofit.InviteHandler;
 import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
@@ -41,6 +42,7 @@ public class StartupActivity extends BaseActivity {
     private List<Entities.BotCreation> syncedBotCreations = new ArrayList<>();
     private List<Entities.Bot> syncedBotSubscriptionsBots = new ArrayList<>();
     private List<Entities.BotSubscription> syncedBotSubscriptions = new ArrayList<>();
+    private List<Entities.Invite> syncedInvites = new ArrayList<>();
     private List<Entities.Message> syncedMessages = new ArrayList<>();
 
     @Override
@@ -109,6 +111,7 @@ public class StartupActivity extends BaseActivity {
         initContacts();
         initBots();
         initComplexes();
+        initInvites();
     }
 
     private void initContacts() {
@@ -252,6 +255,38 @@ public class StartupActivity extends BaseActivity {
         });
     }
 
+    private void initInvites() {
+        NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(InviteHandler.class).getInvites(), new ServerCallback() {
+            @Override
+            public void onRequestSuccess(Packet p) {
+                new Thread(() -> {
+                    syncedInvites = p.getInvites();
+                    synchronized (TASKS_LOCK) {
+                        notifyTaskDone();
+                    }
+                }).start();
+            }
+            @Override
+            public void onServerFailure() {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initInvites();
+                }).start();
+            }
+            @Override
+            public void onConnectionFailure() {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception ignored) { }
+                    initInvites();
+                }).start();
+            }
+        });
+    }
+
     private void initLastActions() {
         List<Entities.Room> rooms = new ArrayList<>();
         for (Entities.Complex complex : syncedComplexes) {
@@ -303,8 +338,7 @@ public class StartupActivity extends BaseActivity {
     private void notifyTaskDone() {
         synchronized (TASKS_LOCK) {
             doneTasksCount++;
-            LogHelper.log("AsemanLogger", doneTasksCount + "");
-            if (doneTasksCount >= 5) {
+            if (doneTasksCount >= 6) {
                 for (Entities.Contact contact : syncedContacts) {
                     DatabaseHelper.notifyContactCreated(contact);
                     DatabaseHelper.notifyUserCreated(contact.getPeer());
@@ -318,6 +352,12 @@ public class StartupActivity extends BaseActivity {
                         DatabaseHelper.notifyMembershipCreated(mem);
                         DatabaseHelper.notifyUserCreated(mem.getUser());
                     }
+                    if (complex.getInvites() != null) {
+                        for (Entities.Invite invite : complex.getInvites()) {
+                            DatabaseHelper.notifyUserCreated(invite.getUser());
+                            DatabaseHelper.notifyInviteReceived(invite);
+                        }
+                    }
                 }
                 for (Entities.ComplexSecret complexSecret : syncedComplexSecrets) {
                     DatabaseHelper.notifyComplexSecretCreated(complexSecret);
@@ -329,6 +369,11 @@ public class StartupActivity extends BaseActivity {
                 for (int counter = 0; counter < syncedBotSubscriptionsBots.size(); counter++) {
                     DatabaseHelper.notifyBotSubscribed(syncedBotSubscriptionsBots.get(counter)
                             , syncedBotSubscriptions.get(counter));
+                }
+                for (Entities.Invite invite : syncedInvites) {
+                    DatabaseHelper.notifyComplexCreated(invite.getComplex());
+                    DatabaseHelper.notifyUserCreated(invite.getUser());
+                    DatabaseHelper.notifyInviteReceived(invite);
                 }
                 for (Entities.Message message : syncedMessages) {
                     if (message instanceof Entities.TextMessage) {
