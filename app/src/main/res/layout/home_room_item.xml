@@ -47,7 +47,10 @@
                     android:textColor="#999"
                     android:textSize="16sp"
                     android:layout_marginRight="44dp"
-                    android:gravity="center_vertical"/>
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:lines="1"
+                    android:ellipsize="end"/>
 
                 <FrameLayout
                     android:layout_width="28dp"

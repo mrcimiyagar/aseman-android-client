@@ -13,6 +13,8 @@ import android.view.View;
 
 public class ComplexesInviteActivity extends AppCompatActivity {
 
+    RecyclerView recyclerView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,9 +29,16 @@ public class ComplexesInviteActivity extends AppCompatActivity {
         } else
             userId = 0;
 
-        RecyclerView recyclerView = findViewById(R.id.selectComplexRV);
+        recyclerView = findViewById(R.id.selectComplexRV);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         recyclerView.setAdapter(new ComplexesInviteAdapter(userId, DatabaseHelper.getAdminedComplexes()));
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (recyclerView.getAdapter() != null)
+            ((ComplexesInviteAdapter) recyclerView.getAdapter()).dispose();
+        super.onDestroy();
     }
 
     public void onBackBtnClicked(View view) {

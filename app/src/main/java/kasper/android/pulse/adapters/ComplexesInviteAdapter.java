@@ -38,7 +38,12 @@ public class ComplexesInviteAdapter extends RecyclerView.Adapter<ComplexesInvite
     public ComplexesInviteAdapter(long userId, List<Entities.Complex> complexes) {
         this.userId = userId;
         this.complexes = complexes;
+        Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
+    }
+
+    public void dispose() {
+        Core.getInstance().bus().unregister(this);
     }
 
     @NonNull
@@ -53,19 +58,7 @@ public class ComplexesInviteAdapter extends RecyclerView.Adapter<ComplexesInvite
         int counter = 0;
         for (Entities.Complex complex : complexes) {
             if (complex.getComplexId() == inviteResolved.getInvite().getComplex().getComplexId()) {
-                notifyItemRemoved(counter);
-                break;
-            }
-            counter++;
-        }
-    }
-
-    @Subscribe
-    public void onMembershipCreated(MembershipCreated membershipCreated) {
-        int counter = 0;
-        for (Entities.Complex complex : complexes) {
-            if (complex.getComplexId() == membershipCreated.getMembership().getComplex().getComplexId()) {
-                notifyItemRemoved(counter);
+                notifyItemChanged(counter);
                 break;
             }
             counter++;

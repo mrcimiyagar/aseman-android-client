@@ -26,9 +26,13 @@ import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.InviteHandler;
+import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.InviteCancelled;
 import kasper.android.pulse.rxbus.notifications.InviteCreated;
 import kasper.android.pulse.rxbus.notifications.InviteResolved;
+import kasper.android.pulse.rxbus.notifications.MembershipCreated;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 
 /**
@@ -121,6 +125,20 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                     DatabaseHelper.notifyInviteResolved(invite);
                     invites.remove(holder.getAdapterPosition());
                     enablers.remove(holder.getAdapterPosition());
+                    Core.getInstance().bus().post(new ComplexCreated(packet.getMembership().getComplex()));
+                    for (Entities.Room room : packet.getMembership().getComplex().getRooms()) {
+                        room.setComplex(packet.getMembership().getComplex());
+                        Core.getInstance().bus().post(new RoomCreated(packet.getMembership().getComplex().getComplexId(), room));
+                    }
+                    for (Entities.Membership membership : packet.getMembership().getComplex().getMembers()) {
+                        membership.setComplex(packet.getMembership().getComplex());
+                        Core.getInstance().bus().post(new MembershipCreated(membership));
+                    }
+                    Core.getInstance().bus().post(new MembershipCreated(packet.getMembership()));
+                    Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+                    messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
+                    messageLocal.setSent(true);
+                    Core.getInstance().bus().post(new MessageReceived(packet.getServiceMessage(), messageLocal));
                     Core.getInstance().bus().post(new ShowToast("Invite accepted."));
                     notifyItemRemoved(holder.getAdapterPosition());
                 }
