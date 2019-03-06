@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Aseman</string>
+    <string name="title_activity_complex_invites">ComplexInvitesActivity</string>
 </resources>

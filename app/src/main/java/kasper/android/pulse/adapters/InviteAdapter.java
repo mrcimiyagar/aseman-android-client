@@ -121,6 +121,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                         DatabaseHelper.notifyUserCreated(membership.getUser());
                         DatabaseHelper.notifyMembershipCreated(membership);
                     }
+                    DatabaseHelper.notifyMembershipCreated(packet.getMembership());
                     DatabaseHelper.notifyServiceMessageReceived(packet.getServiceMessage());
                     DatabaseHelper.notifyInviteResolved(invite);
                     invites.remove(holder.getAdapterPosition());

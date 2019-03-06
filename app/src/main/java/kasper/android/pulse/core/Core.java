@@ -5,6 +5,8 @@ import android.app.Application;
 import com.anadeainc.rxbus.Bus;
 import com.anadeainc.rxbus.BusProvider;
 import com.crashlytics.android.Crashlytics;
+import com.vanniktech.emoji.EmojiManager;
+import com.vanniktech.emoji.twitter.TwitterEmojiProvider;
 
 import io.fabric.sdk.android.Fabric;
 import kasper.android.pulse.helpers.CallbackHelper;
@@ -34,6 +36,7 @@ public class Core extends Application {
         super.onCreate();
         instance = this;
         LogHelper.start();
+        EmojiManager.install(new TwitterEmojiProvider());
         CallbackHelper.setup();
         GraphicHelper.setup(this);
         DatabaseHelper.setup();

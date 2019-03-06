@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import android.os.Bundle;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
@@ -31,6 +32,10 @@ import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.vanniktech.emoji.EmojiEditText;
+import com.vanniktech.emoji.EmojiPopup;
+import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener;
+import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -69,19 +74,24 @@ public class ChatActivity extends BaseActivity {
 
     private boolean searchMode = false;
 
+    CoordinatorLayout rootView;
+
     RelativeLayout mainToolbarContent;
     RelativeLayout searchToolbarContent;
 
     RecyclerView chatRV;
     FloatingActionButton toBottomFAB;
-    EditText chatET;
+    EmojiEditText chatET;
     ImageButton filesBTN;
+    ImageButton emojiBtn;
     ImageButton sendBTN;
 
     EditText searchET;
     TextView searchOcc;
     ImageButton searchUp;
     ImageButton searchDown;
+
+    EmojiPopup emojiPopup;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -198,12 +208,14 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void initViews() {
+        rootView = findViewById(R.id.rootView);
         mainToolbarContent = findViewById(R.id.mainContent);
         searchToolbarContent = findViewById(R.id.searchContent);
         chatRV = findViewById(R.id.fragment_messages_recycler_view);
         toBottomFAB = findViewById(R.id.toBottomFAB);
         chatET = findViewById(R.id.fragment_messages_edit_text);
         filesBTN = findViewById(R.id.fragment_messages_files_image_button);
+        emojiBtn = findViewById(R.id.emojiBTN);
         sendBTN = findViewById(R.id.fragment_messages_send_image_button);
         searchET = findViewById(R.id.searchET);
         searchOcc = findViewById(R.id.searchOccurrences);
@@ -217,6 +229,13 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void initListeners() {
+        emojiPopup = EmojiPopup.Builder.fromRootView(rootView)
+                .setOnEmojiPopupShownListener(() -> emojiBtn.setImageResource(R.drawable.ic_keyboard))
+                .setOnEmojiPopupDismissListener(() -> emojiBtn.setImageResource(R.drawable.ic_emoji))
+                .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                .setIconColor(Color.WHITE)
+                .build(chatET);
+        emojiBtn.setOnClickListener(v -> emojiPopup.toggle());
         chatRV.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -237,15 +256,16 @@ public class ChatActivity extends BaseActivity {
             }
         });
         sendBTN.setOnClickListener(v -> {
-            final String text = chatET.getText().toString();
-            if (text.length() == 0) return;
-            AsemanService.enqueueMessage(new TextMessageSending(complexId, roomId, text));
-            chatET.setText("");
+            if (chatET.getText() != null) {
+                final String text = chatET.getText().toString();
+                if (text.length() == 0) return;
+                AsemanService.enqueueMessage(new TextMessageSending(complexId, roomId, text));
+                chatET.setText("");
+            }
         });
         filesBTN.setOnClickListener(v -> {
-            OnFileSelectListener selectListener = (path, docType) -> {
-                AsemanService.enqueueMessage(new FileMessageSending(complexId, roomId, docType, path));
-            };
+            OnFileSelectListener selectListener = (path, docType) ->
+                    AsemanService.enqueueMessage(new FileMessageSending(complexId, roomId, docType, path));
             long selectCallbackId = CallbackHelper.register(selectListener);
             startActivity(new Intent(ChatActivity.this, FilesActivity.class)
                     .putExtra("select-callback", selectCallbackId));

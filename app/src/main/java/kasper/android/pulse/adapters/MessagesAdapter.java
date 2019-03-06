@@ -23,6 +23,7 @@ import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
+import com.vanniktech.emoji.EmojiTextView;
 
 import java.io.File;
 import java.util.Calendar;
@@ -42,7 +43,6 @@ import kasper.android.pulse.activities.VideoPlayerActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.Downloading;
@@ -614,29 +614,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     if (!new File(filePath).exists()) {
                         holder.blurView.setVisibility(View.VISIBLE);
                         holder.downloadBTN.setVisibility(View.VISIBLE);
-                        holder.downloadBTN.setOnClickListener(v -> {
-                            Dexter.withActivity(activity)
-                                    .withPermissions(
-                                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                                            Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                    .withListener(new MultiplePermissionsListener() {
-                                        @Override
-                                        public void onPermissionsChecked(MultiplePermissionsReport report) {
-                                            if (report.areAllPermissionsGranted()) {
-                                                AsemanService.downloadFile(new Downloading(message.getPhoto().getFileId(), message.getRoomId()));
-                                                fileLocal.setTransferring(true);
-                                                notifyItemChanged(holder.getAdapterPosition());
+                        holder.downloadBTN.setOnClickListener(v ->
+                                Dexter.withActivity(activity)
+                                        .withPermissions(
+                                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                        .withListener(new MultiplePermissionsListener() {
+                                            @Override
+                                            public void onPermissionsChecked(MultiplePermissionsReport report) {
+                                                if (report.areAllPermissionsGranted()) {
+                                                    AsemanService.downloadFile(new Downloading(message.getPhoto().getFileId(), message.getRoomId()));
+                                                    fileLocal.setTransferring(true);
+                                                    notifyItemChanged(holder.getAdapterPosition());
+                                                }
                                             }
-                                        }
 
-                                        @Override
-                                        public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
-                                            token.continuePermissionRequest();
-                                        }
-                                    })
-                                    .onSameThread()
-                                    .check();
-                        });
+                                            @Override
+                                            public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                                                token.continuePermissionRequest();
+                                            }
+                                        })
+                                        .onSameThread()
+                                        .check());
                         GlideApp.with(activity).load(NetworkHelper.createFileLink(message.getPhoto()
                                 .getFileId())).into(holder.imageIV);
                     } else {
@@ -717,29 +716,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     if (!new File(filePath).exists()) {
                         holder.downloadBTN.setVisibility(View.VISIBLE);
                         holder.playBTN.setVisibility(View.GONE);
-                        holder.downloadBTN.setOnClickListener(v -> {
-                            Dexter.withActivity(activity)
-                                    .withPermissions(
-                                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                                            Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                    .withListener(new MultiplePermissionsListener() {
-                                        @Override
-                                        public void onPermissionsChecked(MultiplePermissionsReport report) {
-                                            if (report.areAllPermissionsGranted()) {
-                                                AsemanService.downloadFile(new Downloading(message.getAudio().getFileId(), message.getRoomId()));
-                                                fileLocal.setTransferring(true);
-                                                notifyItemChanged(holder.getAdapterPosition());
+                        holder.downloadBTN.setOnClickListener(v ->
+                                Dexter.withActivity(activity)
+                                        .withPermissions(
+                                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                        .withListener(new MultiplePermissionsListener() {
+                                            @Override
+                                            public void onPermissionsChecked(MultiplePermissionsReport report) {
+                                                if (report.areAllPermissionsGranted()) {
+                                                    AsemanService.downloadFile(new Downloading(message.getAudio().getFileId(), message.getRoomId()));
+                                                    fileLocal.setTransferring(true);
+                                                    notifyItemChanged(holder.getAdapterPosition());
+                                                }
                                             }
-                                        }
 
-                                        @Override
-                                        public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
-                                            token.continuePermissionRequest();
-                                        }
-                                    })
-                                    .onSameThread()
-                                    .check();
-                        });
+                                            @Override
+                                            public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                                                token.continuePermissionRequest();
+                                            }
+                                        })
+                                        .onSameThread()
+                                        .check());
                     } else {
                         holder.downloadBTN.setVisibility(View.GONE);
                         holder.playBTN.setVisibility(View.VISIBLE);
@@ -831,29 +829,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         holder.playBTN.setVisibility(View.GONE);
                         GlideApp.with(activity).load(NetworkHelper
                                 .createFileLink(message.getVideo().getFileId())).into(holder.imageIV);
-                        holder.downloadBTN.setOnClickListener(v -> {
-                            Dexter.withActivity(activity)
-                                    .withPermissions(
-                                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                                            Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                    .withListener(new MultiplePermissionsListener() {
-                                        @Override
-                                        public void onPermissionsChecked(MultiplePermissionsReport report) {
-                                            if (report.areAllPermissionsGranted()) {
-                                                AsemanService.downloadFile(new Downloading(message.getVideo().getFileId(), message.getRoomId()));
-                                                fileLocal.setTransferring(true);
-                                                notifyItemChanged(holder.getAdapterPosition());
+                        holder.downloadBTN.setOnClickListener(v ->
+                                Dexter.withActivity(activity)
+                                        .withPermissions(
+                                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                        .withListener(new MultiplePermissionsListener() {
+                                            @Override
+                                            public void onPermissionsChecked(MultiplePermissionsReport report) {
+                                                if (report.areAllPermissionsGranted()) {
+                                                    AsemanService.downloadFile(new Downloading(message.getVideo().getFileId(), message.getRoomId()));
+                                                    fileLocal.setTransferring(true);
+                                                    notifyItemChanged(holder.getAdapterPosition());
+                                                }
                                             }
-                                        }
-
-                                        @Override
-                                        public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
-                                            token.continuePermissionRequest();
-                                        }
-                                    })
-                                    .onSameThread()
-                                    .check();
-                        });
+                                            @Override
+                                            public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                                                token.continuePermissionRequest();
+                                            }
+                                        })
+                                        .onSameThread()
+                                        .check());
                     } else {
                         holder.blurView.setVisibility(View.GONE);
                         holder.downloadBTN.setVisibility(View.GONE);
@@ -942,7 +938,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     class TextMessageVH extends RecyclerView.ViewHolder {
 
-        private TextView textTV;
+        private EmojiTextView textTV;
         private ImageView avatarIV;
         private TextView timeTV;
         private ImageView signIV;

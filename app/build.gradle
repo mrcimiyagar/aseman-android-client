@@ -81,6 +81,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-jdk14:1.7.25'
     implementation 'com.synnapps:carouselview:0.1.5'
     implementation 'com.karumi:dexter:5.0.0'
+    implementation 'com.vanniktech:emoji-twitter:0.6.0'
     implementation 'com.google.firebase:firebase-core:16.0.7'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
     implementation "com.google.firebase:firebase-measurement-connector-impl:17.0.5"

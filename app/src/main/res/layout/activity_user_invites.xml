@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBlackBlue"
-    tools:context=".activities.ComplexesInviteActivity">
+    tools:context=".activities.UserInvitesActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -41,7 +41,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="56dp"
-        android:id="@+id/selectComplexRV"
+        android:id="@+id/userInvitesRV"
         android:paddingTop="16dp"
         android:clipToPadding="false"/>
 

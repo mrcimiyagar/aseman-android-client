@@ -20,7 +20,11 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning"
         tools:replace="android:allowBackup">
-        <activity android:name=".activities.ComplexesInviteActivity"></activity>
+        <activity
+            android:name=".activities.ComplexInvitesActivity"
+            android:label="@string/title_activity_complex_invites"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".activities.UserInvitesActivity" />
         <activity android:name=".activities.TitleEditorActivity" />
         <activity android:name=".activities.BotStoreBotActivity" />
         <activity
@@ -102,10 +106,10 @@
 
         <service
             android:name=".services.MusicsService"
-            android:stopWithTask="false"/>
+            android:stopWithTask="false" />
         <service
             android:name=".services.AsemanService"
-            android:stopWithTask="false"/>
+            android:stopWithTask="false" />
 
         <receiver android:name=".services.Startup">
             <intent-filter>
@@ -116,11 +120,9 @@
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="150771ddf9d9dff9613be1ba467da98fae3e364d" />
-
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="150771ddf9d9dff9613be1ba467da98fae3e364d" />
-
     </application>
 
 </manifest>

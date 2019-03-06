@@ -40,7 +40,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="28dp">
 
-                <TextView
+                <com.vanniktech.emoji.EmojiTextView
                     android:id="@+id/homeRoomItemLastAction"
                     android:layout_width="match_parent"
                     android:layout_height="28dp"

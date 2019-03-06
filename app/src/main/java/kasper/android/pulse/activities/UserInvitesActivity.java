@@ -4,21 +4,20 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import kasper.android.pulse.R;
-import kasper.android.pulse.adapters.ComplexesInviteAdapter;
+import kasper.android.pulse.adapters.UsersInviteAdapter;
 import kasper.android.pulse.helpers.DatabaseHelper;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-public class ComplexesInviteActivity extends AppCompatActivity {
+public class UserInvitesActivity extends AppCompatActivity {
 
     RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_complex_picker);
+        setContentView(R.layout.activity_user_invites);
 
         final long userId;
         if (getIntent().getExtras() != null) {
@@ -29,15 +28,15 @@ public class ComplexesInviteActivity extends AppCompatActivity {
         } else
             userId = 0;
 
-        recyclerView = findViewById(R.id.selectComplexRV);
+        recyclerView = findViewById(R.id.userInvitesRV);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-        recyclerView.setAdapter(new ComplexesInviteAdapter(userId, DatabaseHelper.getAdminedComplexes()));
+        recyclerView.setAdapter(new UsersInviteAdapter(userId, DatabaseHelper.getAdminedComplexes()));
     }
 
     @Override
     protected void onDestroy() {
         if (recyclerView.getAdapter() != null)
-            ((ComplexesInviteAdapter) recyclerView.getAdapter()).dispose();
+            ((UsersInviteAdapter) recyclerView.getAdapter()).dispose();
         super.onDestroy();
     }
 

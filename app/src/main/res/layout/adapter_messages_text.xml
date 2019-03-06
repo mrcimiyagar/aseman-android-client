@@ -28,7 +28,7 @@
             android:layout_centerInParent="true"
             android:minWidth="84dp">
 
-            <TextView
+            <com.vanniktech.emoji.EmojiTextView
                 android:id="@+id/adapter_messages_text_right_text_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -99,7 +99,7 @@
             android:layout_centerInParent="true"
             android:minWidth="84dp">
 
-            <TextView
+            <com.vanniktech.emoji.EmojiTextView
                 android:id="@+id/adapter_messages_text_left_text_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -139,7 +139,7 @@
 
     </RelativeLayout>
 
-    <TextView
+    <com.vanniktech.emoji.EmojiTextView
         android:id="@+id/adapter_messages_text_center_text_view"
         android:layout_width="wrap_content"
         android:layout_height="56dp"

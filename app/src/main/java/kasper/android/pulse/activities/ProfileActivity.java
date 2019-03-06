@@ -21,7 +21,6 @@ import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ContactHandler;
-import kasper.android.pulse.retrofit.InviteHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
@@ -191,7 +190,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public void onInviteBtnClicked(View view) {
-        startActivity(new Intent(this, ComplexesInviteActivity.class).putExtra("user_id", humanId));
+        startActivity(new Intent(this, UserInvitesActivity.class).putExtra("user_id", humanId));
     }
 
     public void onBackBtnClicked(View view) {

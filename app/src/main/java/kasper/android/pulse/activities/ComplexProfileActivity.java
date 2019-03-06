@@ -15,7 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,10 +45,11 @@ import kasper.android.pulse.models.extras.ComplexProfileUpdating;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
+import kasper.android.pulse.rxbus.notifications.MembershipCreated;
 import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
-public class ComplexProfileActivity extends AppCompatActivity {
+public class ComplexProfileActivity extends BaseActivity {
 
     private Entities.Complex complex;
 
@@ -54,6 +57,9 @@ public class ComplexProfileActivity extends AppCompatActivity {
     private TextView titleTV;
     private TextView memberCountTV;
     private RecyclerView roomsRV;
+
+    private long myId;
+    private long memberCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +73,9 @@ public class ComplexProfileActivity extends AppCompatActivity {
 
         Core.getInstance().bus().register(this);
 
+        Entities.User me = DatabaseHelper.getMe();
+        if (me != null) myId = me.getBaseUserId();
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -76,6 +85,11 @@ public class ComplexProfileActivity extends AppCompatActivity {
 
         if (getIntent().getExtras() != null)
             complex = (Entities.Complex) getIntent().getExtras().getSerializable("complex");
+
+        ImageButton optionsMenuBtn = findViewById(R.id.optionsMenuBtn);
+        if (complex.getMode() == 1 || complex.getMode() == 2 || complex.getComplexSecret() == null)
+            optionsMenuBtn.setVisibility(View.GONE);
+
         roomsRV.setLayoutManager(new LinearLayoutManager(ComplexProfileActivity.this
                 , RecyclerView.VERTICAL, false));
         roomsRV.addItemDecoration(new LinearDecoration(GraphicHelper.dpToPx(16), GraphicHelper.dpToPx(88)));
@@ -125,12 +139,24 @@ public class ComplexProfileActivity extends AppCompatActivity {
             titleTV.setText(complex.getTitle());
             NetworkHelper.loadComplexAvatar(complex.getAvatar(), avatarIV);
         }
-        long memCount = DatabaseHelper.getMembersCount(complex.getComplexId());
-        memberCountTV.setText(memCount + " " + (memCount == 1 ? "member" : "members"));
+        memberCount = DatabaseHelper.getMembersCount(complex.getComplexId());
+        memberCountTV.setText(memberCount + " " + (memberCount == 1 ? "member" : "members"));
     }
 
     public void fillRooms(List<Entities.Room> rooms) {
-        roomsRV.setAdapter(new ComplexProfileAdapter(this, rooms));
+        roomsRV.setAdapter(new ComplexProfileAdapter(this, myId, rooms));
+    }
+
+    public void onOptionsMenuBtnClicked(View view) {
+        showOptionsMenu(R.menu.complex_profile_options_menu, view, item -> {
+            switch (item.getItemId()) {
+                case R.id.invites:
+                    startActivity(new Intent(ComplexProfileActivity.this, ComplexInvitesActivity.class)
+                            .putExtra("complex_id", complex.getComplexId()));
+                    return true;
+            }
+            return false;
+        });
     }
 
     @Override
@@ -269,6 +295,15 @@ public class ComplexProfileActivity extends AppCompatActivity {
     public void onComplexProfileUpdated(ComplexProfileUpdated updated) {
         complex.setAvatar(updated.getComplex().getAvatar());
         NetworkHelper.loadComplexAvatar(complex.getAvatar(), avatarIV);
+    }
+
+    @SuppressLint("SetTextI18n")
+    @Subscribe
+    public void onMembershipCreated(MembershipCreated membershipCreated) {
+        if (membershipCreated.getMembership().getComplex().getComplexId() == complex.getComplexId()) {
+            memberCount++;
+            memberCountTV.setText(memberCount + " " + (memberCount == 1 ? "member" : "members"));
+        }
     }
 
     private void updateProfile() {

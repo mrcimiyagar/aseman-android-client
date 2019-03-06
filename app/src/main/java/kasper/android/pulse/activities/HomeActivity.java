@@ -143,52 +143,86 @@ public class HomeActivity extends BaseActivity {
         final Entities.Complex complex = DatabaseHelper.getComplexById(chosenComplexId);
         String[] itemTitles;
         Drawable[] itemIcons;
-        if (complex.getTitle().toLowerCase().equals("home") || complex.getTitle().equals("")) {
-            Drawable addDrawable = getResources().getDrawable(R.drawable.ic_add);
-            addDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-            Drawable profileDrawable = getResources().getDrawable(R.drawable.ic_profile);
-            profileDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Runnable[] itemClicks;
+
+        Drawable profileDrawable = getResources().getDrawable(R.drawable.ic_profile);
+        profileDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable addDrawable = getResources().getDrawable(R.drawable.ic_add);
+        addDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable deleteDrawable = getResources().getDrawable(R.drawable.ic_delete);
+        deleteDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+
+        Runnable viewProfileClick = () ->
+                startActivity(new Intent(HomeActivity.this, ComplexProfileActivity.class)
+                        .putExtra("complex", DatabaseHelper.getComplexById(chosenComplexId)));
+
+        Runnable addRoomClick = () -> {
+            startActivity(new Intent(HomeActivity.this, CreateRoomActivity.class)
+                    .putExtra("complex_id", chosenComplexId));
+            drawerLayout.closeDrawer(Gravity.LEFT);
+        };
+
+        Runnable deleteComplexClick = () -> showComplexDeleteDialog(chosenComplexId);
+
+        if (complex.getMode() == 1) {
             itemIcons = new Drawable[] {
                     profileDrawable, addDrawable
             };
             itemTitles = new String[] {
-                    "View profile", "Add Room"
+                    "View Profile", "Add Room"
             };
-        } else {
-            Drawable profileDrawable = getResources().getDrawable(R.drawable.ic_profile);
-            profileDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-            Drawable addDrawable = getResources().getDrawable(R.drawable.ic_add);
-            addDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-            Drawable deleteDrawable = getResources().getDrawable(R.drawable.ic_delete);
-            deleteDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+            itemClicks = new Runnable[] {
+                    viewProfileClick, addRoomClick
+            };
+        } else if (complex.getMode() == 2) {
             itemIcons = new Drawable[] {
-                    profileDrawable, addDrawable, deleteDrawable
+                    profileDrawable, addDrawable
             };
             itemTitles = new String[] {
-                    "Edit Complex", "Add Room", "Delete Room"
+                    "View Profile", "Add Room"
             };
+            itemClicks = new Runnable[] {
+                    viewProfileClick, addRoomClick
+            };
+        } else if (complex.getMode() == 3) {
+            if (complex.getComplexSecret() != null) {
+                itemIcons = new Drawable[] {
+                        profileDrawable, addDrawable, deleteDrawable
+                };
+                itemTitles = new String[] {
+                        "View Profile", "Add Room", "Delete Complex"
+                };
+                itemClicks = new Runnable[] {
+                        viewProfileClick, addRoomClick, deleteComplexClick
+                };
+            } else {
+                itemIcons = new Drawable[] {
+                        profileDrawable
+                };
+                itemTitles = new String[] {
+                        "View Profile"
+                };
+                itemClicks = new Runnable[] {
+                        viewProfileClick
+                };
+            }
+        } else {
+            itemIcons = new Drawable[0];
+            itemTitles = new String[0];
+            itemClicks = new Runnable[0];
         }
-        BottomSheet.Builder builder = new BottomSheet.Builder(this);
-        builder.setItems(itemTitles, itemIcons,
-                (dialogInterface, i) -> {
-                    if (i == 0) {
-                        startActivity(new Intent(HomeActivity.this, ComplexProfileActivity.class)
-                                .putExtra("complex", DatabaseHelper.getComplexById(chosenComplexId)));
-                    } else if (i == 1) {
-                        startActivity(new Intent(HomeActivity.this, CreateRoomActivity.class)
-                                .putExtra("complex_id", chosenComplexId));
-                        drawerLayout.closeDrawer(Gravity.LEFT);
-                    } else if (i == 2) {
-                        final long complexId = chosenComplexId;
-                        showComplexDeleteDialog(complexId);
-                    }
-                }).setTitle("Complex")
-                .setDarkTheme(true)
-                .setTitleTextColor(Color.WHITE)
-                .setContentType(BottomSheet.LIST)
-                .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
-                .setItemTextColor(Color.WHITE)
-                .show();
+
+        if (itemClicks.length > 0) {
+            BottomSheet.Builder builder = new BottomSheet.Builder(this);
+            builder.setItems(itemTitles, itemIcons,
+                    (dialogInterface, i) -> itemClicks[i].run()).setTitle("Complex")
+                    .setDarkTheme(true)
+                    .setTitleTextColor(Color.WHITE)
+                    .setContentType(BottomSheet.LIST)
+                    .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                    .setItemTextColor(Color.WHITE)
+                    .show();
+        }
     }
 
     private void showComplexDeleteDialog(long complexId) {

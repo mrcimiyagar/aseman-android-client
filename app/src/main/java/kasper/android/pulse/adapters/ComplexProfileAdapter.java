@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.anadeainc.rxbus.Subscribe;
@@ -17,9 +18,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
+import kasper.android.pulse.activities.ChatActivity;
 import kasper.android.pulse.activities.RoomActivity;
+import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
+import kasper.android.pulse.callbacks.middleware.OnRoomSyncListener;
 import kasper.android.pulse.core.Core;
+import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
@@ -32,11 +38,13 @@ import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private AppCompatActivity activity;
+    private long myId;
     private final List<Entities.Room> rooms;
     private Hashtable<Long, Entities.Message> sendingMessages;
 
-    public ComplexProfileAdapter(AppCompatActivity activity, List<Entities.Room> rooms) {
+    public ComplexProfileAdapter(AppCompatActivity activity, long myId, List<Entities.Room> rooms) {
         this.activity = activity;
+        this.myId = myId;
         this.rooms = rooms;
         this.sendingMessages = new Hashtable<>();
         Core.getInstance().bus().register(this);
@@ -161,28 +169,109 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Entities.Room room = rooms.get(position);
-        RoomItem vh = (RoomItem) holder;
-        NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
-        vh.nameTV.setText(room.getTitle());
+        ComplexProfileAdapter.RoomItem vh = (ComplexProfileAdapter.RoomItem) holder;
+        if (room.getComplex().getMode() == 2 || room.getComplex().getTitle().length() == 0) {
+            Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
+            Entities.User user = contact.getPeer();
+            vh.nameTV.setText(user.getTitle().split(" ")[0] + " : " + room.getTitle());
+            NetworkHelper.loadRoomAvatar(user.getAvatar(), vh.avatarIV);
+            DataSyncer.syncBaseUserWithServer(user.getBaseUserId(), new OnBaseUserSyncListener() {
+                @Override
+                public void userSynced(Entities.BaseUser baseUser) {
+                    DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                        @Override
+                        public void roomSynced(Entities.Room room) {
+                            try {
+                                if (!baseUser.getTitle().equals(user.getTitle())) {
+                                    user.setTitle(baseUser.getTitle());
+                                    vh.nameTV.setText(baseUser.getTitle().split(" ")[0] + " : " + room.getTitle());
+                                }
+                                NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
+                            } catch (Exception ignored) { }
+                        }
+                        @Override
+                        public void syncFailed() { }
+                    });
+                }
+                @Override
+                public void syncFailed() { }
+            });
+        } else {
+            NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
+            vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
+            DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                @Override
+                public void roomSynced(Entities.Room r) {
+                    try {
+                        if (!(r.getComplex().getTitle().equals(room.getComplex().getTitle())
+                                && r.getTitle().equals(room.getTitle()))) {
+                            room.setTitle(r.getTitle());
+                            vh.nameTV.setText(r.getComplex().getTitle() + " : " + r.getTitle());
+                        }
+                        NetworkHelper.loadRoomAvatar(r.getAvatar(), vh.avatarIV);
+                    } catch (Exception ignored) { }
+                }
+                @Override
+                public void syncFailed() { }
+            });
+        }
         Entities.Message lastAction = room.getLastAction();
         if (lastAction != null) {
             if (lastAction instanceof Entities.TextMessage)
-                vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : "
+                vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
                         + ((Entities.TextMessage) lastAction).getText());
             else if (lastAction instanceof Entities.PhotoMessage)
-                vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : " + "Photo");
+                vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
             else if (lastAction instanceof Entities.AudioMessage)
-                vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : " + "Audio");
+                vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
             else if (lastAction instanceof Entities.VideoMessage)
-                vh.lastActionTV.setText(lastAction.getAuthor().getTitle() + " : " + "Video");
+                vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
             else if (lastAction instanceof Entities.ServiceMessage)
                 vh.lastActionTV.setText("Aseman : "
                         + ((Entities.ServiceMessage) lastAction).getText());
+            if (room.getComplex().getMode() == 1) {
+                if (lastAction.getAuthorId() == myId) {
+                    ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
+                    ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                    ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                } else {
+                    ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                    ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                }
+            } else {
+                long unreadCount = DatabaseHelper.getUnreadMessagesCount(room.getRoomId());
+                if (unreadCount == 0) {
+                    ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                    if (lastAction.getAuthorId() == myId) {
+                        if (lastAction.getSeenCount() > 0) {
+                            ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
+                            ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                        } else {
+                            Entities.MessageLocal messageLocal = DatabaseHelper.getMessageLocalById(lastAction.getMessageId());
+                            if (messageLocal != null && messageLocal.isSent()) {
+                                ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_done);
+                                ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                            } else {
+                                ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                            }
+                        }
+                    } else {
+                        ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                    }
+                } else {
+                    ((RoomItem) holder).unreadCount.setText(unreadCount + "");
+                    ((RoomItem) holder).unreadCount.setVisibility(View.VISIBLE);
+                    ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                }
+            }
+        } else {
+            vh.lastActionTV.setText("");
         }
         vh.itemView.setOnClickListener(view ->
-                activity.startActivity(new Intent(activity, RoomActivity.class)
+                activity.startActivity(new Intent(activity, ChatActivity.class)
                         .putExtra("complex_id", room.getComplex().getComplexId())
-                        .putExtra("room_id", room.getRoomId())));
+                        .putExtra("room_id", room.getRoomId())
+                        .putExtra("start_file_id", -1L)));
     }
 
     @Override
@@ -195,12 +284,16 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         CircleImageView avatarIV;
         TextView nameTV;
         TextView lastActionTV;
+        TextView unreadCount;
+        ImageView stateIV;
 
         RoomItem(View itemView) {
             super(itemView);
             this.avatarIV = itemView.findViewById(R.id.homeRoomItemAvatar);
             this.nameTV = itemView.findViewById(R.id.homeRoomItemName);
             this.lastActionTV = itemView.findViewById(R.id.homeRoomItemLastAction);
+            this.unreadCount = itemView.findViewById(R.id.homeRoomItemUnreadCount);
+            this.stateIV = itemView.findViewById(R.id.homeRoomItemMyMessageState);
         }
     }
 }

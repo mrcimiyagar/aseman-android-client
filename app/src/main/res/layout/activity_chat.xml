@@ -7,7 +7,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:app1="http://schemas.android.com/tools"
     android:background="@android:color/transparent"
-    tools:context=".activities.ChatActivity">
+    tools:context=".activities.ChatActivity"
+    android:id="@+id/rootView">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/fragment_messages_recycler_view"
@@ -153,23 +154,33 @@
             android:layout_width="match_parent"
             android:layout_height="56dp">
 
-            <EditText
+            <com.vanniktech.emoji.EmojiEditText
                 android:id="@+id/fragment_messages_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:background="@android:color/transparent"
                 android:hint="Message"
-                android:paddingLeft="56dp"
                 android:paddingRight="56dp"
                 android:textColor="#fff"
-                android:textColorHint="#fff"/>
+                android:textColorHint="#fff"
+                android:imeOptions="actionSend"
+                android:layout_marginLeft="92dp"/>
 
             <ImageButton
                 android:id="@+id/fragment_messages_files_image_button"
-                android:layout_width="56dp"
+                android:layout_width="40dp"
                 android:layout_height="56dp"
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_file"
+                android:tint="#fff" />
+
+            <ImageButton
+                android:id="@+id/emojiBTN"
+                android:layout_width="40dp"
+                android:layout_height="56dp"
+                android:background="@android:color/transparent"
+                android:layout_marginLeft="40dp"
+                android:src="@drawable/ic_emoji"
                 android:tint="#fff"/>
 
             <ImageButton

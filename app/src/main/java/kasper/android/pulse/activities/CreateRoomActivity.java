@@ -21,7 +21,9 @@ import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.models.Tuple;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.GlideApp;
@@ -31,6 +33,7 @@ import kasper.android.pulse.retrofit.RoomHandler;
 import kasper.android.pulse.rxbus.notifications.FileRegistered;
 import kasper.android.pulse.rxbus.notifications.FileTransferProgressed;
 import kasper.android.pulse.rxbus.notifications.FileUploaded;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.services.AsemanService;
@@ -60,8 +63,10 @@ public class CreateRoomActivity extends AppCompatActivity {
 
         Core.getInstance().bus().register(this);
 
-        if (getIntent().getExtras() != null)
+        if (getIntent().getExtras() != null) {
             complexId = getIntent().getExtras().getLong("complex_id");
+            complex = DatabaseHelper.getComplexById(complexId);
+        }
 
         avatarIV = findViewById(R.id.activity_create_room_avatar_image_view);
         nameET = findViewById(R.id.activity_create_room_name_edit_text);
@@ -105,24 +110,28 @@ public class CreateRoomActivity extends AppCompatActivity {
                 loadingView.setVisibility(View.GONE);
             }
             final Packet packet = new Packet();
-            final Entities.Complex complex = DatabaseHelper.getComplexById(complexId);
-            packet.setComplex(complex);
-            Entities.Room room = new Entities.Room();
-            room.setTitle(roomName);
-            room.setAvatar(0);
-            packet.setRoom(room);
+            Entities.Complex c = new Entities.Complex();
+            c.setComplexId(complexId);
+            packet.setComplex(c);
+            Entities.Room r = new Entities.Room();
+            r.setTitle(roomName);
+            r.setAvatar(0);
+            packet.setRoom(r);
             RoomHandler roomHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
             Call<Packet> call = roomHandler.createRoom(packet);
             NetworkHelper.requestServer(call, new ServerCallback() {
                 @Override
                 public void onRequestSuccess(Packet packet) {
-                    final Entities.Room room = packet.getRoom();
-                    final Entities.ServiceMessage message = packet.getServiceMessage();
+                    room = packet.getRoom();
+                    message = packet.getServiceMessage();
+                    room.setComplex(complex);
                     DatabaseHelper.notifyRoomCreated(room);
                     DatabaseHelper.notifyServiceMessageReceived(message);
                     if (selectedImageFile != null && selectedImageFile.exists()) {
-                        AsemanService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
-                                , -1, -1, true, false));
+                        Tuple<Entities.File, Entities.FileLocal, Entities.Message, Entities.MessageLocal, Uploading> uploadData =
+                                AsemanService.uploadFile(new Uploading(DocTypes.Photo, selectedImageFile.getPath()
+                                        , -1, -1, true, false));
+                        fileId = uploadData.first.getFileId();
                     } else {
                         taskDone(complex, room, message);
                     }
@@ -154,8 +163,9 @@ public class CreateRoomActivity extends AppCompatActivity {
 
     @Subscribe
     public void onFileRegistered(FileRegistered fileRegistered) {
-        if (fileRegistered.getLocalFileId() == fileId)
+        if (fileRegistered.getLocalFileId() == fileId) {
             fileId = fileRegistered.getOnlineFileId();
+        }
     }
 
     @Subscribe
@@ -192,6 +202,10 @@ public class CreateRoomActivity extends AppCompatActivity {
         room.setComplex(complex);
         room.setLastAction(message);
         Core.getInstance().bus().post(new RoomCreated(complexId, room));
+        Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+        messageLocal.setMessageId(message.getMessageId());
+        messageLocal.setSent(true);
+        Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
         finish();
     }
 

@@ -10,6 +10,7 @@ import android.view.View;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
@@ -23,6 +24,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private TextFieldBoxes entryBox;
     private ExtendedEditText entryET;
+    private OneClickFAB doneFAB;
 
     private boolean secondLevel;
     private String email;
@@ -34,13 +36,13 @@ public class RegisterActivity extends AppCompatActivity {
 
         entryBox = findViewById(R.id.text_field_boxes);
         entryET = findViewById(R.id.activity_register_edit_text);
+        doneFAB = findViewById(R.id.doneFAB);
 
         secondLevel = false;
         email = "";
     }
 
     public void onOkBtnClicked(View view) {
-
         if (secondLevel) {
             String vCode = entryET.getText().toString();
             if (vCode.length() > 0) {
@@ -60,26 +62,24 @@ public class RegisterActivity extends AppCompatActivity {
                         DatabaseHelper.notifyUserSecretCreated(userSecret);
                         DatabaseHelper.notifyComplexCreated(userSecret.getHome());
                         DatabaseHelper.notifyComplexSecretCreated(complexSecret);
-                        for (Entities.Membership mem : userSecret.getHome().getMembers()) {
-                            DatabaseHelper.notifyUserCreated(mem.getUser());
-                            DatabaseHelper.notifyMembershipCreated(mem);
-                        }
+                        DatabaseHelper.notifyMembershipCreated(userSecret.getHome().getMembers().get(0));
                         gotoStartupPage();
                     }
-
                     @Override
                     public void onServerFailure() {
                         entryBox.setError("Wrong verification code", true);
+                        doneFAB.enable();
                     }
-
                     @Override
                     public void onConnectionFailure() {
                         entryBox.setError("Server connection failure", true);
+                        doneFAB.enable();
                     }
                 });
             }
             else {
                 entryBox.setError("Please enter verification code", true);
+                doneFAB.enable();
             }
         }
         else {
@@ -98,20 +98,24 @@ public class RegisterActivity extends AppCompatActivity {
                         entryBox.setIconSignifier(R.drawable.ic_verify);
                         entryBox.setLabelText("Verification Code");
                         entryBox.setMaxCharacters(8);
+                        doneFAB.enable();
                     }
 
                     @Override
                     public void onServerFailure() {
                         entryBox.setError("Invalid email", true);
+                        doneFAB.enable();
                     }
 
                     @Override
                     public void onConnectionFailure() {
                         entryBox.setError("Server connection failure", true);
+                        doneFAB.enable();
                     }
                 });
             } else {
                 entryBox.setError("Please enter email address", true);
+                doneFAB.enable();
             }
         }
     }
