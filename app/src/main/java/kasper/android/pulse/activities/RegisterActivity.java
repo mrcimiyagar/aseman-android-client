@@ -63,6 +63,7 @@ public class RegisterActivity extends AppCompatActivity {
                         DatabaseHelper.notifyComplexCreated(userSecret.getHome());
                         DatabaseHelper.notifyComplexSecretCreated(complexSecret);
                         DatabaseHelper.notifyMembershipCreated(userSecret.getHome().getMembers().get(0));
+                        DatabaseHelper.notifyMemberAccessCreated(userSecret.getHome().getMembers().get(0).getMemberAccess());
                         gotoStartupPage();
                     }
                     @Override

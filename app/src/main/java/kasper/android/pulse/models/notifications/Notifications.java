@@ -12,6 +12,7 @@ public class Notifications {
             include = JsonTypeInfo.As.PROPERTY,
             property = "type")
     @JsonSubTypes({
+            @JsonSubTypes.Type(value = MemberAccessUpdatedNotification.class, name = "MemberAccessUpdatedNotification"),
             @JsonSubTypes.Type(value = MessageSeenNotification.class, name = "MessageSeenNotification"),
             @JsonSubTypes.Type(value = InviteCreationNotification.class, name = "InviteCreationNotification"),
             @JsonSubTypes.Type(value = InviteAcceptanceNotification.class, name = "InviteAcceptanceNotification"),
@@ -49,6 +50,18 @@ public class Notifications {
 
         public void setSession(Entities.Session session) {
             this.session = session;
+        }
+    }
+
+    public static class MemberAccessUpdatedNotification extends Notification {
+        private Entities.MemberAccess memberAccess;
+
+        public Entities.MemberAccess getMemberAccess() {
+            return memberAccess;
+        }
+
+        public void setMemberAccess(Entities.MemberAccess memberAccess) {
+            this.memberAccess = memberAccess;
         }
     }
 
@@ -364,6 +377,7 @@ public class Notifications {
 
         private long contactId;
         private Entities.Contact contact;
+        private Entities.ComplexSecret complexSecret;
 
         public long getContactId() {
             return contactId;
@@ -379,6 +393,14 @@ public class Notifications {
 
         public void setContact(Entities.Contact contact) {
             this.contact = contact;
+        }
+
+        public Entities.ComplexSecret getComplexSecret() {
+            return complexSecret;
+        }
+
+        public void setComplexSecret(Entities.ComplexSecret complexSecret) {
+            this.complexSecret = complexSecret;
         }
     }
 

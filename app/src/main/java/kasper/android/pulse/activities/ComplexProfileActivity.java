@@ -45,6 +45,7 @@ import kasper.android.pulse.models.extras.ComplexProfileUpdating;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
+import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
 import kasper.android.pulse.rxbus.notifications.MembershipCreated;
 import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
@@ -57,6 +58,7 @@ public class ComplexProfileActivity extends BaseActivity {
     private TextView titleTV;
     private TextView memberCountTV;
     private RecyclerView roomsRV;
+    private ImageButton optionsMenuBtn;
 
     private long myId;
     private long memberCount = 0;
@@ -86,9 +88,10 @@ public class ComplexProfileActivity extends BaseActivity {
         if (getIntent().getExtras() != null)
             complex = (Entities.Complex) getIntent().getExtras().getSerializable("complex");
 
-        ImageButton optionsMenuBtn = findViewById(R.id.optionsMenuBtn);
-        if (complex.getMode() == 1 || complex.getMode() == 2 || complex.getComplexSecret() == null)
-            optionsMenuBtn.setVisibility(View.GONE);
+        optionsMenuBtn = findViewById(R.id.optionsMenuBtn);
+        Entities.Membership membership = DatabaseHelper.getMembershipByComplexAndUserId(complex.getComplexId(), myId);
+        if (membership != null && membership.getMemberAccess() != null)
+            handleInviteAccess(membership.getMemberAccess());
 
         roomsRV.setLayoutManager(new LinearLayoutManager(ComplexProfileActivity.this
                 , RecyclerView.VERTICAL, false));
@@ -120,12 +123,27 @@ public class ComplexProfileActivity extends BaseActivity {
         });
     }
 
+    private void handleInviteAccess(Entities.MemberAccess memberAccess) {
+        if (complex.getMode() == 1 || complex.getMode() == 2 || (complex.getMode() == 3 &&
+                complex.getComplexSecret() == null && !memberAccess.isCanSendInvite()))
+            optionsMenuBtn.setVisibility(View.GONE);
+        else
+            optionsMenuBtn.setVisibility(View.VISIBLE);
+    }
+
     @Override
     protected void onDestroy() {
         if (roomsRV.getAdapter() != null)
             ((ComplexProfileAdapter) roomsRV.getAdapter()).dispose();
         Core.getInstance().bus().unregister(this);
         super.onDestroy();
+    }
+
+    @Subscribe
+    public void onMemberAccessUpdated(MemberAccessUpdated updated) {
+        if (updated.getMemberAccess().getMembership().getUserId() == myId &&
+                updated.getMemberAccess().getMembership().getComplexId() == complex.getComplexId())
+            handleInviteAccess(updated.getMemberAccess());
     }
 
     @SuppressLint("SetTextI18n")

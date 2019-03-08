@@ -12,4 +12,7 @@
         android:icon="@drawable/ic_room"
         android:iconTint="#fff"
         android:title="Go to Room"/>
+    <item android:id="@+id/members_list"
+        android:icon="@drawable/ic_members"
+        android:title="Members list"/>
 </menu>

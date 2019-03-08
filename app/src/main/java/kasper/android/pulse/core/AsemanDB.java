@@ -23,6 +23,7 @@ import kasper.android.pulse.repositories.FileLocalDao;
 import kasper.android.pulse.repositories.FileUsageDao;
 import kasper.android.pulse.repositories.InviteDao;
 import kasper.android.pulse.repositories.KeyValueDao;
+import kasper.android.pulse.repositories.MemberAccessDao;
 import kasper.android.pulse.repositories.MembershipDao;
 import kasper.android.pulse.repositories.MessageDao;
 import kasper.android.pulse.repositories.MessageLocalDao;
@@ -42,9 +43,9 @@ import kasper.android.pulse.repositories.WorkershipDao;
         , Entities.TextMessage.class, Entities.PhotoMessage.class, Entities.AudioMessage.class
         , Entities.VideoMessage.class, Entities.ServiceMessage.class, Entities.Complex.class
         , Entities.ComplexSecret.class, Entities.Room.class, Entities.Membership.class
-        , Entities.Workership.class, Entities.MessageLocal.class, Entities.FileLocal.class
-        , Entities.IdKeeper.class, Uploading.class, Downloading.class, TextMessageSending.class
-        , FileMessageSending.class}, version = 1, exportSchema = false)
+        , Entities.MemberAccess.class, Entities.Workership.class, Entities.MessageLocal.class
+        , Entities.FileLocal.class, Entities.IdKeeper.class, Uploading.class, Downloading.class
+        , TextMessageSending.class, FileMessageSending.class}, version = 1, exportSchema = false)
 public abstract class AsemanDB extends RoomDatabase {
     public abstract BotCreationDao getBotCreationDao();
     public abstract BotDao getBotDao();
@@ -58,6 +59,7 @@ public abstract class AsemanDB extends RoomDatabase {
     public abstract FileUsageDao getFileUsageDao();
     public abstract InviteDao getInviteDao();
     public abstract MembershipDao getMembershipDao();
+    public abstract MemberAccessDao getMemberAccessDao();
     public abstract MessageDao getMessageDao();
     public abstract MessageLocalDao getMessageLocalDao();
     public abstract RoomDao getRoomDao();
@@ -83,6 +85,7 @@ public abstract class AsemanDB extends RoomDatabase {
         getInstance().getFileUsageDao().deleteAll();
         getInstance().getInviteDao().deleteAll();
         getInstance().getMembershipDao().deleteAll();
+        getInstance().getMemberAccessDao().deleteAll();
         getInstance().getMessageDao().deleteAll();
         getInstance().getMessageLocalDao().deleteAll();
         getInstance().getRoomDao().deleteAll();

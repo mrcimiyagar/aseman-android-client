@@ -349,8 +349,10 @@ public class StartupActivity extends BaseActivity {
                         DatabaseHelper.notifyRoomCreated(room);
                     }
                     for (Entities.Membership mem : complex.getMembers()) {
-                        DatabaseHelper.notifyMembershipCreated(mem);
                         DatabaseHelper.notifyUserCreated(mem.getUser());
+                        DatabaseHelper.notifyMembershipCreated(mem);
+                        if (mem.getMemberAccess() != null)
+                            DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
                     }
                     if (complex.getInvites() != null) {
                         for (Entities.Invite invite : complex.getInvites()) {

@@ -18,4 +18,8 @@ public interface ComplexHandler {
     Call<Packet> updateComplexProfile(@Body Packet packet);
     @POST("complex/search_complexes")
     Call<Packet> searchComplexes(@Body Packet packet);
+    @POST("complex/update_member_access")
+    Call<Packet> updateMemberAccess(@Body Packet packet);
+    @POST("complex/get_complex_accesses")
+    Call<Packet> getComplexAccesses(@Body Packet packet);
 }

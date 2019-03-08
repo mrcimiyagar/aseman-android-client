@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import android.os.Bundle;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
@@ -54,6 +55,7 @@ import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.FileMessageSending;
 import kasper.android.pulse.models.extras.TextMessageSending;
+import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
@@ -93,6 +95,10 @@ public class ChatActivity extends BaseActivity {
 
     EmojiPopup emojiPopup;
 
+    CardView chatETContainer;
+
+    private Entities.MemberAccess memberAccess;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,6 +124,10 @@ public class ChatActivity extends BaseActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
+        Entities.User user = DatabaseHelper.getMe();
+        if (user != null)
+            memberAccess = DatabaseHelper.getMemberAccessByComplexAndUserId(complexId, user.getBaseUserId());
+
         Dexter.withActivity(this)
                 .withPermissions(
                         Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -129,6 +139,8 @@ public class ChatActivity extends BaseActivity {
                         initDecorations();
                         initListeners();
                         initMessages();
+
+                        handleMemberAccess();
 
                         if (startFileId > 0) {
                             new Handler().postDelayed(() -> {
@@ -190,6 +202,34 @@ public class ChatActivity extends BaseActivity {
         }
     }
 
+    @Subscribe
+    public void onMemberAccessUpdated(MemberAccessUpdated memberAccessUpdated) {
+        Entities.Membership membership = DatabaseHelper.getMembershipById(memberAccessUpdated.getMemberAccess().getMembershipId());
+        if (membership.getComplex().getComplexId() == complexId) {
+            Entities.User me = DatabaseHelper.getMe();
+            if (me != null) {
+                if (membership.getUser().getBaseUserId() == me.getBaseUserId()) {
+                    memberAccess = memberAccessUpdated.getMemberAccess();
+                    handleMemberAccess();
+                }
+            }
+        }
+    }
+
+    private void handleMemberAccess() {
+        if (memberAccess.isCanCreateMessage()) {
+            chatETContainer.setVisibility(View.VISIBLE);
+            CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) chatRV.getLayoutParams();
+            lp.bottomMargin = GraphicHelper.dpToPx(56);
+            chatRV.setLayoutParams(lp);
+        } else {
+            chatETContainer.setVisibility(View.GONE);
+            CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) chatRV.getLayoutParams();
+            lp.bottomMargin = 0;
+            chatRV.setLayoutParams(lp);
+        }
+    }
+
     private void scrollChatToPosition(int position) {
         if (chatRV.getLayoutManager() != null) {
             RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(this) {
@@ -221,6 +261,7 @@ public class ChatActivity extends BaseActivity {
         searchOcc = findViewById(R.id.searchOccurrences);
         searchUp = findViewById(R.id.searchUp);
         searchDown = findViewById(R.id.searchDown);
+        chatETContainer = findViewById(R.id.chatEtContainer);
     }
 
     private void initDecorations() {
@@ -404,6 +445,10 @@ public class ChatActivity extends BaseActivity {
     public void onOptionsBtnClicked(View view) {
         showOptionsMenu(afterRoom ? R.menu.chat_options_menu1 : R.menu.chat_options_menu2, view, menuItem -> {
             switch (menuItem.getItemId()) {
+                case R.id.members_list:
+                    startActivity(new Intent(ChatActivity.this, ComplexMembersActivity.class)
+                            .putExtra("complex_id", complexId));
+                    return true;
                 case R.id.goto_room:
                     startActivity(new Intent(ChatActivity.this, RoomActivity.class)
                             .putExtra("complex_id", complexId)

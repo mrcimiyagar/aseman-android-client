@@ -20,10 +20,12 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning"
         tools:replace="android:allowBackup">
+        <activity android:name=".activities.ComplexMembersActivity"></activity>
+        <activity android:name=".activities.ModifyMemberAccessActivity" />
         <activity
             android:name=".activities.ComplexInvitesActivity"
             android:label="@string/title_activity_complex_invites"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".activities.UserInvitesActivity" />
         <activity android:name=".activities.TitleEditorActivity" />
         <activity android:name=".activities.BotStoreBotActivity" />

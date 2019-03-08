@@ -19,6 +19,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.callbacks.network.ServerCallback2;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
@@ -51,8 +52,8 @@ import static java.net.HttpURLConnection.HTTP_OK;
 
 public class NetworkHelper {
 
-    //public static String SERVER_IP = "http://192.168.43.151:8080/";
-    public static String SERVER_IP = "http://164.215.133.201:8080/";
+    public static String SERVER_IP = "http://192.168.43.151:8080/";
+    //public static String SERVER_IP = "http://164.215.133.201:8080/";
     private static String API_PATH = SERVER_IP + "api/";
     private static Retrofit retrofit;
     public static Retrofit getRetrofit() {
@@ -320,8 +321,40 @@ public class NetworkHelper {
             @Override
             public void onResponse(@NonNull Call<Packet> call, @NonNull retrofit2.Response<Packet> response) {
                 try {
-                    if (response.code() == HTTP_OK && response.body() != null && response.body().getStatus().equals("success")) {
-                         callback.onRequestSuccess(response.body());
+                    if (response.code() == HTTP_OK && response.body() != null) {
+                        if (response.body().getStatus().equals("success"))
+                            callback.onRequestSuccess(response.body());
+                        else
+                            callback.onServerFailure();
+                    } else {
+                        callback.onServerFailure();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<Packet> call, @NonNull Throwable t) {
+                try {
+                    LogHelper.log("AsemanError", t.toString());
+                    callback.onConnectionFailure();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public static void requestServer(Call<Packet> call, ServerCallback2 callback) {
+        call.enqueue(new Callback<Packet>() {
+            @Override
+            public void onResponse(@NonNull Call<Packet> call, @NonNull retrofit2.Response<Packet> response) {
+                try {
+                    if (response.code() == HTTP_OK && response.body() != null) {
+                        if (response.body().getStatus().equals("success"))
+                            callback.onRequestSuccess(response.body());
+                        else
+                            callback.onLogincalError(response.body().getStatus());
                     } else {
                         callback.onServerFailure();
                     }

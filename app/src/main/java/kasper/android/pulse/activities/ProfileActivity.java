@@ -141,13 +141,17 @@ public class ProfileActivity extends AppCompatActivity {
                         public void onRequestSuccess(Packet packet) {
                             Entities.Contact contact = packet.getContact();
                             Entities.Complex complex = packet.getContact().getComplex();
+                            Entities.ComplexSecret complexSecret = packet.getComplexSecret();
                             Entities.Room room = complex.getRooms().get(0);
                             room.setComplex(complex);
                             Entities.ServiceMessage message = packet.getServiceMessage();
                             DatabaseHelper.notifyComplexCreated(complex);
+                            DatabaseHelper.notifyComplexSecretCreated(complexSecret);
                             for (Entities.Membership mem : complex.getMembers()) {
                                 DatabaseHelper.notifyUserCreated(mem.getUser());
                                 DatabaseHelper.notifyMembershipCreated(mem);
+                                if (mem.getMemberAccess() != null)
+                                    DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
                             }
                             DatabaseHelper.notifyRoomCreated(room);
                             DatabaseHelper.notifyContactCreated(contact);
@@ -167,13 +171,11 @@ public class ProfileActivity extends AppCompatActivity {
                                     .putExtra("room_id", packet.getContact()
                                             .getComplex().getRooms().get(0).getRoomId()));
                         }
-
                         @Override
                         public void onServerFailure() {
                             Toast.makeText(ProfileActivity.this, "Contact creation failure"
                                     , Toast.LENGTH_SHORT).show();
                         }
-
                         @Override
                         public void onConnectionFailure() {
                             Toast.makeText(ProfileActivity.this, "Contact creation failure"

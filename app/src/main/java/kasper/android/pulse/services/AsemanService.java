@@ -77,6 +77,7 @@ import kasper.android.pulse.rxbus.notifications.FileUploading;
 import kasper.android.pulse.rxbus.notifications.InviteResolved;
 import kasper.android.pulse.rxbus.notifications.InviteCancelled;
 import kasper.android.pulse.rxbus.notifications.InviteCreated;
+import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
 import kasper.android.pulse.rxbus.notifications.MembershipCreated;
 import kasper.android.pulse.rxbus.notifications.MessageDeleted;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
@@ -645,6 +646,7 @@ public class AsemanService extends IntentService {
             connection.on("NotifyBotRanCommandsOnBotView", this::onBotRanCommandsOnBotView, Notifications.BotRanCommandsOnBotViewNotification.class);
             connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAddedToRoomNotification.class);
             connection.on("NotifyBotRemovedFromRoom", this::onBotRemovedFromRoom, Notifications.BotRemovedFromRoomNotification.class);
+            connection.on("NotifyMemberAccessUpdated", this::onMemberAccessUpdated, Notifications.MemberAccessUpdatedNotification.class);
 
             connectionState = "Connecting";
             Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connecting));
@@ -1214,6 +1216,38 @@ public class AsemanService extends IntentService {
         }
     }
 
+    public void onMemberAccessUpdated(Notifications.MemberAccessUpdatedNotification notif) {
+        LogHelper.log("Aseman", "Received member access updated notification");
+
+        DatabaseHelper.notifyMemberAccessCreated(notif.getMemberAccess());
+
+        if (notif.getMemberAccess().isCanModifyAccess()) {
+            Packet packet = new Packet();
+            Entities.Complex complex = new Entities.Complex();
+            complex.setComplexId(notif.getMemberAccess().getMembership().getComplex().getComplexId());
+            packet.setComplex(complex);
+            NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(ComplexHandler.class).getComplexAccesses(packet)
+                    , new ServerCallback() {
+                        @Override
+                        public void onRequestSuccess(Packet packet) {
+                            for (Entities.MemberAccess ma : packet.getMemberAccesses())
+                                DatabaseHelper.notifyMemberAccessCreated(ma);
+                            Core.getInstance().bus().post(new MemberAccessUpdated(notif.getMemberAccess()));
+                            notifyServerNotifReceived(notif.getNotificationId());
+                        }
+                        @Override
+                        public void onServerFailure() {
+
+                        }
+                        @Override
+                        public void onConnectionFailure() { }
+                    });
+        } else {
+            Core.getInstance().bus().post(new MemberAccessUpdated(notif.getMemberAccess()));
+            notifyServerNotifReceived(notif.getNotificationId());
+        }
+    }
+
     private void onBotAddedToRoom(Notifications.BotAddedToRoomNotification notif) {
         LogHelper.log("Aseman", "Received Bot Added notification");
 
@@ -1302,6 +1336,8 @@ public class AsemanService extends IntentService {
 
         DatabaseHelper.notifyUserCreated(mem.getUser());
         DatabaseHelper.notifyMembershipCreated(mem);
+        if (mem.getMemberAccess() != null)
+            DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
 
         Core.getInstance().bus().post(new MembershipCreated(mem));
 
@@ -1372,18 +1408,22 @@ public class AsemanService extends IntentService {
         LogHelper.log("Aseman", "Received contact notification");
 
         Entities.Complex complex = ccn.getContact().getComplex();
+        Entities.ComplexSecret complexSecret = ccn.getComplexSecret();
         Entities.Room room = complex.getRooms().get(0);
         room.setComplex(complex);
         Entities.User user = ccn.getContact().getUser();
         Entities.User peer = ccn.getContact().getPeer();
 
         DatabaseHelper.notifyComplexCreated(complex);
+        DatabaseHelper.notifyComplexSecretCreated(complexSecret);
         DatabaseHelper.notifyRoomCreated(room);
         DatabaseHelper.notifyUserCreated(user);
         DatabaseHelper.notifyUserCreated(peer);
         for (Entities.Membership mem : complex.getMembers()) {
             DatabaseHelper.notifyUserCreated(mem.getUser());
             DatabaseHelper.notifyMembershipCreated(mem);
+            if (mem.getMemberAccess() != null)
+                DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
         }
         DatabaseHelper.notifyContactCreated(ccn.getContact());
 

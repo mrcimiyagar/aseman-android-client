@@ -5,11 +5,14 @@ import android.util.JsonWriter;
 import android.util.Log;
 import android.util.Pair;
 
+import java.lang.reflect.Member;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+
+import javax.xml.transform.Result;
 
 import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.models.entities.Entities;
@@ -26,6 +29,7 @@ import kasper.android.pulse.repositories.MessageDao;
 import kasper.android.pulse.repositories.RoomDao;
 import kasper.android.pulse.repositories.UserDao;
 import kasper.android.pulse.repositories.UserSecretDao;
+import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
 import kasper.android.pulse.services.AsemanService;
 
 /**
@@ -160,16 +164,27 @@ public class DatabaseHelper {
         return complexes;
     }
 
-    public static List<Entities.Complex> getAdminedComplexes() {
-        List<Entities.Complex> complexes = AsemanDB.getInstance().getComplexDao().getAdminedComplexes();
-        for (Entities.Complex complex : complexes) {
-            List<Entities.Room> rooms = AsemanDB.getInstance().getRoomDao().getComplexRooms(complex.getComplexId());
-            for (Entities.Room room : rooms) {
-                room.setComplex(complex);
+    public static List<Entities.Complex> getInvitableComplexes() {
+        Entities.User me = getMe();
+        List<Entities.Complex> result = new ArrayList<>();
+        if (me != null) {
+            List<Entities.Membership> memberships = AsemanDB.getInstance().getMembershipDao().getUserMemberships(me.getBaseUserId());
+            for (Entities.Membership membership : memberships) {
+                membership.setMemberAccess(AsemanDB.getInstance().getMemberAccessDao().getMemberAccessByMembershipId(membership.getMembershipId()));
+                membership.setComplex(AsemanDB.getInstance().getComplexDao().getComplexById(membership.getComplexId()));
+                membership.setUser(me);
+                if (membership.getComplex().getMode() == 3 && membership.getMemberAccess() != null && membership.getMemberAccess().isCanSendInvite()) {
+                    Entities.Complex complex = membership.getComplex();
+                    List<Entities.Room> rooms = AsemanDB.getInstance().getRoomDao().getComplexRooms(complex.getComplexId());
+                    for (Entities.Room room : rooms) {
+                        room.setComplex(complex);
+                    }
+                    complex.setRooms(rooms);
+                    result.add(complex);
+                }
             }
-            complex.setRooms(rooms);
         }
-        return complexes;
+        return result;
     }
 
     public static List<Entities.Room> getRooms(long complexId) {
@@ -197,8 +212,43 @@ public class DatabaseHelper {
             Entities.BaseUser baseUser = getBaseUserById(membership.getUserId());
             if (baseUser != null)
                 membership.setUser((Entities.User) baseUser);
+            Entities.MemberAccess memberAccess = AsemanDB.getInstance().getMemberAccessDao().getMemberAccessById(membership.getMemberAccessId());
+            if (memberAccess != null)
+                memberAccess.setMembership(membership);
+            membership.setMemberAccess(memberAccess);
         }
         return memberships;
+    }
+
+    public static Entities.Membership getMembershipById(long membershipId) {
+        Entities.Membership membership = AsemanDB.getInstance().getMembershipDao().getMembershipById(membershipId);
+        membership.setComplex(getComplexById(membership.getComplexId()));
+        membership.setUser((Entities.User) getBaseUserById(membership.getUserId()));
+        Entities.MemberAccess memberAccess = AsemanDB.getInstance().getMemberAccessDao().getMemberAccessByMembershipId(membershipId);
+        if (memberAccess != null) {
+            memberAccess.setMembership(membership);
+            membership.setMemberAccess(memberAccess);
+        }
+        return membership;
+    }
+
+    public static Entities.Membership getMembershipByComplexAndUserId(long complexId, long userId) {
+        Entities.Membership membership = AsemanDB.getInstance().getMembershipDao().getMembershipByUserAndComplexId(userId, complexId);
+        Entities.MemberAccess memberAccess = AsemanDB.getInstance().getMemberAccessDao().getMemberAccessByMembershipId(membership.getMembershipId());
+        if (memberAccess != null)
+            memberAccess.setMembership(membership);
+        membership.setMemberAccess(memberAccess);
+        return membership;
+    }
+
+    public static Entities.MemberAccess getMemberAccessByComplexAndUserId(long complexId, long userId) {
+        Entities.Membership membership = AsemanDB.getInstance().getMembershipDao().getMembershipByUserAndComplexId(userId, complexId);
+        if (membership == null) return null;
+        Entities.MemberAccess memberAccess = AsemanDB.getInstance().getMemberAccessDao().getMemberAccessByMembershipId(membership.getMembershipId());
+        if (memberAccess == null) return null;
+        memberAccess.setMembership(membership);
+        membership.setMemberAccess(memberAccess);
+        return memberAccess;
     }
 
     public static boolean isUserMemberOfComplex(long complexId, long userId) {
@@ -293,6 +343,16 @@ public class DatabaseHelper {
             AsemanDB.getInstance().getMembershipDao().insert(membership);
         else
             AsemanDB.getInstance().getMembershipDao().update(membership);
+    }
+
+    public static void notifyMemberAccessCreated(Entities.MemberAccess memberAccess) {
+        if (AsemanDB.getInstance().getMemberAccessDao().getMemberAccessById(memberAccess.getMemberAccessId()) == null) {
+            AsemanDB.getInstance().getMemberAccessDao().insert(memberAccess);
+            LogHelper.log("Adgar", "hello 0");
+        } else {
+            AsemanDB.getInstance().getMemberAccessDao().update(memberAccess);
+            LogHelper.log("Adgar", "hello 1");
+        }
     }
 
     public static Entities.BaseUser getBaseUserById(long userId) {

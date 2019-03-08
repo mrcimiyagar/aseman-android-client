@@ -26,6 +26,7 @@ import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.InviteHandler;
+import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.InviteCancelled;
 import kasper.android.pulse.rxbus.notifications.InviteCreated;
@@ -104,44 +105,92 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                 activity.startActivity(new Intent(activity, ComplexProfileActivity.class)
                 .putExtra("complex", invite.getComplex())));
         holder.accept.setOnClickListener(v -> {
-            Packet packet = new Packet();
+            Packet request = new Packet();
             Entities.Complex complex = new Entities.Complex();
             complex.setComplexId(invite.getComplex().getComplexId());
-            packet.setComplex(complex);
+            request.setComplex(complex);
             NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(InviteHandler.class)
-                    .acceptInvite(packet), new ServerCallback() {
+                    .acceptInvite(request), new ServerCallback() {
                 @Override
-                public void onRequestSuccess(Packet packet) {
-                    DatabaseHelper.notifyUserCreated(packet.getMembership().getUser());
-                    DatabaseHelper.notifyComplexCreated(packet.getMembership().getComplex());
-                    for (Entities.Room room : packet.getMembership().getComplex().getRooms()) {
+                public void onRequestSuccess(Packet result) {
+                    DatabaseHelper.notifyUserCreated(result.getMembership().getUser());
+                    DatabaseHelper.notifyComplexCreated(result.getMembership().getComplex());
+                    DatabaseHelper.notifyComplexSecretCreated(result.getComplexSecret());
+                    for (Entities.Room room : result.getMembership().getComplex().getRooms()) {
                         DatabaseHelper.notifyRoomCreated(room);
                     }
-                    for (Entities.Membership membership : packet.getMembership().getComplex().getMembers()) {
+                    for (Entities.Membership membership : result.getMembership().getComplex().getMembers()) {
                         DatabaseHelper.notifyUserCreated(membership.getUser());
                         DatabaseHelper.notifyMembershipCreated(membership);
                     }
-                    DatabaseHelper.notifyMembershipCreated(packet.getMembership());
-                    DatabaseHelper.notifyServiceMessageReceived(packet.getServiceMessage());
+                    DatabaseHelper.notifyMemberAccessCreated(result.getMembership().getMemberAccess());
+                    DatabaseHelper.notifyMembershipCreated(result.getMembership());
+                    DatabaseHelper.notifyServiceMessageReceived(result.getServiceMessage());
                     DatabaseHelper.notifyInviteResolved(invite);
+
                     invites.remove(holder.getAdapterPosition());
                     enablers.remove(holder.getAdapterPosition());
-                    Core.getInstance().bus().post(new ComplexCreated(packet.getMembership().getComplex()));
-                    for (Entities.Room room : packet.getMembership().getComplex().getRooms()) {
-                        room.setComplex(packet.getMembership().getComplex());
-                        Core.getInstance().bus().post(new RoomCreated(packet.getMembership().getComplex().getComplexId(), room));
+                    Core.getInstance().bus().post(new ComplexCreated(result.getMembership().getComplex()));
+                    for (Entities.Room room : result.getMembership().getComplex().getRooms()) {
+                        room.setComplex(result.getMembership().getComplex());
+                        Core.getInstance().bus().post(new RoomCreated(result.getMembership().getComplex().getComplexId(), room));
                     }
-                    for (Entities.Membership membership : packet.getMembership().getComplex().getMembers()) {
-                        membership.setComplex(packet.getMembership().getComplex());
+                    for (Entities.Membership membership : result.getMembership().getComplex().getMembers()) {
+                        membership.setComplex(result.getMembership().getComplex());
                         Core.getInstance().bus().post(new MembershipCreated(membership));
                     }
-                    Core.getInstance().bus().post(new MembershipCreated(packet.getMembership()));
+                    Core.getInstance().bus().post(new MembershipCreated(result.getMembership()));
                     Entities.MessageLocal messageLocal = new Entities.MessageLocal();
-                    messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
+                    messageLocal.setMessageId(result.getServiceMessage().getMessageId());
                     messageLocal.setSent(true);
-                    Core.getInstance().bus().post(new MessageReceived(packet.getServiceMessage(), messageLocal));
-                    Core.getInstance().bus().post(new ShowToast("Invite accepted."));
-                    notifyItemRemoved(holder.getAdapterPosition());
+                    Core.getInstance().bus().post(new MessageReceived(result.getServiceMessage(), messageLocal));
+
+                    Packet p = new Packet();
+                    p.setRooms(new ArrayList<>());
+                    for (Entities.Room room : result.getMembership().getComplex().getRooms()) {
+                        Entities.Room r = new Entities.Room();
+                        r.setRoomId(room.getRoomId());
+                        r.setComplexId(room.getComplexId());
+                        p.getRooms().add(r);
+                    }
+                    NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(MessageHandler.class).getLastActions(p)
+                            , new ServerCallback() {
+                                @Override
+                                public void onRequestSuccess(Packet packet) {
+                                    for (Entities.Room room : packet.getRooms()) {
+                                        if (room.getLastAction() != null) {
+                                            if (room.getLastAction() instanceof Entities.TextMessage)
+                                                DatabaseHelper.notifyTextMessageReceived((Entities.TextMessage) room.getLastAction());
+                                            else if (room.getLastAction() instanceof Entities.PhotoMessage)
+                                                DatabaseHelper.notifyPhotoMessageReceived((Entities.PhotoMessage) room.getLastAction());
+                                            else if (room.getLastAction() instanceof Entities.AudioMessage)
+                                                DatabaseHelper.notifyAudioMessageReceived((Entities.AudioMessage) room.getLastAction());
+                                            else if (room.getLastAction() instanceof Entities.VideoMessage)
+                                                DatabaseHelper.notifyVideoMessageReceived((Entities.VideoMessage) room.getLastAction());
+                                            else if (room.getLastAction() instanceof Entities.ServiceMessage)
+                                                DatabaseHelper.notifyServiceMessageReceived((Entities.ServiceMessage) room.getLastAction());
+                                            if (room.getLastAction() != null) {
+                                                Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+                                                messageLocal.setMessageId(room.getLastAction().getMessageId());
+                                                messageLocal.setSent(true);
+                                                Core.getInstance().bus().post(new MessageReceived(room.getLastAction(), messageLocal));
+                                            }
+                                        }
+                                    }
+                                    Core.getInstance().bus().post(new ShowToast("Invite accepted."));
+                                    notifyItemRemoved(holder.getAdapterPosition());
+                                }
+                                @Override
+                                public void onServerFailure() {
+                                    Core.getInstance().bus().post(new ShowToast("Invite accepted."));
+                                    notifyItemRemoved(holder.getAdapterPosition());
+                                }
+                                @Override
+                                public void onConnectionFailure() {
+                                    Core.getInstance().bus().post(new ShowToast("Invite accepted."));
+                                    notifyItemRemoved(holder.getAdapterPosition());
+                                }
+                            });
                 }
                 @Override
                 public void onServerFailure() {

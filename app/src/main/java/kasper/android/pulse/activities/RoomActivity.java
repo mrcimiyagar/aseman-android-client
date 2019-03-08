@@ -21,6 +21,7 @@ import java.util.Map;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
+import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
@@ -28,6 +29,7 @@ import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
+import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
 import kasper.android.pulse.rxbus.notifications.WorkerAdded;
 import kasper.android.pulse.rxbus.notifications.WorkerRemoved;
 import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
@@ -38,6 +40,7 @@ public class RoomActivity extends AppCompatActivity {
 
     private long complexId;
     private long roomId;
+    private long myId;
     private boolean afterChat;
 
     private ImageView backgroundView;
@@ -50,12 +53,14 @@ public class RoomActivity extends AppCompatActivity {
     private List<Entities.Bot> bots;
     private Hashtable<Long, PulseView> pulseTable;
 
+    private Entities.MemberAccess memberAccess;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_room);
 
-Core.getInstance().bus().register(this);
+        Core.getInstance().bus().register(this);
 
         workerships = new ArrayList<>();
         bots = new ArrayList<>();
@@ -73,6 +78,12 @@ Core.getInstance().bus().register(this);
         PulseHelper.setCurrentComplexId(complexId);
         PulseHelper.setCurrentRoomId(roomId);
 
+        Entities.User me = DatabaseHelper.getMe();
+        if (me != null)
+            myId = me.getBaseUserId();
+
+        memberAccess = DatabaseHelper.getMemberAccessByComplexAndUserId(complexId, myId);
+
         load();
     }
 
@@ -80,9 +91,8 @@ Core.getInstance().bus().register(this);
     protected void onDestroy() {
         PulseHelper.setCurrentComplexId(-1);
         PulseHelper.setCurrentRoomId(-1);
-        for (Entities.Bot bot : bots) {
+        for (Entities.Bot bot : bots)
             PulseHelper.getPulseViewTable().remove(bot.getBaseUserId());
-        }
         Core.getInstance().bus().unregister(this);
         super.onDestroy();
     }
@@ -151,13 +161,32 @@ Core.getInstance().bus().register(this);
                 .putExtra("complex_id", complexId)
                 .putExtra("room_id", roomId)));
 
-        botsFAB.setOnClickListener(view ->
-                startActivityForResult(new Intent(RoomActivity.this, AddBotToRoomActivity.class)
-                                .putExtra("complex_id", complexId)
-                                .putExtra("room_id", roomId)
-                                .putExtra("existing_bots", workerships
-                                        .toArray(new Entities.Workership[0]))
-                        , 1));
+        handleWorkerAccess();
+    }
+
+    private void handleWorkerAccess() {
+        if (memberAccess.isCanModifyWorkers()) {
+            botsFAB.setColorFilter(Color.WHITE);
+            botsFAB.setOnClickListener(view ->
+                    startActivityForResult(new Intent(RoomActivity.this, AddBotToRoomActivity.class)
+                                    .putExtra("complex_id", complexId)
+                                    .putExtra("room_id", roomId)
+                                    .putExtra("existing_bots", workerships
+                                            .toArray(new Entities.Workership[0]))
+                            , 1));
+        } else {
+            botsFAB.setColorFilter(Color.GRAY);
+            botsFAB.setOnClickListener(view -> {});
+        }
+    }
+
+    @Subscribe
+    public void onMemberAccessUpdated(MemberAccessUpdated updated) {
+        if (updated.getMemberAccess().getMembership().getUserId() == myId
+                && updated.getMemberAccess().getMembership().getComplexId() == complexId) {
+            memberAccess = updated.getMemberAccess();
+            handleWorkerAccess();
+        }
     }
 
     private void loadBots() {

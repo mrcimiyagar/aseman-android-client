@@ -30,7 +30,7 @@ public class UserInvitesActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.userInvitesRV);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-        recyclerView.setAdapter(new UsersInviteAdapter(userId, DatabaseHelper.getAdminedComplexes()));
+        recyclerView.setAdapter(new UsersInviteAdapter(userId, DatabaseHelper.getInvitableComplexes()));
     }
 
     @Override

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlackBlue"
+    tools:context=".activities.ModifyMemberAccessActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentInsetEnd="0dp"
+            app:contentInsetStart="0dp">
+
+            <ImageButton
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_back"
+                android:tint="#fff"
+                android:onClick="onBackBtnClicked"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textColor="#fff"
+                android:textSize="20sp"
+                android:text="Member Access Level"/>
+
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:text="Can Create Message"
+                    android:textColor="#fff"
+                    android:textSize="16sp"/>
+
+                <Switch
+                    android:id="@+id/canCreateMessageSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:thumbTint="@color/colorBlackBlue3"
+                    android:layout_gravity="right"
+                    android:trackTint="@color/colorBlue"
+                    android:layout_marginRight="16dp"/>
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:text="Can Send Invite"
+                    android:textColor="#fff"
+                    android:textSize="16sp"/>
+
+                <Switch
+                    android:id="@+id/canSendInviteSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:thumbTint="@color/colorBlackBlue3"
+                    android:layout_gravity="right"
+                    android:trackTint="@color/colorBlue"
+                    android:layout_marginRight="16dp"/>
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:text="Can Modify Workers"
+                    android:textColor="#fff"
+                    android:textSize="16sp"/>
+
+                <Switch
+                    android:id="@+id/canModifyWorkersSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:thumbTint="@color/colorBlackBlue3"
+                    android:layout_gravity="right"
+                    android:trackTint="@color/colorBlue"
+                    android:layout_marginRight="16dp"/>
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:text="Can Update Profiles"
+                    android:textColor="#fff"
+                    android:textSize="16sp"/>
+
+                <Switch
+                    android:id="@+id/canUpdateProfilesSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:thumbTint="@color/colorBlackBlue3"
+                    android:layout_gravity="right"
+                    android:trackTint="@color/colorBlue"
+                    android:layout_marginRight="16dp"/>
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:text="Can Modify Access"
+                    android:textColor="#fff"
+                    android:textSize="16sp"/>
+
+                <Switch
+                    android:id="@+id/canModifyAccessSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:thumbTint="@color/colorBlackBlue3"
+                    android:layout_gravity="right"
+                    android:trackTint="@color/colorBlue"
+                    android:layout_marginRight="16dp"/>
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</RelativeLayout>

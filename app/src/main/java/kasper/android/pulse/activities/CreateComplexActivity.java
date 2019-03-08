@@ -120,6 +120,8 @@ public class CreateComplexActivity extends AppCompatActivity {
                     for (Entities.Membership mem : complex.getMembers()) {
                         DatabaseHelper.notifyUserCreated(mem.getUser());
                         DatabaseHelper.notifyMembershipCreated(mem);
+                        if (mem.getMemberAccess() != null)
+                            DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
                     }
                     DatabaseHelper.notifyComplexSecretCreated(complexSecret);
                     DatabaseHelper.notifyRoomCreated(room);

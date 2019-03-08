@@ -1320,6 +1320,9 @@ public class Entities {
         private long complexId;
         @Ignore
         private Complex complex;
+        private long memberAccessId;
+        @Ignore
+        private MemberAccess memberAccess;
 
         public long getMembershipId() {
             return membershipId;
@@ -1359,6 +1362,22 @@ public class Entities {
 
         public void setComplex(Complex complex) {
             this.complex = complex;
+        }
+
+        public long getMemberAccessId() {
+            return memberAccessId;
+        }
+
+        public void setMemberAccessId(long memberAccessId) {
+            this.memberAccessId = memberAccessId;
+        }
+
+        public MemberAccess getMemberAccess() {
+            return memberAccess;
+        }
+
+        public void setMemberAccess(MemberAccess memberAccess) {
+            this.memberAccess = memberAccess;
         }
     }
 
@@ -1686,6 +1705,84 @@ public class Entities {
 
         public void setSessionId(long sessionId) {
             this.sessionId = sessionId;
+        }
+    }
+
+    @Entity
+    public static class MemberAccess implements Serializable {
+        @PrimaryKey
+        private long memberAccessId;
+        private boolean canCreateMessage;
+        private boolean canSendInvite;
+        private boolean canModifyWorkers;
+        private boolean canUpdateProfiles;
+        private boolean canModifyAccess;
+        private long membershipId;
+        @Ignore
+        private Membership membership;
+
+        public long getMemberAccessId() {
+            return memberAccessId;
+        }
+
+        public void setMemberAccessId(long memberAccessId) {
+            this.memberAccessId = memberAccessId;
+        }
+
+        public boolean isCanCreateMessage() {
+            return canCreateMessage;
+        }
+
+        public void setCanCreateMessage(boolean canCreateMessage) {
+            this.canCreateMessage = canCreateMessage;
+        }
+
+        public boolean isCanSendInvite() {
+            return canSendInvite;
+        }
+
+        public void setCanSendInvite(boolean canSendInvite) {
+            this.canSendInvite = canSendInvite;
+        }
+
+        public boolean isCanModifyWorkers() {
+            return canModifyWorkers;
+        }
+
+        public void setCanModifyWorkers(boolean canModifyWorkers) {
+            this.canModifyWorkers = canModifyWorkers;
+        }
+
+        public boolean isCanUpdateProfiles() {
+            return canUpdateProfiles;
+        }
+
+        public void setCanUpdateProfiles(boolean canUpdateProfiles) {
+            this.canUpdateProfiles = canUpdateProfiles;
+        }
+
+        public boolean isCanModifyAccess() {
+            return canModifyAccess;
+        }
+
+        public void setCanModifyAccess(boolean canModifyAccess) {
+            this.canModifyAccess = canModifyAccess;
+        }
+
+        public long getMembershipId() {
+            return membershipId;
+        }
+
+        public void setMembershipId(long membershipId) {
+            this.membershipId = membershipId;
+        }
+
+        public Membership getMembership() {
+            return membership;
+        }
+
+        public void setMembership(Membership membership) {
+            this.membership = membership;
         }
     }
 }
