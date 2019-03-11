@@ -131,6 +131,9 @@ public class UiUpdaterEngine {
         } else if (mirror instanceof Bindings.MirrorToRotation) {
             update = new Updates.ControlUpdateRotation();
             ((Updates.ControlUpdateRotation) update).setValue(convertDoubleToInt(value + ""));
+        } else if (mirror instanceof Bindings.MirrorToTextColor) {
+            update = new Updates.TextCtrlUpdateTextColor();
+            ((Updates.TextCtrlUpdateTextColor) update).setValue(value + "");
         }
         if (update != null) {
             update.setControlId(mirror.getCtrlName());

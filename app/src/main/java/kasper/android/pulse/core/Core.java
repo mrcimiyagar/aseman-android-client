@@ -14,6 +14,7 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
+import kasper.android.pulse.helpers.UiHelper;
 
 /**
  * Created by keyhan1376 on 1/24/2018
@@ -37,6 +38,7 @@ public class Core extends Application {
         instance = this;
         LogHelper.start();
         EmojiManager.install(new TwitterEmojiProvider());
+        UiHelper.setup();
         CallbackHelper.setup();
         GraphicHelper.setup(this);
         DatabaseHelper.setup();

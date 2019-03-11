@@ -1,5 +1,6 @@
 package kasper.android.pulseframework.engines;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.os.Handler;
 import android.util.Pair;
@@ -7,6 +8,8 @@ import android.view.Gravity;
 import android.view.View;
 
 import java.util.Hashtable;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import kasper.android.pulseframework.interfaces.IAnimToUpdate;
 import kasper.android.pulseframework.locks.Locks;
@@ -190,5 +193,10 @@ public class UiAnimatorEngine {
                 new Handler().post(() -> animateUiAsync(control, view, anim));
             }
         });
+    }
+
+    public void animateBatchUi(Hashtable<String, Pair<Controls.Control, View>> idTable, List<Anims.Anim> anims) {
+        for (Anims.Anim anim : anims)
+            animateUi(idTable, anim);
     }
 }

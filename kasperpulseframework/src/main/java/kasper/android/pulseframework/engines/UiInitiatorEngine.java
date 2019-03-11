@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -451,7 +452,7 @@ public class UiInitiatorEngine {
             result = barChartView;
         } else if (control instanceof Controls.ScrollerCtrl) {
             Controls.ScrollerCtrl scrollerCtrl = (Controls.ScrollerCtrl) control;
-            ScrollView scrollView = new ScrollView(context);
+            NestedScrollView scrollView = new NestedScrollView(context);
             Tuple<View, List<Pair<Controls.Control, View>>
                     , Hashtable<String, Pair<Controls.Control, View>>> pair =
                     buildViewTree(Controls.PanelCtrl.LayoutType.RELATIVE, scrollerCtrl.getPanel());
@@ -666,7 +667,8 @@ public class UiInitiatorEngine {
         if (!FieldValidator.isFieldEmpty(el.getBorderColor()))
             outerCV.setCardBackgroundColor(Color.parseColor(el.getBorderColor()));
         else if (FieldValidator.isFieldEmpty(el.getCornerRadius()))
-            outerCV.setBackgroundResource(R.drawable.empty_background);
+            outerCV.setCardBackgroundColor(Color.TRANSPARENT);
+        //            outerCV.setBackgroundResource(R.drawable.empty_background);
         CardView innerCV = new CardView(context);
         CardView.LayoutParams innerCvParams = new CardView.LayoutParams(
                 CardView.LayoutParams.MATCH_PARENT,
@@ -676,7 +678,9 @@ public class UiInitiatorEngine {
         innerCV.setLayoutParams(innerCvParams);
         innerCV.setRadius(GraphicsHelper.dpToPx(el.getCornerRadius()));
         innerCV.setCardElevation(0);
-        innerCV.setBackgroundResource(R.drawable.empty_background);
+        if (FieldValidator.isFieldEmpty(el.getBackColor()))
+            innerCV.setCardBackgroundColor(Color.TRANSPARENT);
+            //    innerCV.setBackgroundResource(R.drawable.empty_background);
         innerCV.addView(view);
         outerCV.addView(innerCV);
         view = outerCV;

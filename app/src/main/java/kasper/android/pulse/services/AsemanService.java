@@ -1362,7 +1362,8 @@ public class AsemanService extends IntentService {
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
             Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                if (pulseView != null) pulseView.buildUi(notif.getViewData());
+                if (pulseView != null)
+                    pulseView.buildUi(notif.getViewData());
             }));
 
         notifyServerNotifReceived(notif.getNotificationId());
@@ -1374,7 +1375,12 @@ public class AsemanService extends IntentService {
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
             Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                if (pulseView != null) pulseView.updateUi(notif.getUpdateData());
+                if (pulseView != null) {
+                    if (notif.isBatchData())
+                        pulseView.updateBatchUi(notif.getUpdateData());
+                    else
+                        pulseView.updateUi(notif.getUpdateData());
+                }
             }));
 
         notifyServerNotifReceived(notif.getNotificationId());
@@ -1386,7 +1392,12 @@ public class AsemanService extends IntentService {
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
             Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                if (pulseView != null) pulseView.animateUi(notif.getAnimData());
+                if (pulseView != null) {
+                    if (notif.isBatchData())
+                        pulseView.animateBatchUi(notif.getAnimData());
+                    else
+                        pulseView.animateUi(notif.getAnimData());
+                }
             }));
 
         notifyServerNotifReceived(notif.getNotificationId());
@@ -1398,7 +1409,12 @@ public class AsemanService extends IntentService {
                 && PulseHelper.getCurrentRoomId() == notif.getRoomId())
             Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                if (pulseView != null) pulseView.runCommands(notif.getCommandsData());
+                if (pulseView != null) {
+                    if (notif.isBatchData())
+                        pulseView.runCommands(notif.getCommandsData());
+                    else
+                        pulseView.runCommand(notif.getCommandsData());
+                }
             }));
 
         notifyServerNotifReceived(notif.getNotificationId());

@@ -1,6 +1,8 @@
 package kasper.android.pulseframework.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -11,13 +13,62 @@ import kasper.android.pulseframework.interfaces.INotifyValueChange;
 
 public class Codes {
 
+    @JsonTypeInfo(
+            use = JsonTypeInfo.Id.NAME,
+            include = JsonTypeInfo.As.PROPERTY,
+            property = "type")
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = PerformAnim.class, name = "PerformAnim"),
+            @JsonSubTypes.Type(value = If.class, name = "If"),
+            @JsonSubTypes.Type(value = MathExpNot.class, name = "MathExpNot"),
+            @JsonSubTypes.Type(value = ModifyMirror.class, name = "ModifyMirror"),
+            @JsonSubTypes.Type(value = For.class, name = "For"),
+            @JsonSubTypes.Type(value = While.class, name = "While"),
+            @JsonSubTypes.Type(value = Comparison.class, name = "Comparison"),
+            @JsonSubTypes.Type(value = EQCompare.class, name = "EQCompare"),
+            @JsonSubTypes.Type(value = NECompare.class, name = "NECompare"),
+            @JsonSubTypes.Type(value = GTCompare.class, name = "GTCompare"),
+            @JsonSubTypes.Type(value = LTCompare.class, name = "LTCompare"),
+            @JsonSubTypes.Type(value = GECompare.class, name = "GECompare"),
+            @JsonSubTypes.Type(value = LECompare.class, name = "LECompare"),
+            @JsonSubTypes.Type(value = Definition.class, name = "Definition"),
+            @JsonSubTypes.Type(value = Assignment.class, name = "Assignment"),
+            @JsonSubTypes.Type(value = MathExpSum.class, name = "MathExpSum"),
+            @JsonSubTypes.Type(value = MathExpSubtract.class, name = "MathExpSubtract"),
+            @JsonSubTypes.Type(value = MathExpMultiply.class, name = "MathExpMultiply"),
+            @JsonSubTypes.Type(value = MathExpDivide.class, name = "MathExpDivide"),
+            @JsonSubTypes.Type(value = MathExpAnd.class, name = "MathExpAnd"),
+            @JsonSubTypes.Type(value = MathExpOr.class, name = "MathExpOr"),
+            @JsonSubTypes.Type(value = Increment.class, name = "Increment"),
+            @JsonSubTypes.Type(value = Decrement.class, name = "Decrement"),
+            @JsonSubTypes.Type(value = Parenthesis.class, name = "Parenthesis"),
+            @JsonSubTypes.Type(value = Variable.class, name = "Variable"),
+            @JsonSubTypes.Type(value = Value.class, name = "Value"),
+            @JsonSubTypes.Type(value = Task.class, name = "Task"),
+            @JsonSubTypes.Type(value = DefineTask.class, name = "DefineTask"),
+            @JsonSubTypes.Type(value = StartTask.class, name = "StartTask"),
+            @JsonSubTypes.Type(value = StopTask.class, name = "StopTask")
+    })
     public static class Code {
 
     }
 
+    public static class PerformAnim extends Code {
+        private Anims.Anim anim;
+
+        public Anims.Anim getAnim() {
+            return anim;
+        }
+
+        public void setAnim(Anims.Anim anim) {
+            this.anim = anim;
+        }
+    }
+
     public static class If extends Code {
         private Code condition;
-        private List<Code> codes;
+        private List<Code> ifCodes;
+        private List<Code> elseCodes;
 
         public Code getCondition() {
             return condition;
@@ -27,12 +78,46 @@ public class Codes {
             this.condition = condition;
         }
 
-        public List<Code> getCodes() {
-            return codes;
+        public List<Code> getIfCodes() {
+            return ifCodes;
         }
 
-        public void setCodes(List<Code> codes) {
-            this.codes = codes;
+        public void setIfCodes(List<Code> ifCodes) {
+            this.ifCodes = ifCodes;
+        }
+
+        public List<Code> getElseCodes() {
+            return elseCodes;
+        }
+
+        public void setElseCodes(List<Code> elseCodes) {
+            this.elseCodes = elseCodes;
+        }
+    }
+
+    public static class MathExpNot extends Code {
+
+        private Code code;
+
+        public Code getCode() {
+            return code;
+        }
+
+        public void setCode(Code value) {
+            this.code = value;
+        }
+    }
+
+    public static class ModifyMirror extends Code {
+
+        private Bindings.Mirror mirror;
+
+        public Bindings.Mirror getMirror() {
+            return mirror;
+        }
+
+        public void setMirror(Bindings.Mirror mirror) {
+            this.mirror = mirror;
         }
     }
 

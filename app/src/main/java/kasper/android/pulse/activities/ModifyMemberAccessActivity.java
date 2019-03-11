@@ -16,7 +16,10 @@ import kasper.android.pulse.rxbus.notifications.ShowToast;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.Switch;
+
+import com.anadeainc.rxbus.Subscribe;
 
 public class ModifyMemberAccessActivity extends AppCompatActivity {
 
@@ -25,6 +28,7 @@ public class ModifyMemberAccessActivity extends AppCompatActivity {
     private Switch canModifyWorkersSwitch;
     private Switch canUpdateProfilesSwitch;
     private Switch canModifyAccessSwitch;
+    private FrameLayout canModifyAccessContainer;
 
     private long complexId;
     private long userId;
@@ -41,6 +45,8 @@ public class ModifyMemberAccessActivity extends AppCompatActivity {
             userId = getIntent().getExtras().getLong("user_id");
         }
 
+        Core.getInstance().bus().register(this);
+
         memberAccess = DatabaseHelper.getMemberAccessByComplexAndUserId(complexId, userId);
 
         initViews();
@@ -53,12 +59,34 @@ public class ModifyMemberAccessActivity extends AppCompatActivity {
         Entities.Complex complex = DatabaseHelper.getComplexById(complexId);
         Entities.User me = DatabaseHelper.getMe();
         if (me != null && complex.getComplexSecret() != null &&
-                complex.getComplexSecret().getAdminId() == me.getBaseUserId())
+                complex.getComplexSecret().getAdminId() == me.getBaseUserId()) {
+            canModifyAccessContainer.setVisibility(View.VISIBLE);
             canModifyAccessSwitch.setChecked(memberAccess.isCanModifyAccess());
+        }
         else
-            canModifyAccessSwitch.setVisibility(View.GONE);
+            canModifyAccessContainer.setVisibility(View.GONE);
 
         initListeners();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
+    }
+
+    @Subscribe
+    public void onMemberAccessUpdated(MemberAccessUpdated updated) {
+        if (updated.getMemberAccess().getMembership().getComplexId() == complexId
+                && updated.getMemberAccess().getMembership().getUserId() == userId) {
+            detachListeners();
+            canCreateMessageSwitch.setChecked(updated.getMemberAccess().isCanCreateMessage());
+            canSendInviteSwitch.setChecked(updated.getMemberAccess().isCanSendInvite());
+            canModifyWorkersSwitch.setChecked(updated.getMemberAccess().isCanModifyWorkers());
+            canUpdateProfilesSwitch.setChecked(updated.getMemberAccess().isCanUpdateProfiles());
+            canModifyAccessSwitch.setChecked(updated.getMemberAccess().isCanModifyAccess());
+            initListeners();
+        }
     }
 
     private void initViews() {
@@ -67,6 +95,7 @@ public class ModifyMemberAccessActivity extends AppCompatActivity {
         canModifyWorkersSwitch = findViewById(R.id.canModifyWorkersSwitch);
         canUpdateProfilesSwitch = findViewById(R.id.canUpdateProfilesSwitch);
         canModifyAccessSwitch = findViewById(R.id.canModifyAccessSwitch);
+        canModifyAccessContainer = findViewById(R.id.canModifyAccessContainer);
     }
 
     private void initListeners() {
@@ -75,6 +104,14 @@ public class ModifyMemberAccessActivity extends AppCompatActivity {
         canModifyWorkersSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateServer());
         canUpdateProfilesSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateServer());
         canModifyAccessSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateServer());
+    }
+
+    private void detachListeners() {
+        canCreateMessageSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {});
+        canSendInviteSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {});
+        canModifyWorkersSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {});
+        canUpdateProfilesSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {});
+        canModifyAccessSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {});
     }
 
     public void onBackBtnClicked(View view) {

@@ -75,7 +75,8 @@ public class PulseView extends RelativeLayout {
         this.uiAnimatorEngine = new UiAnimatorEngine(
                 update -> uiUpdaterEngine.updateUi(idTable, update));
         this.erEngine = new EREngine(
-                (mirror, value) -> uiUpdaterEngine.handleMirrorEffect(idTable, mirror, value));
+                (mirror, value) -> uiUpdaterEngine.handleMirrorEffect(idTable, mirror, value),
+                (anim) -> uiAnimatorEngine.animateUi(idTable, anim));
     }
 
     public void buildUi(Controls.Control control) {
@@ -136,6 +137,19 @@ public class PulseView extends RelativeLayout {
         }
     }
 
+    public void animateBatchUi(List<Anims.Anim> anims) {
+        uiAnimatorEngine.animateBatchUi(idTable, anims);
+    }
+
+    public void animateBatchUi(String json) {
+        try {
+            List<Anims.Anim> anims = initMapper().readValue(json, new TypeReference<List<Anims.Anim>>(){});
+            animateBatchUi(anims);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runCommand(Codes.Code code) {
         this.runCommands(Collections.singletonList(code));
     }
@@ -156,7 +170,7 @@ public class PulseView extends RelativeLayout {
     public void runCommands(String json) {
         try {
             List<Codes.Code> codes = initMapper().readValue(json, new TypeReference<List<Codes.Code>>(){});
-            runCommands(codes);
+            this.runCommands(codes);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

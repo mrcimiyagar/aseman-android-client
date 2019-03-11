@@ -23,6 +23,7 @@ import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
 import kasper.android.pulse.models.entities.Entities;
@@ -245,6 +246,8 @@ public class RoomActivity extends AppCompatActivity {
                 .dpToPx(ws.getHeight())));
         pulseView.setX(GraphicHelper.dpToPx(ws.getPosX()));
         pulseView.setY(GraphicHelper.dpToPx(ws.getPosY()));
+        if (ws.getPosX() == -1)
+            ((RelativeLayout.LayoutParams) pulseView.getLayoutParams()).addRule(RelativeLayout.CENTER_HORIZONTAL);
         widgetContainer.addView(pulseView);
         pulseTable.put(bot.getBaseUserId(), pulseView);
         PulseHelper.getPulseViewTable().put(bot.getBaseUserId(), pulseView);
@@ -261,19 +264,11 @@ public class RoomActivity extends AppCompatActivity {
                 .create(PulseHandler.class).requestBotView(packet2);
         NetworkHelper.requestServer(call2, new ServerCallback() {
             @Override
-            public void onRequestSuccess(Packet packet) {
-
-            }
-
+            public void onRequestSuccess(Packet packet) { }
             @Override
-            public void onServerFailure() {
-
-            }
-
+            public void onServerFailure() { }
             @Override
-            public void onConnectionFailure() {
-
-            }
+            public void onConnectionFailure() { }
         });
     }
 

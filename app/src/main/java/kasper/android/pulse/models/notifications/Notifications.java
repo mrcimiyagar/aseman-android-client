@@ -261,6 +261,7 @@ public class Notifications {
         private long roomId;
         private long botId;
         private String updateData;
+        private boolean batchData;
 
         public long getComplexId() {
             return complexId;
@@ -293,6 +294,14 @@ public class Notifications {
         public void setUpdateData(String updateData) {
             this.updateData = updateData;
         }
+
+        public boolean isBatchData() {
+            return batchData;
+        }
+
+        public void setBatchData(boolean batchData) {
+            this.batchData = batchData;
+        }
     }
 
     public static class BotAnimatedBotViewNotification extends Notification {
@@ -300,6 +309,7 @@ public class Notifications {
         private long roomId;
         private long botId;
         private String animData;
+        private boolean batchData;
 
         public long getComplexId() {
             return complexId;
@@ -332,6 +342,14 @@ public class Notifications {
         public void setAnimData(String animData) {
             this.animData = animData;
         }
+
+        public boolean isBatchData() {
+            return batchData;
+        }
+
+        public void setBatchData(boolean batchData) {
+            this.batchData = batchData;
+        }
     }
 
     public static class BotRanCommandsOnBotViewNotification extends Notification {
@@ -339,6 +357,7 @@ public class Notifications {
         private long roomId;
         private long botId;
         private String commandsData;
+        private boolean batchData;
 
         public long getComplexId() {
             return complexId;
@@ -370,6 +389,14 @@ public class Notifications {
 
         public void setCommandsData(String commandsData) {
             this.commandsData = commandsData;
+        }
+
+        public boolean isBatchData() {
+            return batchData;
+        }
+
+        public void setBatchData(boolean batchData) {
+            this.batchData = batchData;
         }
     }
 

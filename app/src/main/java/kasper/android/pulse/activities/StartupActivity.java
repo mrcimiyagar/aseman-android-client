@@ -67,11 +67,6 @@ public class StartupActivity extends BaseActivity {
     }
 
     @Subscribe
-    public void onUiThreadRequested(UiThreadRequested uiThreadRequested) {
-        this.runOnUiThread(uiThreadRequested.getRunnable());
-    }
-
-    @Subscribe
     public void onShowingToast(ShowToast showToast) {
         Toast.makeText(this, showToast.getText(), Toast.LENGTH_SHORT).show();
     }

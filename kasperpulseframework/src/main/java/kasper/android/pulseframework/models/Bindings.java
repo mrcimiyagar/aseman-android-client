@@ -1,9 +1,37 @@
 package kasper.android.pulseframework.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 public class Bindings {
 
+    @JsonTypeInfo(
+            use = JsonTypeInfo.Id.NAME,
+            include = JsonTypeInfo.As.PROPERTY,
+            property = "type")
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = MirrorToX.class, name = "MirrorToX"),
+            @JsonSubTypes.Type(value = MirrorToY.class, name = "MirrorToY"),
+            @JsonSubTypes.Type(value = MirrorToWidth.class, name = "MirrorToWidth"),
+            @JsonSubTypes.Type(value = MirrorToHeight.class, name = "MirrorToHeight"),
+            @JsonSubTypes.Type(value = MirrorToMarginLeft.class, name = "MirrorToMarginLeft"),
+            @JsonSubTypes.Type(value = MirrorToMarginTop.class, name = "MirrorToMarginTop"),
+            @JsonSubTypes.Type(value = MirrorToMarginRight.class, name = "MirrorToMarginRight"),
+            @JsonSubTypes.Type(value = MirrorToMarginBottom.class, name = "MirrorToMarginBottom"),
+            @JsonSubTypes.Type(value = MirrorToPaddingLeft.class, name = "MirrorToPaddingLeft"),
+            @JsonSubTypes.Type(value = MirrorToPaddingTop.class, name = "MirrorToPaddingTop"),
+            @JsonSubTypes.Type(value = MirrorToPaddingRight.class, name = "MirrorToPaddingRight"),
+            @JsonSubTypes.Type(value = MirrorToPaddingBottom.class, name = "MirrorToPaddingBottom"),
+            @JsonSubTypes.Type(value = MirrorToBorderColor.class, name = "MirrorToBorderColor"),
+            @JsonSubTypes.Type(value = MirrorToBorderWidth.class, name = "MirrorToBorderWidth"),
+            @JsonSubTypes.Type(value = MirrorToBackColor.class, name = "MirrorToBackColor"),
+            @JsonSubTypes.Type(value = MirrorToRotationX.class, name = "MirrorToRotationX"),
+            @JsonSubTypes.Type(value = MirrorToRotationY.class, name = "MirrorToRotationY"),
+            @JsonSubTypes.Type(value = MirrorToRotation.class, name = "MirrorToRotation"),
+            @JsonSubTypes.Type(value = MirrorToElevation.class, name = "MirrorToElevation"),
+            @JsonSubTypes.Type(value = MirrorToTextColor.class, name = "MirrorToTextColor")
+    })
     public static class Mirror {
 
         public enum ActionType {
@@ -113,6 +141,10 @@ public class Bindings {
     }
 
     public static class MirrorToElevation extends Mirror {
+
+    }
+
+    public static class MirrorToTextColor extends Mirror {
 
     }
 }
