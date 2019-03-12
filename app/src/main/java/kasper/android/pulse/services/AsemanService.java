@@ -313,7 +313,8 @@ public class AsemanService extends IntentService {
                                     }
                                 } else {
                                     uploadedFile = fileEntity;
-                                    createdFileUsage = DatabaseHelper.getFileUsages(uploadedFile.getFileId()).get(0);
+                                    List<Entities.FileUsage> fileUsages = DatabaseHelper.getFileUsages(uploadedFile.getFileId());
+                                    createdFileUsage = fileUsages.size() > 0 ? fileUsages.get(0) : null;
                                 }
                                 currentUploadingFile = uploadedFile;
 
