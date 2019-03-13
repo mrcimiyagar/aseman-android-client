@@ -1459,7 +1459,7 @@ public class AsemanService extends IntentService {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
             showMessageNotification(message, message.getText());
         }
 
@@ -1480,7 +1480,7 @@ public class AsemanService extends IntentService {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
             showMessageNotification(message, "Photo");
         }
 
@@ -1501,7 +1501,7 @@ public class AsemanService extends IntentService {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
             showMessageNotification(message, "Audio");
         }
 
@@ -1522,7 +1522,7 @@ public class AsemanService extends IntentService {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
             showMessageNotification(message, "Video");
         }
 
@@ -1537,7 +1537,7 @@ public class AsemanService extends IntentService {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
             messageLocal.setMessageId(message.getRoomId());
             messageLocal.setSent(true);
-            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+            Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
             showMessageNotification(message, message.getText());
         }
 

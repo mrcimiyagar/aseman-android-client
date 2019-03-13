@@ -27,6 +27,7 @@ import com.vanniktech.emoji.EmojiTextView;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -79,6 +80,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private AppCompatActivity activity;
     private long roomId;
     private final List<Entities.Message> messages;
+    private HashSet<Long> messageIdsStore;
     private Hashtable<Long, Entities.MessageLocal> messageLocals;
     private Hashtable<Long, Entities.FileLocal> fileLocals;
     private long myId;
@@ -86,11 +88,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public MessagesAdapter(AppCompatActivity activity
             , long roomId
             , List<Entities.Message> ms
+            , HashSet<Long> mis
             , Hashtable<Long, Entities.MessageLocal> mls
             , Hashtable<Long, Entities.FileLocal> fls) {
         this.activity = activity;
         this.roomId = roomId;
         this.messages = ms;
+        this.messageIdsStore = mis;
         this.messageLocals = mls;
         this.fileLocals = fls;
         Entities.Session session = DatabaseHelper.getSingleSession();
@@ -283,11 +287,22 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         Entities.Message message = messageReceived.getMessage();
         if (message.getRoomId() == roomId) {
             Entities.MessageLocal messageLocal = messageReceived.getMessageLocal();
-            messages.add(message);
-            messageLocals.put(messageLocal.getMessageId(), messageLocal);
-            notifyItemInserted(messages.size() - 1);
-            if (messages.size() >= 2) {
-                notifyItemChanged(messages.size() - 2);
+            if (!messageLocals.containsKey(message.getMessageId())) {
+                if (messageReceived.isBottom()) {
+                    messages.add(message);
+                    messageIdsStore.add(message.getMessageId());
+                    messageLocals.put(messageLocal.getMessageId(), messageLocal);
+                    notifyItemInserted(messages.size() - 1);
+                    if (messages.size() >= 2)
+                        notifyItemChanged(messages.size() - 2);
+                } else {
+                    messages.add(0, message);
+                    messageIdsStore.add(message.getMessageId());
+                    messageLocals.put(message.getMessageId(), messageLocal);
+                    notifyItemInserted(0);
+                    if (messages.size() >= 2)
+                        notifyItemChanged(1);
+                }
             }
         }
     }
@@ -298,6 +313,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         for (int counter = 0; counter < messages.size(); counter++) {
             if (messages.get(counter).getMessageId() == message.getMessageId()) {
                 messages.remove(counter);
+                messageIdsStore.remove(message.getMessageId());
+                messageLocals.remove(message.getMessageId());
                 notifyItemRemoved(counter);
                 break;
             }
@@ -310,6 +327,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         if (message.getRoom().getRoomId() == roomId) {
             Entities.MessageLocal messageLocal = messageSending.getMessageLocal();
             messages.add(message);
+            messageIdsStore.add(message.getMessageId());
             messageLocals.put(messageLocal.getMessageId(), messageLocal);
             notifyItemInserted(messages.size() - 1);
             if (messages.size() >= 2) {
@@ -329,6 +347,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 messageLocal.setSent(true);
                 messageLocals.put(onlineMessageId, messageLocal);
                 messageLocals.remove(localMessageId);
+                messageIdsStore.add(onlineMessageId);
+                messageIdsStore.remove(localMessageId);
                 int counter = 0;
                 for (Entities.Message message : messages) {
                     if (message.getMessageId() == localMessageId || message.getMessageId() == onlineMessageId) {

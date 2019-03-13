@@ -69,18 +69,20 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Subscribe
     public void onMessageReceived(MessageReceived messageReceived) {
-        Entities.Message message = messageReceived.getMessage();
-        int counter = 0;
-        for (Entities.Room room : rooms) {
-            if (message.getRoom().getRoomId() == room.getRoomId()) {
-                room.setLastAction(message);
-                notifyItemChanged(counter + 2);
-                rooms.add(0, room);
-                rooms.remove(counter + 1);
-                notifyItemMoved(counter + 2, 2);
-                break;
+        if (messageReceived.isBottom()) {
+            Entities.Message message = messageReceived.getMessage();
+            int counter = 0;
+            for (Entities.Room room : rooms) {
+                if (message.getRoom().getRoomId() == room.getRoomId()) {
+                    room.setLastAction(message);
+                    notifyItemChanged(counter + 2);
+                    rooms.add(0, room);
+                    rooms.remove(counter + 1);
+                    notifyItemMoved(counter + 2, 2);
+                    break;
+                }
+                counter++;
             }
-            counter++;
         }
     }
 
@@ -288,18 +290,31 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
             Entities.Message lastAction = room.getLastAction();
             if (lastAction != null) {
-                if (lastAction instanceof Entities.TextMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
-                            + ((Entities.TextMessage) lastAction).getText());
-                else if (lastAction instanceof Entities.PhotoMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
-                else if (lastAction instanceof Entities.AudioMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
-                else if (lastAction instanceof Entities.VideoMessage)
-                    vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
-                else if (lastAction instanceof Entities.ServiceMessage)
-                    vh.lastActionTV.setText("Aseman : "
-                            + ((Entities.ServiceMessage) lastAction).getText());
+                if (lastAction instanceof Entities.TextMessage) {
+                    if (lastAction.getAuthor() != null)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
+                                + ((Entities.TextMessage) lastAction).getText());
+                    else
+                        vh.lastActionTV.setText("");
+                } else if (lastAction instanceof Entities.PhotoMessage) {
+                    if (lastAction.getAuthor() != null)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
+                    else
+                        vh.lastActionTV.setText("");
+                } else if (lastAction instanceof Entities.AudioMessage) {
+                    if (lastAction.getAuthor() != null)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
+                    else
+                        vh.lastActionTV.setText("");
+                } else if (lastAction instanceof Entities.VideoMessage) {
+                    if (lastAction.getAuthor() != null)
+                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
+                    else
+                        vh.lastActionTV.setText("");
+                } else if (lastAction instanceof Entities.ServiceMessage) {
+                    vh.lastActionTV.setText("Aseman : " + ((Entities.ServiceMessage) lastAction).getText());
+                }
+
                 if (room.getComplex().getMode() == 1) {
                     if (lastAction.getAuthorId() == myId) {
                         ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);

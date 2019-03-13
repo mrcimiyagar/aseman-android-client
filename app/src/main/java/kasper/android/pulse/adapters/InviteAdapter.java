@@ -116,9 +116,10 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                     DatabaseHelper.notifyUserCreated(result.getMembership().getUser());
                     DatabaseHelper.notifyComplexCreated(result.getMembership().getComplex());
                     DatabaseHelper.notifyComplexSecretCreated(result.getComplexSecret());
-                    for (Entities.Room room : result.getMembership().getComplex().getRooms()) {
+                    for (Entities.Room room : result.getMembership().getComplex().getRooms())
                         DatabaseHelper.notifyRoomCreated(room);
-                    }
+                    for (Entities.Bot bot : result.getBots())
+                        DatabaseHelper.notifyBotCreated(bot, null);
                     for (Entities.Membership membership : result.getMembership().getComplex().getMembers()) {
                         DatabaseHelper.notifyUserCreated(membership.getUser());
                         DatabaseHelper.notifyMembershipCreated(membership);
@@ -143,7 +144,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                     Entities.MessageLocal messageLocal = new Entities.MessageLocal();
                     messageLocal.setMessageId(result.getServiceMessage().getMessageId());
                     messageLocal.setSent(true);
-                    Core.getInstance().bus().post(new MessageReceived(result.getServiceMessage(), messageLocal));
+                    Core.getInstance().bus().post(new MessageReceived(true, result.getServiceMessage(), messageLocal));
 
                     Packet p = new Packet();
                     p.setRooms(new ArrayList<>());
@@ -173,7 +174,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                                                 Entities.MessageLocal messageLocal = new Entities.MessageLocal();
                                                 messageLocal.setMessageId(room.getLastAction().getMessageId());
                                                 messageLocal.setSent(true);
-                                                Core.getInstance().bus().post(new MessageReceived(room.getLastAction(), messageLocal));
+                                                Core.getInstance().bus().post(new MessageReceived(true, room.getLastAction(), messageLocal));
                                             }
                                         }
                                     }

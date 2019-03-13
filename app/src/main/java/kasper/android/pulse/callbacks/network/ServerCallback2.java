@@ -4,7 +4,7 @@ import kasper.android.pulse.models.network.Packet;
 
 public interface ServerCallback2 {
     void onRequestSuccess(Packet packet);
-    void onLogincalError(String errorCode);
+    void onLogicalError(String errorCode);
     void onServerFailure();
     void onConnectionFailure();
 }

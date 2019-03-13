@@ -205,7 +205,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         Entities.MessageLocal messageLocal = new Entities.MessageLocal();
         messageLocal.setMessageId(message.getMessageId());
         messageLocal.setSent(true);
-        Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+        Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
         finish();
     }
 

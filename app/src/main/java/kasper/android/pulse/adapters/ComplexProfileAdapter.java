@@ -57,18 +57,20 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @Subscribe
     public void onMessageReceived(MessageReceived messageReceived) {
-        Entities.Message message = messageReceived.getMessage();
-        int counter = 0;
-        for (Entities.Room room : rooms) {
-            if (message.getRoom().getRoomId() == room.getRoomId()) {
-                room.setLastAction(message);
-                notifyItemChanged(counter);
-                rooms.add(0, room);
-                rooms.remove(counter + 1);
-                notifyItemMoved(counter, 0);
-                break;
+        if (messageReceived.isBottom()) {
+            Entities.Message message = messageReceived.getMessage();
+            int counter = 0;
+            for (Entities.Room room : rooms) {
+                if (message.getRoom().getRoomId() == room.getRoomId()) {
+                    room.setLastAction(message);
+                    notifyItemChanged(counter);
+                    rooms.add(0, room);
+                    rooms.remove(counter + 1);
+                    notifyItemMoved(counter, 0);
+                    break;
+                }
+                counter++;
             }
-            counter++;
         }
     }
 

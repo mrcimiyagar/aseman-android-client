@@ -162,7 +162,7 @@ public class ProfileActivity extends AppCompatActivity {
                             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
                             messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
                             messageLocal.setSent(true);
-                            Core.getInstance().bus().post(new MessageReceived(message, messageLocal));
+                            Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
                             connectBTN.setImageResource(R.drawable.ic_message);
                             ProfileActivity.this.startActivity(new Intent(ProfileActivity
                                     .this, RoomActivity.class)

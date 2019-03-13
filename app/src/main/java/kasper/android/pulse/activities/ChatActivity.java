@@ -39,22 +39,31 @@ import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener;
 import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ListIterator;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.MessagesAdapter;
+import kasper.android.pulse.callbacks.network.ServerCallback2;
 import kasper.android.pulse.callbacks.ui.OnFileSelectListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.extras.LinearDecoration;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
+import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.DocTypes;
 import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.FileMessageSending;
 import kasper.android.pulse.models.extras.TextMessageSending;
+import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.retrofit.MessageHandler;
+import kasper.android.pulse.rxbus.notifications.FileReceived;
 import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
@@ -69,6 +78,7 @@ public class ChatActivity extends BaseActivity {
     private boolean afterRoom = false;
 
     private List<Entities.Message> messages = new ArrayList<>();
+    private HashSet<Long> messageIdsStore = new HashSet<>();
     private ListIterator<Integer> searchIterator;
     private int currentSearchIndex = 0;
     private int searchCounter = 0, searchTotal = 0;
@@ -137,10 +147,13 @@ public class ChatActivity extends BaseActivity {
                     public void onPermissionsChecked(MultiplePermissionsReport report) {
                         initViews();
                         initDecorations();
-                        initListeners();
                         initMessages();
+                        initListeners();
 
                         handleMemberAccess();
+
+                        fetchMessages(true);
+                        fetchMessages(false);
 
                         if (startFileId > 0) {
                             new Handler().postDelayed(() -> {
@@ -293,6 +306,11 @@ public class ChatActivity extends BaseActivity {
                         toBottomFAB.animate().y(GraphicHelper.getScreenHeight())
                                 .setDuration(350).start();
                     }
+                    if (!recyclerView.canScrollVertically(1)) {
+                        fetchMessages(false);
+                    } else if (!recyclerView.canScrollVertically(-1)) {
+                        fetchMessages(true);
+                    }
                 }
             }
         });
@@ -338,6 +356,94 @@ public class ChatActivity extends BaseActivity {
         });
     }
 
+    private void fetchMessages(boolean topSide) {
+        Packet packet = new Packet();
+        Entities.Complex complex = new Entities.Complex();
+        complex.setComplexId(complexId);
+        packet.setComplex(complex);
+        Entities.Room room = new Entities.Room();
+        room.setRoomId(roomId);
+        packet.setRoom(room);
+        Entities.Message msg = new Entities.Message();
+        msg.setMessageId(topSide ? messages.get(0).getMessageId() : messages.get(messages.size() - 1).getMessageId());
+        packet.setMessage(msg);
+        packet.setFetchNext(!topSide);
+        NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(MessageHandler.class).getMessages(packet)
+                , new ServerCallback2() {
+                    @Override
+                    public void onRequestSuccess(Packet packet) {
+                        if (packet.getMessages().size() > 0) {
+                            Collections.reverse(packet.getMessages());
+                            int counter = 0;
+                            if (!topSide) {
+                                counter = messages.size() - 1;
+                            }
+                            for (Entities.Message message : packet.getMessages()) {
+                                if (!messageIdsStore.contains(message.getMessageId())) {
+                                    if (message instanceof Entities.TextMessage)
+                                        DatabaseHelper.notifyTextMessageReceived((Entities.TextMessage) message);
+                                    else if (message instanceof Entities.PhotoMessage)
+                                        DatabaseHelper.notifyPhotoMessageReceived((Entities.PhotoMessage) message);
+                                    else if (message instanceof Entities.AudioMessage)
+                                        DatabaseHelper.notifyAudioMessageReceived((Entities.AudioMessage) message);
+                                    else if (message instanceof Entities.VideoMessage)
+                                        DatabaseHelper.notifyVideoMessageReceived((Entities.VideoMessage) message);
+                                    else if (message instanceof Entities.ServiceMessage)
+                                        DatabaseHelper.notifyServiceMessageReceived((Entities.ServiceMessage) message);
+                                    Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+                                    messageLocal.setMessageId(message.getMessageId());
+                                    messageLocal.setSent(true);
+                                    if (message instanceof Entities.PhotoMessage) {
+                                        Entities.FileLocal fileLocal = new Entities.FileLocal();
+                                        fileLocal.setFileId(((Entities.PhotoMessage) message).getPhoto().getFileId());
+                                        fileLocal.setPath("");
+                                        fileLocal.setProgress(0);
+                                        fileLocal.setTransferring(false);
+                                        Core.getInstance().bus().post(new FileReceived(DocTypes.Video
+                                                , ((Entities.PhotoMessage) message).getPhoto(), fileLocal));
+                                    } else if (message instanceof Entities.AudioMessage) {
+                                        Entities.FileLocal fileLocal = new Entities.FileLocal();
+                                        fileLocal.setFileId(((Entities.AudioMessage) message).getAudio().getFileId());
+                                        fileLocal.setPath("");
+                                        fileLocal.setProgress(0);
+                                        fileLocal.setTransferring(false);
+                                        Core.getInstance().bus().post(new FileReceived(DocTypes.Video
+                                                , ((Entities.AudioMessage) message).getAudio(), fileLocal));
+                                    } else if (message instanceof Entities.VideoMessage) {
+                                        Entities.FileLocal fileLocal = new Entities.FileLocal();
+                                        fileLocal.setFileId(((Entities.VideoMessage) message).getVideo().getFileId());
+                                        fileLocal.setPath("");
+                                        fileLocal.setProgress(0);
+                                        fileLocal.setTransferring(false);
+                                        Core.getInstance().bus().post(new FileReceived(DocTypes.Video
+                                                , ((Entities.VideoMessage) message).getVideo(), fileLocal));
+                                    }
+                                    Core.getInstance().bus().post(new MessageReceived(!topSide, message, messageLocal));
+                                    if (topSide) {
+                                        scrollChatToPosition(counter);
+                                        counter++;
+                                    } else {
+                                        scrollChatToPosition(counter);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    @Override
+                    public void onLogicalError(String errorCode) {
+
+                    }
+                    @Override
+                    public void onServerFailure() {
+
+                    }
+                    @Override
+                    public void onConnectionFailure() {
+
+                    }
+                });
+    }
+
     private class MessageSearchTask extends AsyncTask<String, Void, List<Integer>> {
         @Override
         protected List<Integer> doInBackground(String... inputs) {
@@ -377,9 +483,12 @@ public class ChatActivity extends BaseActivity {
 
     private void initMessages() {
         messages = DatabaseHelper.getMessages(roomId);
+        for (Entities.Message message : messages) {
+            messageIdsStore.add(message.getMessageId());
+        }
         Hashtable<Long, Entities.MessageLocal> messageLocals = DatabaseHelper.getLocalMessages(messages);
         Hashtable<Long, Entities.FileLocal> fileLocals = DatabaseHelper.getLocalFiles(messages);
-        chatRV.setAdapter(new MessagesAdapter(this, roomId, messages, messageLocals, fileLocals));
+        chatRV.setAdapter(new MessagesAdapter(this, roomId, messages, messageIdsStore, messageLocals, fileLocals));
         if (chatRV.getAdapter() != null)
             chatRV.scrollToPosition(chatRV.getAdapter().getItemCount() - 1);
     }

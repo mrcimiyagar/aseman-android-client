@@ -49,8 +49,9 @@ public class Packet {
     private Entities.FileUsage FileUsage;
     private Entities.BaseUser BaseUser;
     private Notifications.Notification Notif;
-    private Entities.MemberAccess memberAccess;
-    private List<Entities.MemberAccess> memberAccesses;
+    private Entities.MemberAccess MemberAccess;
+    private List<Entities.MemberAccess> MemberAccesses;
+    private Boolean FetchNext;
 
     public String getStatus() {
         return Status;
@@ -397,18 +398,26 @@ public class Packet {
     }
 
     public Entities.MemberAccess getMemberAccess() {
-        return memberAccess;
+        return MemberAccess;
     }
 
     public void setMemberAccess(Entities.MemberAccess memberAccess) {
-        this.memberAccess = memberAccess;
+        this.MemberAccess = memberAccess;
     }
 
     public List<Entities.MemberAccess> getMemberAccesses() {
-        return memberAccesses;
+        return MemberAccesses;
     }
 
     public void setMemberAccesses(List<Entities.MemberAccess> memberAccesses) {
-        this.memberAccesses = memberAccesses;
+        this.MemberAccesses = memberAccesses;
+    }
+
+    public Boolean getFetchNext() {
+        return FetchNext;
+    }
+
+    public void setFetchNext(Boolean fetchNext) {
+        FetchNext = fetchNext;
     }
 }

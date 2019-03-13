@@ -194,8 +194,7 @@ public class DatabaseHelper {
             room.setComplex(complex);
             room.setLastAction(AsemanDB.getInstance().getMessageDao().getLastAction(room.getRoomId()));
             if (room.getLastAction() != null)
-                room.getLastAction().setAuthor(AsemanDB.getInstance().getUserDao()
-                        .getUserById(room.getLastAction().getAuthorId()));
+                room.getLastAction().setAuthor(getBaseUserById(room.getLastAction().getAuthorId()));
         }
         return rooms;
     }
@@ -260,8 +259,7 @@ public class DatabaseHelper {
         for (Entities.Room room : rooms) {
             room.setLastAction(AsemanDB.getInstance().getMessageDao().getLastAction(room.getRoomId()));
             if (room.getLastAction() != null)
-                room.getLastAction().setAuthor(AsemanDB.getInstance().getUserDao()
-                        .getUserById(room.getLastAction().getAuthorId()));
+                room.getLastAction().setAuthor(getBaseUserById(room.getLastAction().getAuthorId()));
             room.setComplex(getComplexById(room.getComplexId()));
         }
         Collections.sort(rooms, (room1, room2) -> {
@@ -292,8 +290,7 @@ public class DatabaseHelper {
             room.setComplex(AsemanDB.getInstance().getComplexDao().getComplexById(room.getComplexId()));
             room.setLastAction(AsemanDB.getInstance().getMessageDao().getLastAction(roomId));
             if (room.getLastAction() != null)
-                room.getLastAction().setAuthor(AsemanDB.getInstance().getUserDao()
-                        .getUserById(room.getLastAction().getAuthorId()));
+                room.getLastAction().setAuthor(getBaseUserById(room.getLastAction().getAuthorId()));
         }
         return room;
     }
@@ -1238,8 +1235,7 @@ public class DatabaseHelper {
         for (Entities.Room room : rooms) {
             room.setLastAction(AsemanDB.getInstance().getMessageDao().getLastAction(room.getRoomId()));
             if (room.getLastAction() != null)
-                room.getLastAction().setAuthor(AsemanDB.getInstance().getUserDao()
-                        .getUserById(room.getLastAction().getAuthorId()));
+                room.getLastAction().setAuthor(getBaseUserById(room.getLastAction().getAuthorId()));
             complexTable.get(room.getComplexId()).getRooms().add(room);
         }
         for (Entities.Contact contact : contacts) {

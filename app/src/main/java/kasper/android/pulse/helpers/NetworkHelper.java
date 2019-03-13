@@ -354,7 +354,7 @@ public class NetworkHelper {
                         if (response.body().getStatus().equals("success"))
                             callback.onRequestSuccess(response.body());
                         else
-                            callback.onLogincalError(response.body().getStatus());
+                            callback.onLogicalError(response.body().getStatus());
                     } else {
                         callback.onServerFailure();
                     }
