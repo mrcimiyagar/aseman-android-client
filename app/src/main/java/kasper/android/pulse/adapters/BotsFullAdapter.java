@@ -78,6 +78,7 @@ public class BotsFullAdapter extends RecyclerView.Adapter<BotsFullAdapter.BotVH>
                             .putExtra("bot_id", bot.getBaseUserId())
                             .putExtra("complex_id", complexId)
                             .putExtra("room_id", roomId)
+                            .putExtra("workership_id", ws.getWorkershipId())
                             .putExtra("pos_x", ws.getPosX())
                             .putExtra("pos_y", ws.getPosY())
                             .putExtra("width", ws.getWidth())

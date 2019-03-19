@@ -1,5 +1,7 @@
 package kasper.android.pulse.models.extras;
 
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -59,30 +61,42 @@ public class ProgressRequestBody extends RequestBody {
             Call<Packet> fileSizeCall = NetworkHelper.getRetrofit().create(FileHandler.class).getFileSize(packet);
             if (cancel) return;
             Packet res = fileSizeCall.execute().body();
+            Log.d("TEST", "hello 0");
             long writePos = 0;
-            if (res != null)
+            if (res != null) {
+                Log.d("TEST", "hello 1");
                 writePos = res.getFile().getSize();
+            }
+            Log.d("TEST", "hello 2");
             long fileLength = mFile.length();
+            if (writePos >= fileLength) return;
+            Log.d("TEST", "hello 3");
             byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
             if (cancel) return;
             try (FileInputStream in = new FileInputStream(mFile)) {
+                Log.d("TEST", "hello 4");
                 in.skip(writePos);
                 long uploaded = writePos;
                 int read;
+                Log.d("TEST", "hello 5");
                 while ((read = in.read(buffer)) != -1 && !cancel) {
                     int progress = (int) (100 * uploaded / fileLength);
                     if (progress - notifiedProgress > 0) {
+                        Log.d("TEST", "hello 6");
                         DatabaseHelper.notifyFileTransferProgressed(fileId, progress);
                         Core.getInstance().bus().post(new FileTransferProgressed(docType, fileId, progress));
                         notifiedProgress = progress;
+                        Log.d("TEST", "hello 7");
                     }
                     uploaded += read;
                     try {
                         sink.write(buffer, 0, read);
+                        Log.d("TEST", "hello 8");
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         break;
                     }
+                    Log.d("TEST", "hello 9");
                 }
             }
         } catch (Exception ex) {

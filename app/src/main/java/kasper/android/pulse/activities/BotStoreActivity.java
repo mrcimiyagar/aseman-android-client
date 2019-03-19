@@ -54,8 +54,11 @@ public class BotStoreActivity extends AppCompatActivity {
             @SuppressLint("SetTextI18n")
             @Override
             public void onRequestSuccess(Packet packet) {
-                final List<Entities.BotStoreBanner> banners = packet.getBotStoreHeader().getBanners();
+                List<Entities.BotStoreBanner> nonFinalBanners = new ArrayList<>();
+                if (packet.getBotStoreHeader() != null)
+                    nonFinalBanners = packet.getBotStoreHeader().getBanners();
                 final List<Entities.BotStoreSection> sections = packet.getBotStoreSections();
+                final List<Entities.BotStoreBanner> banners = nonFinalBanners;
                 carouselView.setViewListener(position -> {
                     @SuppressLint("InflateParams") View customView = getLayoutInflater()
                             .inflate(R.layout.carousel_banner_item, null);

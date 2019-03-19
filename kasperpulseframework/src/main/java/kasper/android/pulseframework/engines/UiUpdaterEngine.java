@@ -47,6 +47,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import kasper.android.pulseframework.adapters.DropDownAdapter;
 import kasper.android.pulseframework.adapters.RecyclerAdapter;
+import kasper.android.pulseframework.interfaces.IClickNotifier;
 import kasper.android.pulseframework.interfaces.IMainThreadRunner;
 import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Bindings;
@@ -65,10 +66,12 @@ public class UiUpdaterEngine {
 
     private Context context;
     private IMainThreadRunner mainThreadRunner;
+    private IClickNotifier clickNotifier;
 
-    public UiUpdaterEngine(Context context, IMainThreadRunner mainThreadRunner) {
+    public UiUpdaterEngine(Context context, IMainThreadRunner mainThreadRunner, IClickNotifier clickNotifier) {
         this.context = context;
         this.mainThreadRunner = mainThreadRunner;
+        this.clickNotifier = clickNotifier;
     }
 
     public void handleMirrorEffect(Hashtable<String, Pair<Controls.Control, View>> idTable
@@ -334,7 +337,7 @@ public class UiUpdaterEngine {
                             ((Updates.PanelCtrlAddControl) update).getValue());
                     Tuple<View, List<Pair<Controls.Control, View>>
                             , Hashtable<String, Pair<Controls.Control, View>>> buildResult =
-                            new UiInitiatorEngine(context, mainThreadRunner).buildViewTree(
+                            new UiInitiatorEngine(context, mainThreadRunner, clickNotifier).buildViewTree(
                                     ((Controls.PanelCtrl) control).getLayoutType(),
                                     ((Updates.PanelCtrlAddControl) update).getValue());
                     idTable.putAll(buildResult.getItem3());
@@ -893,7 +896,7 @@ public class UiUpdaterEngine {
                     view = getOrigin(view);
                     LineChartView lineChartView = (LineChartView) view;
                     Controls.LineChartCtrl chartEl = (Controls.LineChartCtrl) control;
-                    LineSet dataset = new UiInitiatorEngine(context, mainThreadRunner)
+                    LineSet dataset = new UiInitiatorEngine(context, mainThreadRunner, clickNotifier)
                             .initLineChartView(chartEl);
                     lineChartView.getData().remove(0);
                     lineChartView.addData(dataset);
@@ -1223,7 +1226,7 @@ public class UiUpdaterEngine {
     public void updateUi(Hashtable<String, Pair<Controls.Control, View>> idTable, Updates.Update update) {
         Pair<Controls.Control, View> pair = idTable.get(update.getControlId());
         if (pair != null) {
-            Locks.runSafeOnIdTable(() -> {
+            Locks.runInQueue(() -> {
                 Controls.Control control = pair.first;
                 View view = pair.second;
                 mainThreadRunner.runOnMainThread(() -> updateUiAsync(control, view, idTable, update));

@@ -8,4 +8,6 @@ import retrofit2.http.POST;
 public interface PulseHandler {
     @POST("pulse/request_bot_view")
     Call<Packet> requestBotView(@Body Packet packet);
+    @POST("pulse/click_bot_view")
+    Call<Packet> clickBotView(@Body Packet packet);
 }

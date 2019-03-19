@@ -61,6 +61,7 @@ import kasper.android.pulseframework.R;
 import kasper.android.pulseframework.adapters.DropDownAdapter;
 import kasper.android.pulseframework.adapters.RecyclerAdapter;
 import kasper.android.pulseframework.components.CustomSeekBar;
+import kasper.android.pulseframework.interfaces.IClickNotifier;
 import kasper.android.pulseframework.interfaces.IMainThreadRunner;
 import kasper.android.pulseframework.models.Data;
 import kasper.android.pulseframework.models.Controls;
@@ -73,10 +74,12 @@ public class UiInitiatorEngine {
 
     private Context context;
     private IMainThreadRunner mainThreadRunner;
+    private IClickNotifier clickNotifier;
 
-    public UiInitiatorEngine(Context context, IMainThreadRunner mainThreadRunner) {
+    public UiInitiatorEngine(Context context, IMainThreadRunner mainThreadRunner, IClickNotifier clickNotifier) {
         this.context = context;
         this.mainThreadRunner = mainThreadRunner;
+        this.clickNotifier = clickNotifier;
     }
 
     @SuppressLint("RtlHardcoded")
@@ -751,10 +754,17 @@ public class UiInitiatorEngine {
             view.setLayoutParams(mlp);
         }
 
-
         view.setRotationX(el.getRotationX());
         view.setRotationY(el.getRotationY());
         view.setRotation(el.getRotation());
+
+        if (el.isClickable()) {
+            view.setOnClickListener(v -> clickNotifier.controlClicked(el.getId()));
+            view.setClickable(true);
+        } else {
+            view.setOnClickListener(null);
+            view.setClickable(false);
+        }
 
         return view;
     }

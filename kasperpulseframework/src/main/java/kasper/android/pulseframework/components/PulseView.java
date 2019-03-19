@@ -21,6 +21,7 @@ import kasper.android.pulseframework.engines.EREngine;
 import kasper.android.pulseframework.engines.UiAnimatorEngine;
 import kasper.android.pulseframework.engines.UiInitiatorEngine;
 import kasper.android.pulseframework.engines.UiUpdaterEngine;
+import kasper.android.pulseframework.interfaces.IClickNotifier;
 import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Anims;
 import kasper.android.pulseframework.models.Bindings;
@@ -64,16 +65,19 @@ public class PulseView extends RelativeLayout {
         this.setFocusableInTouchMode(true);
     }
 
-    public void setup(AppCompatActivity activity) {
+    public void setup(AppCompatActivity activity, IClickNotifier controlClickNotifier) {
         Locks.setup(activity::runOnUiThread);
         this.uiInitiatorEngine = new UiInitiatorEngine(
                 getContext(),
-                activity::runOnUiThread);
+                activity::runOnUiThread,
+                controlClickNotifier);
         this.uiUpdaterEngine = new UiUpdaterEngine(
                 getContext(),
-                activity::runOnUiThread);
+                activity::runOnUiThread,
+                controlClickNotifier);
         this.uiAnimatorEngine = new UiAnimatorEngine(
-                update -> uiUpdaterEngine.updateUi(idTable, update));
+                update -> uiUpdaterEngine.updateUi(idTable, update),
+                activity::runOnUiThread);
         this.erEngine = new EREngine(
                 (mirror, value) -> uiUpdaterEngine.handleMirrorEffect(idTable, mirror, value),
                 (anim) -> uiAnimatorEngine.animateUi(idTable, anim));

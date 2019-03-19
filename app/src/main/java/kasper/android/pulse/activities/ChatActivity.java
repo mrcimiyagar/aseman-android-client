@@ -152,8 +152,7 @@ public class ChatActivity extends BaseActivity {
 
                         handleMemberAccess();
 
-                        fetchMessages(true);
-                        fetchMessages(false);
+                        fetchMessages();
 
                         if (startFileId > 0) {
                             new Handler().postDelayed(() -> {
@@ -306,10 +305,9 @@ public class ChatActivity extends BaseActivity {
                         toBottomFAB.animate().y(GraphicHelper.getScreenHeight())
                                 .setDuration(350).start();
                     }
-                    if (!recyclerView.canScrollVertically(1)) {
-                        fetchMessages(false);
-                    } else if (!recyclerView.canScrollVertically(-1)) {
-                        fetchMessages(true);
+
+                    if (!recyclerView.canScrollVertically(-1)) {
+                        fetchMessages();
                     }
                 }
             }
@@ -356,7 +354,7 @@ public class ChatActivity extends BaseActivity {
         });
     }
 
-    private void fetchMessages(boolean topSide) {
+    private void fetchMessages() {
         Packet packet = new Packet();
         Entities.Complex complex = new Entities.Complex();
         complex.setComplexId(complexId);
@@ -365,9 +363,13 @@ public class ChatActivity extends BaseActivity {
         room.setRoomId(roomId);
         packet.setRoom(room);
         Entities.Message msg = new Entities.Message();
-        msg.setMessageId(topSide ? messages.get(0).getMessageId() : messages.get(messages.size() - 1).getMessageId());
+        if (messages.size() > 0) {
+            msg.setMessageId(messages.get(0).getMessageId());
+        } else {
+            msg.setMessageId(0);
+        }
         packet.setMessage(msg);
-        packet.setFetchNext(!topSide);
+        packet.setFetchNext(false);
         NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(MessageHandler.class).getMessages(packet)
                 , new ServerCallback2() {
                     @Override
@@ -375,9 +377,6 @@ public class ChatActivity extends BaseActivity {
                         if (packet.getMessages().size() > 0) {
                             Collections.reverse(packet.getMessages());
                             int counter = 0;
-                            if (!topSide) {
-                                counter = messages.size() - 1;
-                            }
                             for (Entities.Message message : packet.getMessages()) {
                                 if (!messageIdsStore.contains(message.getMessageId())) {
                                     if (message instanceof Entities.TextMessage)
@@ -418,13 +417,9 @@ public class ChatActivity extends BaseActivity {
                                         Core.getInstance().bus().post(new FileReceived(DocTypes.Video
                                                 , ((Entities.VideoMessage) message).getVideo(), fileLocal));
                                     }
-                                    Core.getInstance().bus().post(new MessageReceived(!topSide, message, messageLocal));
-                                    if (topSide) {
-                                        scrollChatToPosition(counter);
-                                        counter++;
-                                    } else {
-                                        scrollChatToPosition(counter);
-                                    }
+                                    Core.getInstance().bus().post(new MessageReceived(false, message, messageLocal));
+                                    scrollChatToPosition(counter);
+                                    counter++;
                                 }
                             }
                         }

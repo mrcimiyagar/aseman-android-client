@@ -1,17 +1,15 @@
 package kasper.android.pulseframework.engines;
 
-import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.os.Handler;
 import android.util.Pair;
-import android.view.Gravity;
 import android.view.View;
 
 import java.util.Hashtable;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
 
 import kasper.android.pulseframework.interfaces.IAnimToUpdate;
+import kasper.android.pulseframework.interfaces.IMainThreadRunner;
 import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Anims;
 import kasper.android.pulseframework.models.Controls;
@@ -21,9 +19,11 @@ import kasper.android.pulseframework.utils.GraphicsHelper;
 public class UiAnimatorEngine {
 
     private IAnimToUpdate animToUpdate;
+    private IMainThreadRunner mainThreadRunner;
 
-    public UiAnimatorEngine(IAnimToUpdate animToUpdate) {
+    public UiAnimatorEngine(IAnimToUpdate animToUpdate, IMainThreadRunner mainThreadRunner) {
         this.animToUpdate = animToUpdate;
+        this.mainThreadRunner = mainThreadRunner;
     }
 
     private void animateUiAsync(Controls.Control control, View view, Anims.Anim anim) {
@@ -177,7 +177,6 @@ public class UiAnimatorEngine {
                 updateRotation.setControlId(anim.getControlId());
                 updateRotation.setValue(value);
                 animToUpdate.update(updateRotation);
-
             });
         }
         valueAnimator.setDuration(anim.getDuration());
@@ -185,12 +184,12 @@ public class UiAnimatorEngine {
     }
 
     public void animateUi(Hashtable<String, Pair<Controls.Control, View>> idTable, Anims.Anim anim) {
-        Locks.runSafeOnIdTable(() -> {
+        Locks.runInQueue(() -> {
             Pair<Controls.Control, View> pair = idTable.get(anim.getControlId());
             if (pair != null) {
                 Controls.Control control = pair.first;
                 View view = pair.second;
-                new Handler().post(() -> animateUiAsync(control, view, anim));
+                mainThreadRunner.runOnMainThread(() -> animateUiAsync(control, view, anim));
             }
         });
     }

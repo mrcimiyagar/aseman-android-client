@@ -52,6 +52,7 @@ public class Packet {
     private Entities.MemberAccess MemberAccess;
     private List<Entities.MemberAccess> MemberAccesses;
     private Boolean FetchNext;
+    private String ControlId;
 
     public String getStatus() {
         return Status;
@@ -419,5 +420,13 @@ public class Packet {
 
     public void setFetchNext(Boolean fetchNext) {
         FetchNext = fetchNext;
+    }
+
+    public String getControlId() {
+        return ControlId;
+    }
+
+    public void setControlId(String controlId) {
+        ControlId = controlId;
     }
 }

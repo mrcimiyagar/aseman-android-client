@@ -75,7 +75,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter {
             if (entry.second instanceof RecyclerView)
                 ((RecyclerView) entry.second).setRecycledViewPool(viewPool);
         uiInitiatorEngine.initFingerprint(pair.getItem2(), i);
-        Locks.runSafeOnIdTable(() -> {
+        Locks.runInQueue(() -> {
             for (Map.Entry<String, Pair<Controls.Control, View>> entry : pair.getItem3().entrySet()) {
                 idTable.remove(entry.getKey());
                 idTable.put(entry.getKey(), entry.getValue());
@@ -88,7 +88,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter {
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
-        Locks.runSafeOnIdTable(() -> {
+        Locks.runInQueue(() -> {
             for (String id : ((ItemHolder) holder).containerIds) {
                 Pair<Controls.Control, View> value = idTable.remove(id);
                 if (value != null) {

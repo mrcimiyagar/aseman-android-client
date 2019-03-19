@@ -8,23 +8,31 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 
+import com.anadeainc.rxbus.Subscribe;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.BotsFullAdapter;
+import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 
 public class AddBotToRoomActivity extends AppCompatActivity {
 
     boolean modified = false;
     String modifieds = "";
 
+    Entities.Workership[] existingBots;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_bot_to_room);
+
+        Core.getInstance().bus().register(this);
 
         long complexId = 0;
         long roomId = 0;
@@ -33,7 +41,7 @@ public class AddBotToRoomActivity extends AppCompatActivity {
             complexId = getIntent().getExtras().getLong("complex_id");
             roomId = getIntent().getExtras().getLong("room_id");
         }
-        Entities.Workership[] existingBots = (Entities.Workership[]) getIntent().getExtras()
+        existingBots = (Entities.Workership[]) getIntent().getExtras()
                 .getSerializable("existing_bots");
         if (existingBots == null)
             existingBots = new Entities.Workership[0];
@@ -43,6 +51,25 @@ public class AddBotToRoomActivity extends AppCompatActivity {
         recyclerView.setAdapter(new BotsFullAdapter(this, complexId, roomId,
                 DatabaseHelper.getSubscribedBots(),
                 new ArrayList<>(Arrays.asList(existingBots))));
+    }
+
+    @Override
+    protected void onDestroy() {
+        Core.getInstance().bus().unregister(this);
+        super.onDestroy();
+    }
+
+    @Subscribe
+    public void onWorkerUpdated(WorkerUpdated workerUpdated) {
+        for (int counter = 0; counter < existingBots.length; counter++) {
+            if (existingBots[counter].getWorkershipId() == workerUpdated.getWorkership().getWorkershipId()) {
+                existingBots[counter].setPosX(workerUpdated.getWorkership().getPosX());
+                existingBots[counter].setPosY(workerUpdated.getWorkership().getPosY());
+                existingBots[counter].setWidth(workerUpdated.getWorkership().getWidth());
+                existingBots[counter].setHeight(workerUpdated.getWorkership().getHeight());
+                break;
+            }
+        }
     }
 
     @Override

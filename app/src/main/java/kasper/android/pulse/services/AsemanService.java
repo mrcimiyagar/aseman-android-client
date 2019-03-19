@@ -89,6 +89,9 @@ import kasper.android.pulse.rxbus.notifications.RoomProfileUpdated;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
+import kasper.android.pulse.rxbus.notifications.WorkerAdded;
+import kasper.android.pulse.rxbus.notifications.WorkerRemoved;
+import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 import kasper.android.pulseframework.components.PulseView;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -124,6 +127,7 @@ public class AsemanService extends IntentService {
     private static Thread downloaderThread;
 
     private static boolean skipDownload = false;
+    private static boolean skipUpload = false;
 
     private static Thread txtMsgSenderThread;
     private static Call<Packet> currentTextCall;
@@ -225,7 +229,7 @@ public class AsemanService extends IntentService {
                     try {
                         while (alive) {
                             try {
-                                Thread.sleep(1000);
+                                Thread.sleep(5000);
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
@@ -319,6 +323,13 @@ public class AsemanService extends IntentService {
                                 currentUploadingFile = uploadedFile;
 
                                 if (uploadedFile != null) {
+
+                                    if (skipUpload) {
+                                        DatabaseHelper.deleteUploadingById(currentUploading.getUploadingId());
+                                        uploadingFileParts.remove(currentUploading.getUploadingId());
+                                        uploadingFiles.take();
+                                        continue;
+                                    }
 
                                     currentUploading.setFileId(uploadedFile.getFileId());
                                     DatabaseHelper.notifyUploadingUpdated(currentUploading);
@@ -466,35 +477,41 @@ public class AsemanService extends IntentService {
                                     final long messageLocalId = txtMsgSending.getMessageId();
                                     currentTextMessageId = messageLocalId;
 
-                                    final Packet packet = new Packet();
-                                    Entities.Complex complex = new Entities.Complex();
-                                    complex.setComplexId(txtMsgSending.getComplexId());
-                                    packet.setComplex(complex);
-                                    Entities.Room room = new Entities.Room();
-                                    room.setRoomId(txtMsgSending.getRoomId());
-                                    packet.setRoom(room);
-                                    packet.setTextMessage((Entities.TextMessage) message);
-                                    MessageHandler messageHandler = NetworkHelper.getRetrofit().create(MessageHandler.class);
-                                    currentTextCall = messageHandler.createTextMessage(packet);
-                                    Packet p = null;
+                                    if (message != null) {
+                                        final Packet packet = new Packet();
+                                        Entities.Complex complex = new Entities.Complex();
+                                        complex.setComplexId(txtMsgSending.getComplexId());
+                                        packet.setComplex(complex);
+                                        Entities.Room room = new Entities.Room();
+                                        room.setRoomId(txtMsgSending.getRoomId());
+                                        packet.setRoom(room);
+                                        packet.setTextMessage((Entities.TextMessage) message);
+                                        MessageHandler messageHandler = NetworkHelper.getRetrofit().create(MessageHandler.class);
+                                        currentTextCall = messageHandler.createTextMessage(packet);
+                                        Packet p = null;
 
-                                    try {
-                                        p = currentTextCall.execute().body();
-                                    } catch (Exception ex) {
-                                        ex.printStackTrace();
-                                    }
-
-                                    if (p != null) {
-                                        final Entities.TextMessage msg = p.getTextMessage();
-                                        DatabaseHelper.notifyTextMessageSent(messageLocalId, msg.getMessageId(), msg.getTime());
-                                        if (DatabaseHelper.getComplexById(txtMsgSending.getComplexId()).getMode() == 1) {
-                                            msg.setSeenCount(1);
-                                            DatabaseHelper.notifyMessageUpdated(msg);
+                                        try {
+                                            p = currentTextCall.execute().body();
+                                        } catch (Exception ex) {
+                                            ex.printStackTrace();
                                         }
-                                        Core.getInstance().bus().post(new MessageSent(messageLocalId, msg.getMessageId()));
 
+                                        if (p != null) {
+                                            final Entities.TextMessage msg = p.getTextMessage();
+                                            if (p.getTextMessage() != null) {
+                                                DatabaseHelper.notifyTextMessageSent(messageLocalId, msg.getMessageId(), msg.getTime());
+                                                if (DatabaseHelper.getComplexById(txtMsgSending.getComplexId()).getMode() == 1) {
+                                                    msg.setSeenCount(1);
+                                                    DatabaseHelper.notifyMessageUpdated(msg);
+                                                }
+                                                Core.getInstance().bus().post(new MessageSent(messageLocalId, msg.getMessageId()));
+                                            }
+
+                                            DatabaseHelper.notifyTextMessageSendingDeleted(txtMsgSending.getSendingId());
+                                            txtMsgQueue.take();
+                                        }
+                                    } else {
                                         DatabaseHelper.notifyTextMessageSendingDeleted(txtMsgSending.getSendingId());
-
                                         txtMsgQueue.take();
                                     }
                                 } catch (Exception ex) {
@@ -648,6 +665,7 @@ public class AsemanService extends IntentService {
             connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAddedToRoomNotification.class);
             connection.on("NotifyBotRemovedFromRoom", this::onBotRemovedFromRoom, Notifications.BotRemovedFromRoomNotification.class);
             connection.on("NotifyMemberAccessUpdated", this::onMemberAccessUpdated, Notifications.MemberAccessUpdatedNotification.class);
+            connection.on("NotifyBotPropertiesChanged", this::onBotPropertiesChanged, Notifications.BotPropertiesChangedNotification.class);
 
             connectionState = "Connecting";
             Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connecting));
@@ -1217,8 +1235,16 @@ public class AsemanService extends IntentService {
         }
     }
 
+    public void onBotPropertiesChanged(Notifications.BotPropertiesChangedNotification notif) {
+        LogHelper.log("Aseman", "Received Bot Properties Changed notification");
+
+        Core.getInstance().bus().post(new WorkerUpdated(notif.getWorkership()));
+
+        notifyServerNotifReceived(notif.getNotificationId());
+    }
+
     public void onMemberAccessUpdated(Notifications.MemberAccessUpdatedNotification notif) {
-        LogHelper.log("Aseman", "Received member access updated notification");
+        LogHelper.log("Aseman", "Received Member Access Updated notification");
 
         DatabaseHelper.notifyMemberAccessCreated(notif.getMemberAccess());
 
@@ -1252,11 +1278,18 @@ public class AsemanService extends IntentService {
     private void onBotAddedToRoom(Notifications.BotAddedToRoomNotification notif) {
         LogHelper.log("Aseman", "Received Bot Added notification");
 
+        if (notif.getBot() != null)
+            DatabaseHelper.notifyBotCreated(notif.getBot(), null);
+
+        Core.getInstance().bus().post(new WorkerAdded(notif.getWorkership()));
+
         notifyServerNotifReceived(notif.getNotificationId());
     }
 
     private void onBotRemovedFromRoom(Notifications.BotRemovedFromRoomNotification notif) {
         LogHelper.log("Aseman", "Received Bot Removed notification");
+
+        Core.getInstance().bus().post(new WorkerRemoved(notif.getWorkership()));
 
         notifyServerNotifReceived(notif.getNotificationId());
     }

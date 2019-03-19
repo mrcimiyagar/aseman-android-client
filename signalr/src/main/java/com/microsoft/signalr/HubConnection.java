@@ -146,9 +146,13 @@ public class HubConnection {
                 if (handshakeResponse.getHandshakeError() != null) {
                     String errorMessage = "Error in handshake " + handshakeResponse.getHandshakeError();
                     logger.error(errorMessage);
-                    RuntimeException exception = new RuntimeException(errorMessage);
-                    handshakeResponseSubject.onError(exception);
-                    throw exception;
+                    try {
+                        RuntimeException exception = new RuntimeException(errorMessage);
+                        handshakeResponseSubject.onError(exception);
+                        throw exception;
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
                 handshakeReceived = true;
                 handshakeResponseSubject.onComplete();
@@ -444,8 +448,11 @@ public class HubConnection {
                 errorMessage = stopError;
             }
             if (errorMessage != null) {
-                exception = new RuntimeException(errorMessage);
-                exception.printStackTrace();
+                try {
+                    throw new RuntimeException(errorMessage);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
                 logger.error("HubConnection disconnected with an error {}.", errorMessage);
             }
             if (connectionState != null) {

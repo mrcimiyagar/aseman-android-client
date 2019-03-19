@@ -20,6 +20,7 @@ import java.util.Map;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.callbacks.network.ServerCallback2;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
@@ -236,7 +237,26 @@ public class RoomActivity extends AppCompatActivity {
         Entities.Bot bot = new Entities.Bot();
         bot.setBaseUserId(ws.getBotId());
         PulseView pulseView = new PulseView(RoomActivity.this);
-        pulseView.setup(RoomActivity.this);
+        pulseView.setup(RoomActivity.this, controlId -> {
+            Packet packet = new Packet();
+            Entities.Complex c = new Entities.Complex();
+            c.setComplexId(complexId);
+            packet.setComplex(c);
+            Entities.Room r = new Entities.Room();
+            r.setRoomId(roomId);
+            packet.setRoom(r);
+            packet.setBot(bot);
+            packet.setControlId(controlId);
+            NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(PulseHandler.class).clickBotView(packet)
+                    , new ServerCallback() {
+                        @Override
+                        public void onRequestSuccess(Packet packet) { }
+                        @Override
+                        public void onServerFailure() { }
+                        @Override
+                        public void onConnectionFailure() { }
+                    });
+        });
         pulseView.setLayoutParams(new RelativeLayout.LayoutParams(ws.getWidth()
                 == 0 ? RelativeLayout.LayoutParams.MATCH_PARENT : ws
                 .getWidth() == -1 ? RelativeLayout.LayoutParams.WRAP_CONTENT

@@ -60,6 +60,7 @@ public class Controls {
         private int paddingRight;
         private int paddingBottom;
         private int elevation;
+        private boolean clickable;
 
         public String getId() {
             return id;
@@ -227,6 +228,14 @@ public class Controls {
 
         public void setElevation(int elevation) {
             this.elevation = elevation;
+        }
+
+        public boolean isClickable() {
+            return clickable;
+        }
+
+        public void setClickable(boolean clickable) {
+            this.clickable = clickable;
         }
     }
 

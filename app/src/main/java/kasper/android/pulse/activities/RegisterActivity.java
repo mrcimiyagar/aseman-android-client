@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Handler;
 import android.text.InputType;
 import android.view.View;
 
@@ -64,7 +65,12 @@ public class RegisterActivity extends AppCompatActivity {
                         DatabaseHelper.notifyComplexSecretCreated(complexSecret);
                         DatabaseHelper.notifyMembershipCreated(userSecret.getHome().getMembers().get(0));
                         DatabaseHelper.notifyMemberAccessCreated(userSecret.getHome().getMembers().get(0).getMemberAccess());
-                        gotoStartupPage();
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                gotoStartupPage();
+                            }
+                        }, 2000);
                     }
                     @Override
                     public void onServerFailure() {

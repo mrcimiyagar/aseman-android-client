@@ -24,7 +24,7 @@ import retrofit2.Response;
 
 public class WorkershipDataActivity extends AppCompatActivity {
 
-    long botId, complexId, roomId;
+    long botId, complexId, roomId, wsId;
     EditText xET, yET, widthET, heightET;
 
     @SuppressLint("SetTextI18n")
@@ -42,6 +42,7 @@ public class WorkershipDataActivity extends AppCompatActivity {
             botId = getIntent().getExtras().getLong("bot_id");
             complexId = getIntent().getExtras().getLong("complex_id");
             roomId = getIntent().getExtras().getLong("room_id");
+            wsId = getIntent().getExtras().getLong("workership_id");
             xET.setText("" + getIntent().getExtras().getInt("pos_x"));
             yET.setText("" + getIntent().getExtras().getInt("pos_y"));
             widthET.setText("" + getIntent().getExtras().getInt("width"));
@@ -71,10 +72,13 @@ public class WorkershipDataActivity extends AppCompatActivity {
             room.setRoomId(roomId);
             packet.setRoom(room);
             Entities.Workership ws = new Entities.Workership();
+            ws.setWorkershipId(wsId);
             ws.setPosX(posX);
             ws.setPosY(posY);
             ws.setWidth(width);
             ws.setHeight(height);
+            ws.setRoomId(roomId);
+            ws.setBotId(botId);
             packet.setWorkership(ws);
             RobotHandler robotHandler = NetworkHelper.getRetrofit().create(RobotHandler.class);
             Call<Packet> call = robotHandler.updateWorkership(packet);
@@ -84,12 +88,10 @@ public class WorkershipDataActivity extends AppCompatActivity {
                     Core.getInstance().bus().post(new WorkerUpdated(ws));
                     finish();
                 }
-
                 @Override
                 public void onServerFailure() {
                     Toast.makeText(WorkershipDataActivity.this, "Worker update failure", Toast.LENGTH_SHORT).show();
                 }
-
                 @Override
                 public void onConnectionFailure() {
                     Toast.makeText(WorkershipDataActivity.this, "Worker update failure", Toast.LENGTH_SHORT).show();

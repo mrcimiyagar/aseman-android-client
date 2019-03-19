@@ -12,6 +12,7 @@ public class Notifications {
             include = JsonTypeInfo.As.PROPERTY,
             property = "type")
     @JsonSubTypes({
+            @JsonSubTypes.Type(value = BotPropertiesChangedNotification.class, name = "BotPropertiesChangedNotification"),
             @JsonSubTypes.Type(value = MemberAccessUpdatedNotification.class, name = "MemberAccessUpdatedNotification"),
             @JsonSubTypes.Type(value = MessageSeenNotification.class, name = "MessageSeenNotification"),
             @JsonSubTypes.Type(value = InviteCreationNotification.class, name = "InviteCreationNotification"),
@@ -53,6 +54,18 @@ public class Notifications {
         }
     }
 
+    public static class BotPropertiesChangedNotification extends Notification {
+        private Entities.Workership workership;
+
+        public Entities.Workership getWorkership() {
+            return workership;
+        }
+
+        public void setWorkership(Entities.Workership workership) {
+            this.workership = workership;
+        }
+    }
+
     public static class MemberAccessUpdatedNotification extends Notification {
         private Entities.MemberAccess memberAccess;
 
@@ -66,44 +79,35 @@ public class Notifications {
     }
 
     public static class BotAddedToRoomNotification extends Notification {
-        private long roomId;
-        private Entities.Room room;
+        private Entities.Workership workership;
+        private Entities.Bot bot;
 
-        public long getRoomId() {
-            return roomId;
+        public Entities.Workership getWorkership() {
+            return workership;
         }
 
-        public void setRoomId(long roomId) {
-            this.roomId = roomId;
+        public void setWorkership(Entities.Workership workership) {
+            this.workership = workership;
         }
 
-        public Entities.Room getRoom() {
-            return room;
+        public Entities.Bot getBot() {
+            return bot;
         }
 
-        public void setRoom(Entities.Room room) {
-            this.room = room;
+        public void setBot(Entities.Bot bot) {
+            this.bot = bot;
         }
     }
 
     public static class BotRemovedFromRoomNotification extends Notification {
-        private long roomId;
-        private Entities.Room room;
+        private Entities.Workership workership;
 
-        public long getRoomId() {
-            return roomId;
+        public Entities.Workership getWorkership() {
+            return workership;
         }
 
-        public void setRoomId(long roomId) {
-            this.roomId = roomId;
-        }
-
-        public Entities.Room getRoom() {
-            return room;
-        }
-
-        public void setRoom(Entities.Room room) {
-            this.room = room;
+        public void setWorkership(Entities.Workership workership) {
+            this.workership = workership;
         }
     }
 

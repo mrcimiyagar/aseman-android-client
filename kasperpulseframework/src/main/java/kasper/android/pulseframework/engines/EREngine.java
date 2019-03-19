@@ -1,7 +1,6 @@
 package kasper.android.pulseframework.engines;
 
 import android.util.Log;
-import android.util.Pair;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -10,10 +9,12 @@ import java.util.TimerTask;
 
 import kasper.android.pulseframework.interfaces.ICodeToAnim;
 import kasper.android.pulseframework.interfaces.IMirrorEffect;
+import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Anims;
 import kasper.android.pulseframework.models.Bindings;
 import kasper.android.pulseframework.models.Codes;
 import kasper.android.pulseframework.models.Exceptions;
+import kasper.android.pulseframework.models.Tuple;
 
 public class EREngine {
 
@@ -32,7 +33,7 @@ public class EREngine {
     private IMirrorEffect mirrorEffect;
     private ICodeToAnim codeToAnimation;
     private Hashtable<String, Codes.Variable> variableTable;
-    private Hashtable<String, Pair<Codes.Task, TimerHolder>> taskTable;
+    private Hashtable<String, Tuple<Codes.Task, TimerHolder, Boolean>> taskTable;
 
     public EREngine(IMirrorEffect mirrorEffect, ICodeToAnim codeToAnimation) {
         this.mirrorEffect = mirrorEffect;
@@ -60,11 +61,13 @@ public class EREngine {
     }
 
     public void run(List<Codes.Code> codes) {
-        try {
-            this.runCommands(codes);
-        } catch (Exceptions.ELangException ex) {
-            ex.printStackTrace();
-        }
+        Locks.runInQueue(() -> {
+            try {
+                runCommands(codes);
+            } catch (Exceptions.ELangException ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 
     private void runCommands(List<Codes.Code> codes) throws Exceptions.ELangException {
@@ -75,34 +78,42 @@ public class EREngine {
                 this.codeToAnimation.performAnimation(anim);
             } else if (code instanceof Codes.DefineTask) {
                 Codes.Task task = ((Codes.DefineTask) code).getTask();
-                TimerHolder timerHolder = new TimerHolder();
-                timerHolder.setTimer(new Timer());
-                taskTable.put(task.getName(), new Pair<>(task, timerHolder));
+                if (!taskTable.containsKey(task.getName())) {
+                    TimerHolder timerHolder = new TimerHolder();
+                    timerHolder.setTimer(new Timer());
+                    taskTable.put(task.getName(), new Tuple<>(task, timerHolder, false));
+                }
             } else if (code instanceof Codes.StartTask) {
-                Pair<Codes.Task, TimerHolder> pair = taskTable.get(((Codes.StartTask) code).getTaskName());
-                if (pair != null) {
-                    Codes.Task task = pair.first;
-                    Timer timer = pair.second.getTimer();
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            try {
-                                runCommands(task.getCodes());
-                            } catch (Exceptions.ELangException ex) {
-                                ex.printStackTrace();
+                Tuple<Codes.Task, TimerHolder, Boolean> tuple = taskTable.get(((Codes.StartTask) code).getTaskName());
+                if (tuple != null) {
+                    if (!tuple.getItem3()) {
+                        Codes.Task task = tuple.getItem1();
+                        Timer timer = tuple.getItem2().getTimer();
+                        taskTable.remove(task.getName());
+                        taskTable.put(task.getName(), new Tuple<>(task, tuple.getItem2(), true));
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                try {
+                                    runCommands(task.getCodes());
+                                } catch (Exceptions.ELangException ex) {
+                                    ex.printStackTrace();
+                                }
                             }
-                        }
-                    }, 1, task.getPeriod());
+                        }, 1, task.getPeriod());
+                    }
                 } else {
                     throw new Exceptions.ELangException();
                 }
             } else if (code instanceof Codes.StopTask) {
-                Pair<Codes.Task, TimerHolder> pair = taskTable.get(((Codes.StopTask) code).getTaskName());
-                if (pair != null) {
-                    Timer timer = pair.second.getTimer();
+                Tuple<Codes.Task, TimerHolder, Boolean> tuple = taskTable.get(((Codes.StopTask) code).getTaskName());
+                if (tuple != null) {
+                    taskTable.remove(((Codes.StopTask) code).getTaskName());
+                    taskTable.put(((Codes.StopTask) code).getTaskName(), new Tuple<>(tuple.getItem1(), tuple.getItem2(), false));
+                    Timer timer = tuple.getItem2().getTimer();
                     timer.cancel();
                     timer.purge();
-                    pair.second.setTimer(new Timer());
+                    tuple.getItem2().setTimer(new Timer());
                 }
             } if (code instanceof Codes.If) {
                 Codes.Value conditionValue = resolveObjectTree(((Codes.If) code).getCondition());

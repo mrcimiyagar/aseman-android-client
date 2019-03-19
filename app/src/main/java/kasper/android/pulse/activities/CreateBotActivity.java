@@ -108,6 +108,8 @@ public class CreateBotActivity extends AppCompatActivity {
             } else {
                 createBot(botName, 0, botDesc);
             }
+        } else {
+            saveFAB.enable();
         }
     }
 
