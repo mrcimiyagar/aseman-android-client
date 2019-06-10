@@ -29,10 +29,10 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
 
     private AppCompatActivity activity;
     private long complexId;
-    private List<Entities.Room> rooms;
+    private List<Entities.BaseRoom> rooms;
     private OnRoomIconClickListener roomOpeningCallback;
 
-    public RoomsAdapter(AppCompatActivity activity, long complexId, List<Entities.Room> rooms, OnRoomIconClickListener roomOpeningCallback) {
+    public RoomsAdapter(AppCompatActivity activity, long complexId, List<Entities.BaseRoom> rooms, OnRoomIconClickListener roomOpeningCallback) {
         this.activity = activity;
         this.complexId = complexId;
         this.rooms = rooms;
@@ -48,7 +48,7 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
     @Subscribe
     public void onContactCreated(ContactCreated contactCreated) {
         if (complexId == contactCreated.getContact().getComplex().getComplexId()) {
-            addRoom(contactCreated.getContact().getComplex().getRooms().get(0));
+            addRoom(contactCreated.getContact().getComplex().getAllRooms().get(0));
         }
     }
 
@@ -81,7 +81,7 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
 
     @Override
     public void onBindViewHolder(@NonNull final RoomVH holder, int position) {
-        final Entities.Room room = this.rooms.get(position);
+        final Entities.BaseRoom room = this.rooms.get(position);
         holder.titleTV.setText(room.getTitle());
         if (room.getAvatar() >= 0) {
             NetworkHelper.loadRoomAvatar(room.getAvatar(), holder.avatarIV);
@@ -89,7 +89,7 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
         final int pos = position;
         DataSyncer.syncRoomWithServer(complexId, room.getRoomId(), new OnRoomSyncListener() {
             @Override
-            public void roomSynced(Entities.Room room) {
+            public void roomSynced(Entities.BaseRoom room) {
                 rooms.set(pos, room);
                 holder.titleTV.setText(room.getTitle());
                 NetworkHelper.loadRoomAvatar(room.getAvatar(), holder.avatarIV);
@@ -105,9 +105,9 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
         return this.rooms.size();
     }
 
-    private void addRoom(Entities.Room room) {
+    private void addRoom(Entities.BaseRoom room) {
         boolean exists = false;
-        for (Entities.Room r : rooms) {
+        for (Entities.BaseRoom r : rooms) {
             if (r.getRoomId() == room.getRoomId()) {
                 exists = true;
                 break;
@@ -119,9 +119,9 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
         }
     }
 
-    private void removeRoom(Entities.Room room) {
+    private void removeRoom(Entities.BaseRoom room) {
         int counter = 0;
-        for (Entities.Room r : rooms) {
+        for (Entities.BaseRoom r : rooms) {
             if (r.getRoomId() == room.getRoomId()) {
                 rooms.remove(counter);
                 notifyItemRemoved(counter);

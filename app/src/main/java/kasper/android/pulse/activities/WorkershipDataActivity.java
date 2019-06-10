@@ -2,7 +2,6 @@ package kasper.android.pulse.activities;
 
 import android.annotation.SuppressLint;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,15 +11,12 @@ import android.widget.Toast;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class WorkershipDataActivity extends AppCompatActivity {
 
@@ -70,7 +66,7 @@ public class WorkershipDataActivity extends AppCompatActivity {
             packet.setComplex(complex);
             Entities.Room room = new Entities.Room();
             room.setRoomId(roomId);
-            packet.setRoom(room);
+            packet.setBaseRoom(room);
             Entities.Workership ws = new Entities.Workership();
             ws.setWorkershipId(wsId);
             ws.setPosX(posX);

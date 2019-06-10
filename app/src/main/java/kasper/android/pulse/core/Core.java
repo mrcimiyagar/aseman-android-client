@@ -36,7 +36,6 @@ public class Core extends Application {
         Fabric.with(fabric);
         super.onCreate();
         instance = this;
-        LogHelper.start();
         EmojiManager.install(new TwitterEmojiProvider());
         UiHelper.setup();
         CallbackHelper.setup();

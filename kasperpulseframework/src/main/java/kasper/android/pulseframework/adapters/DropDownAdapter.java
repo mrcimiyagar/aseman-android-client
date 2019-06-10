@@ -9,6 +9,7 @@ import android.widget.SpinnerAdapter;
 import java.util.Hashtable;
 import java.util.List;
 
+import kasper.android.pulseframework.components.CustomHashtable;
 import kasper.android.pulseframework.engines.UiInitiatorEngine;
 import kasper.android.pulseframework.models.Controls;
 import kasper.android.pulseframework.models.Tuple;
@@ -38,12 +39,11 @@ public class DropDownAdapter implements SpinnerAdapter {
     @Override
     public View getDropDownView(int i, View view, ViewGroup viewGroup) {
         Tuple<View, List<Pair<Controls.Control, View>>,
-                Hashtable<String, Pair<Controls.Control, View>>> pair = uiInitiatorEngine.buildViewTree(
+                CustomHashtable<String, Pair<Controls.Control, View>>> pair = uiInitiatorEngine.buildViewTree(
                 Controls.PanelCtrl.LayoutType.LINEAR_VERTICAL,
                 items.get(i));
         View itemView = pair.getItem1();
         uiInitiatorEngine.initFingerprint(pair.getItem2(), i);
-        idTable.putAll(pair.getItem3());
         return itemView;
     }
 
@@ -80,7 +80,7 @@ public class DropDownAdapter implements SpinnerAdapter {
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         Tuple<View, List<Pair<Controls.Control, View>>,
-                Hashtable<String, Pair<Controls.Control, View>>> pair = uiInitiatorEngine.buildViewTree(
+                CustomHashtable<String, Pair<Controls.Control, View>>> pair = uiInitiatorEngine.buildViewTree(
                 Controls.PanelCtrl.LayoutType.LINEAR_VERTICAL,
                 items.get(i));
         View itemView = pair.getItem1();

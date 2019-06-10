@@ -4,13 +4,13 @@ import kasper.android.pulse.models.entities.Entities;
 
 public class RoomRemoved {
 
-    private Entities.Room room;
+    private Entities.BaseRoom room;
 
-    public RoomRemoved(Entities.Room room) {
+    public RoomRemoved(Entities.BaseRoom room) {
         this.room = room;
     }
 
-    public Entities.Room getRoom() {
+    public Entities.BaseRoom getRoom() {
         return room;
     }
 }

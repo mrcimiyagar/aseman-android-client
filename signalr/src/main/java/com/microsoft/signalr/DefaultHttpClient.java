@@ -8,96 +8,79 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.Single;
 import io.reactivex.subjects.SingleSubject;
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Cookie;
+import okhttp3.CookieJar;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 final class DefaultHttpClient extends HttpClient {
-    private OkHttpClient client = null;
+    private final OkHttpClient client;
 
     public DefaultHttpClient() {
-        this(0, null);
-    }
+        this.client = new OkHttpClient.Builder().cookieJar(new CookieJar() {
+            private List<Cookie> cookieList = new ArrayList<>();
+            private Lock cookieLock = new ReentrantLock();
 
-    public DefaultHttpClient cloneWithTimeOut(int timeoutInMilliseconds) {
-        OkHttpClient newClient = client.newBuilder().readTimeout(timeoutInMilliseconds, TimeUnit.MILLISECONDS)
-                .build();
-        return new DefaultHttpClient(timeoutInMilliseconds, newClient);
-    }
-
-    public DefaultHttpClient(int timeoutInMilliseconds, OkHttpClient client) {
-        if (client != null) {
-            this.client = client;
-        } else {
-
-            OkHttpClient.Builder builder = new OkHttpClient.Builder().cookieJar(new CookieJar() {
-                private List<Cookie> cookieList = new ArrayList<>();
-                private Lock cookieLock = new ReentrantLock();
-
-                @Override
-                public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-                    cookieLock.lock();
-                    try {
-                        for (Cookie cookie : cookies) {
-                            boolean replacedCookie = false;
-                            for (int i = 0; i < cookieList.size(); i++) {
-                                Cookie innerCookie = cookieList.get(i);
-                                if (cookie.name().equals(innerCookie.name()) && innerCookie.matches(url)) {
-                                    // We have a new cookie that matches an older one so we replace the older one.
-                                    cookieList.set(i, innerCookie);
-                                    replacedCookie = true;
-                                    break;
-                                }
-                            }
-                            if (!replacedCookie) {
-                                cookieList.add(cookie);
+            @Override
+            public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                cookieLock.lock();
+                try {
+                    for (Cookie cookie : cookies) {
+                        boolean replacedCookie = false;
+                        for (int i = 0; i < cookieList.size(); i++) {
+                            Cookie innerCookie = cookieList.get(i);
+                            if (cookie.name().equals(innerCookie.name()) && innerCookie.matches(url)) {
+                                // We have a new cookie that matches an older one so we replace the older one.
+                                cookieList.set(i, innerCookie);
+                                replacedCookie = true;
+                                break;
                             }
                         }
-                    } finally {
-                        cookieLock.unlock();
-                    }
-                }
-
-                @Override
-                public List<Cookie> loadForRequest(HttpUrl url) {
-                    cookieLock.lock();
-                    try {
-                        List<Cookie> matchedCookies = new ArrayList<>();
-                        List<Cookie> expiredCookies = new ArrayList<>();
-                        for (Cookie cookie : cookieList) {
-                            if (cookie.expiresAt() < System.currentTimeMillis()) {
-                                expiredCookies.add(cookie);
-                            } else if (cookie.matches(url)) {
-                                matchedCookies.add(cookie);
-                            }
+                        if (!replacedCookie) {
+                            cookieList.add(cookie);
                         }
-
-                        cookieList.removeAll(expiredCookies);
-                        return matchedCookies;
-                    } finally {
-                        cookieLock.unlock();
                     }
+                } finally {
+                    cookieLock.unlock();
                 }
-            });
-
-            if (timeoutInMilliseconds > 0) {
-                builder.readTimeout(timeoutInMilliseconds, TimeUnit.MILLISECONDS);
             }
-            this.client = builder.build();
-        }
+
+            @Override
+            public List<Cookie> loadForRequest(HttpUrl url) {
+                cookieLock.lock();
+                try {
+                    List<Cookie> matchedCookies = new ArrayList<>();
+                    List<Cookie> expiredCookies = new ArrayList<>();
+                    for (Cookie cookie : cookieList) {
+                        if (cookie.expiresAt() < System.currentTimeMillis()) {
+                            expiredCookies.add(cookie);
+                        } else if (cookie.matches(url)) {
+                            matchedCookies.add(cookie);
+                        }
+                    }
+
+                    cookieList.removeAll(expiredCookies);
+                    return matchedCookies;
+                } finally {
+                    cookieLock.unlock();
+                }
+            }
+        }).build();
     }
 
     @Override
     public Single<HttpResponse> send(HttpRequest httpRequest) {
-        return send(httpRequest, null);
-    }
-
-    @Override
-    public Single<HttpResponse> send(HttpRequest httpRequest, String bodyContent) {
         Request.Builder requestBuilder = new Request.Builder().url(httpRequest.getUrl());
 
         switch (httpRequest.getMethod()) {
@@ -105,13 +88,7 @@ final class DefaultHttpClient extends HttpClient {
                 requestBuilder.get();
                 break;
             case "POST":
-                RequestBody body;
-                if (bodyContent != null) {
-                    body = RequestBody.create(MediaType.parse("text/plain"), bodyContent);
-                } else {
-                    body = RequestBody.create(null, new byte[]{});
-                }
-
+                RequestBody body = RequestBody.create(null, new byte[]{});
                 requestBuilder.post(body);
                 break;
             case "DELETE":

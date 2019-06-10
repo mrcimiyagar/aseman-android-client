@@ -5,9 +5,9 @@ import kasper.android.pulse.models.entities.Entities;
 public class RoomCreated {
 
     private long complexId;
-    private Entities.Room room;
+    private Entities.BaseRoom room;
 
-    public RoomCreated(long complexId, Entities.Room room) {
+    public RoomCreated(long complexId, Entities.BaseRoom room) {
         this.complexId = complexId;
         this.room = room;
     }
@@ -16,7 +16,7 @@ public class RoomCreated {
         return complexId;
     }
 
-    public Entities.Room getRoom() {
+    public Entities.BaseRoom getRoom() {
         return room;
     }
 }

@@ -2,6 +2,7 @@ package kasper.android.pulse.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.anadeainc.rxbus.Subscribe;
+import com.microsoft.signalr.JsonHelper;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -25,6 +27,7 @@ import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnRoomSyncListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
@@ -40,12 +43,12 @@ import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private AppCompatActivity activity;
-    private final List<Entities.Room> rooms;
+    private final List<Entities.BaseRoom> rooms;
     private Hashtable<Long, Entities.Message> sendingMessages;
     private RecyclerView peopleRV;
     private long myId;
 
-    public HomeAdapter(AppCompatActivity activity, List<Entities.Room> rooms) {
+    public HomeAdapter(AppCompatActivity activity, List<Entities.BaseRoom> rooms) {
         this.activity = activity;
         this.rooms = rooms;
         this.sendingMessages = new Hashtable<>();
@@ -72,7 +75,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (messageReceived.isBottom()) {
             Entities.Message message = messageReceived.getMessage();
             int counter = 0;
-            for (Entities.Room room : rooms) {
+            for (Entities.BaseRoom room : rooms) {
                 if (message.getRoom().getRoomId() == room.getRoomId()) {
                     room.setLastAction(message);
                     notifyItemChanged(counter + 2);
@@ -90,7 +93,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onMessageSending(MessageSending messageSending) {
         Entities.Message message = messageSending.getMessage();
         int counter = 0;
-        for (Entities.Room room : rooms) {
+        for (Entities.BaseRoom room : rooms) {
             if (message.getRoom().getRoomId() == room.getRoomId()) {
                 sendingMessages.put(message.getMessageId(), message.clone());
                 room.setLastAction(message);
@@ -112,7 +115,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (message != null) {
             message.setMessageId(onlineMessageId);
             int counter = 0;
-            for (Entities.Room room : rooms) {
+            for (Entities.BaseRoom room : rooms) {
                 if (message.getRoom().getRoomId() == room.getRoomId()) {
                     room.setLastAction(message);
                     notifyItemChanged(counter + 2);
@@ -133,7 +136,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Subscribe
     public void onRoomsCreated(RoomsCreated roomsCreated) {
-        for (Entities.Room room : rooms) {
+        for (Entities.BaseRoom room : rooms) {
             addRoom(room);
         }
     }
@@ -146,7 +149,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Subscribe
     public void onRoomUnreadChanged(RoomUnreadChanged unreadChanged) {
         int counter = 0;
-        for (Entities.Room room : rooms) {
+        for (Entities.BaseRoom room : rooms) {
             if (room.getRoomId() == unreadChanged.getRoomId()) {
                 notifyItemChanged(counter + 2);
                 break;
@@ -158,7 +161,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Subscribe
     public void onMessageSeen(MessageSeen messageSeen) {
         int counter = 0;
-        for (Entities.Room room : rooms) {
+        for (Entities.BaseRoom room : rooms) {
             if (room.getRoomId() == messageSeen.getMessage().getRoom().getRoomId()) {
                 if (room.getLastAction() != null) {
                     room.getLastAction().setSeenCount(messageSeen.getMessage().getSeenCount());
@@ -170,9 +173,9 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    private void addRoom(Entities.Room room) {
+    private void addRoom(Entities.BaseRoom room) {
         boolean exists = false;
-        for (Entities.Room r : rooms) {
+        for (Entities.BaseRoom r : rooms) {
             if (r.getRoomId() == room.getRoomId()) {
                 exists = true;
                 break;
@@ -184,9 +187,9 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    private void removeRoom(Entities.Room room) {
+    private void removeRoom(Entities.BaseRoom room) {
         int counter = 0;
-        for (Entities.Room r : rooms) {
+        for (Entities.BaseRoom r : rooms) {
             if (r.getRoomId() == room.getRoomId()) {
                 rooms.remove(counter);
                 notifyItemRemoved(counter + 2);
@@ -241,9 +244,9 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
             vh.peopleRV.setAdapter(new ActiveNowAdapter(activity, users));
         } else if (position != 1) {
-            Entities.Room room = rooms.get(position - 2);
+            Entities.BaseRoom room = rooms.get(position - 2);
             RoomItem vh = (RoomItem) holder;
-            if (room.getComplex().getMode() == 2 || room.getComplex().getTitle().length() == 0) {
+            if (room.getComplex().getMode() == 2) {
                 Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
                 Entities.User user = contact.getPeer();
                 vh.nameTV.setText(user.getTitle().split(" ")[0] + " : " + room.getTitle());
@@ -253,7 +256,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     public void userSynced(Entities.BaseUser baseUser) {
                         DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
                             @Override
-                            public void roomSynced(Entities.Room room) {
+                            public void roomSynced(Entities.BaseRoom room) {
                                 try {
                                     if (!baseUser.getTitle().equals(user.getTitle())) {
                                         user.setTitle(baseUser.getTitle());
@@ -270,23 +273,65 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     public void syncFailed() { }
                 });
             } else {
-                NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
-                vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
-                DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
-                    @Override
-                    public void roomSynced(Entities.Room r) {
-                        try {
-                            if (!(r.getComplex().getTitle().equals(room.getComplex().getTitle())
-                                    && r.getTitle().equals(room.getTitle()))) {
-                                room.setTitle(r.getTitle());
-                                vh.nameTV.setText(r.getComplex().getTitle() + " : " + r.getTitle());
-                            }
-                            NetworkHelper.loadRoomAvatar(r.getAvatar(), vh.avatarIV);
-                        } catch (Exception ignored) { }
+                if (room instanceof Entities.SingleRoom) {
+                    Entities.SingleRoom sr = (Entities.SingleRoom) room;
+                    final Entities.User peer;
+                    if (sr.getUser1().getBaseUserId() == myId) {
+                        peer = DatabaseHelper.getHumanById(sr.getUser2Id());
                     }
-                    @Override
-                    public void syncFailed() { }
-                });
+                    else if (sr.getUser2().getBaseUserId() == myId) {
+                        peer = DatabaseHelper.getHumanById(sr.getUser1Id());
+                    }
+                    else {
+                        peer = null;
+                    }
+                    if (peer != null) {
+                        vh.nameTV.setText(sr.getComplex().getTitle() + " : " + peer.getTitle().split(" ")[0]);
+                        NetworkHelper.loadRoomAvatar(peer.getAvatar(), vh.avatarIV);
+                        DataSyncer.syncBaseUserWithServer(peer.getBaseUserId(), new OnBaseUserSyncListener() {
+                            @Override
+                            public void userSynced(Entities.BaseUser baseUser) {
+                                DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                                    @Override
+                                    public void roomSynced(Entities.BaseRoom room) {
+                                        try {
+                                            if (!baseUser.getTitle().equals(peer.getTitle())) {
+                                                peer.setTitle(baseUser.getTitle());
+                                                vh.nameTV.setText(sr.getComplex().getTitle() + " : " + peer.getTitle().split(" ")[0]);
+                                            }
+                                            NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
+                                        } catch (Exception ignored) { }
+                                    }
+                                    @Override
+                                    public void syncFailed() { }
+                                });
+                            }
+                            @Override
+                            public void syncFailed() { }
+                        });
+                    }
+                } else {
+                    NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
+                    vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
+                    DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                        @Override
+                        public void roomSynced(Entities.BaseRoom r) {
+                            try {
+                                if (!(r.getComplex().getTitle().equals(room.getComplex().getTitle())
+                                        && r.getTitle().equals(room.getTitle()))) {
+                                    room.setTitle(r.getTitle());
+                                    vh.nameTV.setText(r.getComplex().getTitle() + " : " + r.getTitle());
+                                }
+                                NetworkHelper.loadRoomAvatar(r.getAvatar(), vh.avatarIV);
+                            } catch (Exception ignored) {
+                            }
+                        }
+
+                        @Override
+                        public void syncFailed() {
+                        }
+                    });
+                }
             }
             Entities.Message lastAction = room.getLastAction();
             if (lastAction != null) {

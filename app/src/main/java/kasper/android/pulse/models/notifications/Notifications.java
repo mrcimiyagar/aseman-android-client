@@ -31,7 +31,8 @@ public class Notifications {
             @JsonSubTypes.Type(value = BotSentBotViewNotification.class, name = "BotSentBotViewNotification"),
             @JsonSubTypes.Type(value = BotUpdatedBotViewNotification.class, name = "BotUpdatedBotViewNotification"),
             @JsonSubTypes.Type(value = BotAnimatedBotViewNotification.class, name = "BotAnimatedBotViewNotification"),
-            @JsonSubTypes.Type(value = BotRanCommandsOnBotViewNotification.class, name = "BotRanCommandsOnBotViewNotification")
+            @JsonSubTypes.Type(value = BotRanCommandsOnBotViewNotification.class, name = "BotRanCommandsOnBotViewNotification"),
+            @JsonSubTypes.Type(value = RoomCreationNotification.class, name = "RoomCreationNotification")
     })
     public static class Notification {
         private String notificationId;
@@ -51,6 +52,36 @@ public class Notifications {
 
         public void setSession(Entities.Session session) {
             this.session = session;
+        }
+    }
+
+    public static class RoomCreationNotification extends Notification {
+        private Entities.Room room;
+        private Entities.SingleRoom singleRoom;
+        private Entities.ServiceMessage message;
+
+        public Entities.Room getRoom() {
+            return room;
+        }
+
+        public void setRoom(Entities.Room room) {
+            this.room = room;
+        }
+
+        public Entities.SingleRoom getSingleRoom() {
+            return singleRoom;
+        }
+
+        public void setSingleRoom(Entities.SingleRoom singleRoom) {
+            this.singleRoom = singleRoom;
+        }
+
+        public Entities.ServiceMessage getMessage() {
+            return message;
+        }
+
+        public void setMessage(Entities.ServiceMessage message) {
+            this.message = message;
         }
     }
 
@@ -409,6 +440,7 @@ public class Notifications {
         private long contactId;
         private Entities.Contact contact;
         private Entities.ComplexSecret complexSecret;
+        private Entities.ServiceMessage message;
 
         public long getContactId() {
             return contactId;
@@ -432,6 +464,14 @@ public class Notifications {
 
         public void setComplexSecret(Entities.ComplexSecret complexSecret) {
             this.complexSecret = complexSecret;
+        }
+
+        public Entities.ServiceMessage getMessage() {
+            return message;
+        }
+
+        public void setMessage(Entities.ServiceMessage message) {
+            this.message = message;
         }
     }
 
@@ -531,6 +571,7 @@ public class Notifications {
     public static class UserJointComplexNotification extends Notification {
         private long membershipId;
         private Entities.Membership membership;
+        private Entities.ServiceMessage message;
 
         public long getMembershipId() {
             return membershipId;
@@ -546,6 +587,14 @@ public class Notifications {
 
         public void setMembership(Entities.Membership membership) {
             this.membership = membership;
+        }
+
+        public Entities.ServiceMessage getMessage() {
+            return message;
+        }
+
+        public void setMessage(Entities.ServiceMessage message) {
+            this.message = message;
         }
     }
 }

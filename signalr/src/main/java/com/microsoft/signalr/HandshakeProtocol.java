@@ -6,7 +6,7 @@ package com.microsoft.signalr;
 import com.google.gson.Gson;
 
 final class HandshakeProtocol {
-    private static final Gson gson = new Gson();
+    private static final Gson gson = GsonCore.getInstance();
     private static final String RECORD_SEPARATOR = "\u001e";
 
     public static String createHandshakeRequestMessage(HandshakeRequestMessage message) {

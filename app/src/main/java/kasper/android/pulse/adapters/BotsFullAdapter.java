@@ -93,7 +93,7 @@ public class BotsFullAdapter extends RecyclerView.Adapter<BotsFullAdapter.BotVH>
                 packet.setComplex(complex);
                 Entities.Room room = new Entities.Room();
                 room.setRoomId(roomId);
-                packet.setRoom(room);
+                packet.setBaseRoom(room);
                 RobotHandler robotHandler = NetworkHelper.getRetrofit().create(RobotHandler.class);
                 Call<Packet> call = robotHandler.removeBotFromRoom(packet);
                 NetworkHelper.requestServer(call, new ServerCallback() {
@@ -131,7 +131,7 @@ public class BotsFullAdapter extends RecyclerView.Adapter<BotsFullAdapter.BotVH>
                 packet.setComplex(complex);
                 Entities.Room room = new Entities.Room();
                 room.setRoomId(roomId);
-                packet.setRoom(room);
+                packet.setBaseRoom(room);
                 final Entities.Workership workership = new Entities.Workership();
                 workership.setPosX(0);
                 workership.setPosY(0);

@@ -39,6 +39,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 import androidx.cardview.widget.CardView;
 import androidx.core.widget.CompoundButtonCompat;
@@ -47,6 +48,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import kasper.android.pulseframework.adapters.DropDownAdapter;
 import kasper.android.pulseframework.adapters.RecyclerAdapter;
+import kasper.android.pulseframework.components.CustomHashtable;
 import kasper.android.pulseframework.interfaces.IClickNotifier;
 import kasper.android.pulseframework.interfaces.IMainThreadRunner;
 import kasper.android.pulseframework.locks.Locks;
@@ -58,6 +60,7 @@ import kasper.android.pulseframework.models.Tuple;
 import kasper.android.pulseframework.models.Updates;
 import kasper.android.pulseframework.utils.FieldValidator;
 import kasper.android.pulseframework.utils.GraphicsHelper;
+import kasper.android.pulseframework.utils.JsonHelper;
 import tcking.github.com.giraffeplayer2.VideoView;
 
 public class UiUpdaterEngine {
@@ -74,7 +77,7 @@ public class UiUpdaterEngine {
         this.clickNotifier = clickNotifier;
     }
 
-    public void handleMirrorEffect(Hashtable<String, Pair<Controls.Control, View>> idTable
+    public void handleMirrorEffect(CustomHashtable<String, Pair<Controls.Control, View>> idTable
             , Bindings.Mirror mirror, Object value) {
         Updates.Update update = null;
         if (mirror instanceof Bindings.MirrorToX) {
@@ -155,7 +158,7 @@ public class UiUpdaterEngine {
 
     @SuppressLint("RtlHardcoded")
     private void updateUiAsync(Controls.Control control, View view
-            , Hashtable<String, Pair<Controls.Control, View>> idTable, Updates.Update update) {
+            , CustomHashtable<String, Pair<Controls.Control, View>> idTable, Updates.Update update) {
         if (view != null) {
             if (update instanceof Updates.ControlUpdateWidth) {
                 control.setWidth(((Updates.ControlUpdateWidth) update).getValue());
@@ -336,8 +339,8 @@ public class UiUpdaterEngine {
                     ((Controls.PanelCtrl) control).getControls().add(
                             ((Updates.PanelCtrlAddControl) update).getValue());
                     Tuple<View, List<Pair<Controls.Control, View>>
-                            , Hashtable<String, Pair<Controls.Control, View>>> buildResult =
-                            new UiInitiatorEngine(context, mainThreadRunner, clickNotifier).buildViewTree(
+                            , CustomHashtable<String, Pair<Controls.Control, View>>> buildResult =
+                            new UiInitiatorEngine(context, idTable, mainThreadRunner, clickNotifier).buildViewTree(
                                     ((Controls.PanelCtrl) control).getLayoutType(),
                                     ((Updates.PanelCtrlAddControl) update).getValue());
                     idTable.putAll(buildResult.getItem3());
@@ -896,7 +899,7 @@ public class UiUpdaterEngine {
                     view = getOrigin(view);
                     LineChartView lineChartView = (LineChartView) view;
                     Controls.LineChartCtrl chartEl = (Controls.LineChartCtrl) control;
-                    LineSet dataset = new UiInitiatorEngine(context, mainThreadRunner, clickNotifier)
+                    LineSet dataset = new UiInitiatorEngine(context, idTable, mainThreadRunner, clickNotifier)
                             .initLineChartView(chartEl);
                     lineChartView.getData().remove(0);
                     lineChartView.addData(dataset);
@@ -1223,7 +1226,14 @@ public class UiUpdaterEngine {
         }
     }
 
-    public void updateUi(Hashtable<String, Pair<Controls.Control, View>> idTable, Updates.Update update) {
+    public void updateUi(CustomHashtable<String, Pair<Controls.Control, View>> idTable, Updates.Update update) {
+        if (!update.getControlId().contains("sign") && !update.getControlId().contains("pn") && !update.getControlId().contains("pe")) {
+            String ids = "";
+            for (String id : idTable.keySet()) {
+                ids += id + ";";
+            }
+            Log.d("Kasper", "hello : \n" + ids);
+        }
         Pair<Controls.Control, View> pair = idTable.get(update.getControlId());
         if (pair != null) {
             Locks.runInQueue(() -> {
@@ -1234,7 +1244,7 @@ public class UiUpdaterEngine {
         }
     }
 
-    public void updateBatchUi(Hashtable<String, Pair<Controls.Control, View>> idTable, List<Updates.Update> updates) {
+    public void updateBatchUi(CustomHashtable<String, Pair<Controls.Control, View>> idTable, List<Updates.Update> updates) {
         for (Updates.Update update : updates) {
             updateUi(idTable, update);
         }

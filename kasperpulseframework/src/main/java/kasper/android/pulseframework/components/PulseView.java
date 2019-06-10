@@ -30,10 +30,11 @@ import kasper.android.pulseframework.models.Controls;
 import kasper.android.pulseframework.models.Tuple;
 import kasper.android.pulseframework.models.Updates;
 import kasper.android.pulseframework.utils.GraphicsHelper;
+import kasper.android.pulseframework.utils.JsonHelper;
 
 public class PulseView extends RelativeLayout {
 
-    private Hashtable<String, Pair<Controls.Control, View>> idTable;
+    private CustomHashtable<String, Pair<Controls.Control, View>> idTable;
     private UiInitiatorEngine uiInitiatorEngine;
     private UiUpdaterEngine uiUpdaterEngine;
     private UiAnimatorEngine uiAnimatorEngine;
@@ -60,15 +61,17 @@ public class PulseView extends RelativeLayout {
     }
 
     private void init() {
-        this.idTable = new Hashtable<>();
+        this.idTable = new CustomHashtable<>();
         GraphicsHelper.setup(getContext());
         this.setFocusableInTouchMode(true);
     }
 
     public void setup(AppCompatActivity activity, IClickNotifier controlClickNotifier) {
+        JsonHelper.setup();
         Locks.setup(activity::runOnUiThread);
         this.uiInitiatorEngine = new UiInitiatorEngine(
                 getContext(),
+                idTable,
                 activity::runOnUiThread,
                 controlClickNotifier);
         this.uiUpdaterEngine = new UiUpdaterEngine(
@@ -86,7 +89,7 @@ public class PulseView extends RelativeLayout {
     public void buildUi(Controls.Control control) {
         this.removeAllViews();
         Tuple<View, List<Pair<Controls.Control, View>>
-                , Hashtable<String, Pair<Controls.Control, View>>> result =
+                , CustomHashtable<String, Pair<Controls.Control, View>>> result =
                 uiInitiatorEngine.buildViewTree(Controls.PanelCtrl.LayoutType.RELATIVE, control);
         View view = result.getItem1();
         idTable = result.getItem3();

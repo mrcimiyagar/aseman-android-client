@@ -95,12 +95,6 @@ abstract class HttpClient {
         return this.send(request);
     }
 
-    public Single<HttpResponse> post(String url, String body, HttpRequest options) {
-        options.setUrl(url);
-        options.setMethod("POST");
-        return this.send(options, body);
-    }
-
     public Single<HttpResponse> post(String url, HttpRequest options) {
         options.setUrl(url);
         options.setMethod("POST");
@@ -122,9 +116,5 @@ abstract class HttpClient {
 
     public abstract Single<HttpResponse> send(HttpRequest request);
 
-    public abstract Single<HttpResponse> send(HttpRequest request, String body);
-
     public abstract WebSocketWrapper createWebSocket(String url, Map<String, String> headers);
-
-    public abstract HttpClient cloneWithTimeOut(int timeoutInMilliseconds);
 }

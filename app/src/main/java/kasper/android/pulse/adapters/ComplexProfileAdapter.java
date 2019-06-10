@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ChatActivity;
-import kasper.android.pulse.activities.RoomActivity;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnRoomSyncListener;
 import kasper.android.pulse.core.Core;
@@ -39,10 +38,10 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private AppCompatActivity activity;
     private long myId;
-    private final List<Entities.Room> rooms;
+    private final List<Entities.BaseRoom> rooms;
     private Hashtable<Long, Entities.Message> sendingMessages;
 
-    public ComplexProfileAdapter(AppCompatActivity activity, long myId, List<Entities.Room> rooms) {
+    public ComplexProfileAdapter(AppCompatActivity activity, long myId, List<Entities.BaseRoom> rooms) {
         this.activity = activity;
         this.myId = myId;
         this.rooms = rooms;
@@ -60,7 +59,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         if (messageReceived.isBottom()) {
             Entities.Message message = messageReceived.getMessage();
             int counter = 0;
-            for (Entities.Room room : rooms) {
+            for (Entities.BaseRoom room : rooms) {
                 if (message.getRoom().getRoomId() == room.getRoomId()) {
                     room.setLastAction(message);
                     notifyItemChanged(counter);
@@ -78,7 +77,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public void onMessageSending(MessageSending messageSending) {
         Entities.Message message = messageSending.getMessage();
         int counter = 0;
-        for (Entities.Room room : rooms) {
+        for (Entities.BaseRoom room : rooms) {
             if (message.getRoom().getRoomId() == room.getRoomId()) {
                 sendingMessages.put(message.getMessageId(), message.clone());
                 room.setLastAction(message);
@@ -99,7 +98,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         Entities.Message message = sendingMessages.remove(localMessageId);
         message.setMessageId(onlineMessageId);
         int counter = 0;
-        for (Entities.Room room : rooms) {
+        for (Entities.BaseRoom room : rooms) {
             if (message.getRoom().getRoomId() == room.getRoomId()) {
                 room.setLastAction(message);
                 notifyItemChanged(counter);
@@ -119,7 +118,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @Subscribe
     public void onRoomsCreated(RoomsCreated roomsCreated) {
-        for (Entities.Room room : rooms) {
+        for (Entities.BaseRoom room : rooms) {
             onRoomCreated(new RoomCreated(roomsCreated.getComplexId(), room));
         }
     }
@@ -131,12 +130,12 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @Subscribe
     public void onContactCreated(ContactCreated contactCreated) {
-        addRoom(contactCreated.getContact().getComplex().getRooms().get(0));
+        addRoom(contactCreated.getContact().getComplex().getAllRooms().get(0));
     }
 
-    private void addRoom(Entities.Room room) {
+    private void addRoom(Entities.BaseRoom room) {
         boolean exists = false;
-        for (Entities.Room r : rooms) {
+        for (Entities.BaseRoom r : rooms) {
             if (r.getRoomId() == room.getRoomId()) {
                 exists = true;
                 break;
@@ -148,9 +147,9 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
-    private void removeRoom(Entities.Room room) {
+    private void removeRoom(Entities.BaseRoom room) {
         int counter = 0;
-        for (Entities.Room r : rooms) {
+        for (Entities.BaseRoom r : rooms) {
             if (r.getRoomId() == room.getRoomId()) {
                 rooms.remove(counter);
                 notifyItemRemoved(counter + 2);
@@ -170,7 +169,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        Entities.Room room = rooms.get(position);
+        Entities.BaseRoom room = rooms.get(position);
         ComplexProfileAdapter.RoomItem vh = (ComplexProfileAdapter.RoomItem) holder;
         if (room.getComplex().getMode() == 2 || room.getComplex().getTitle().length() == 0) {
             Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
@@ -182,7 +181,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 public void userSynced(Entities.BaseUser baseUser) {
                     DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
                         @Override
-                        public void roomSynced(Entities.Room room) {
+                        public void roomSynced(Entities.BaseRoom room) {
                             try {
                                 if (!baseUser.getTitle().equals(user.getTitle())) {
                                     user.setTitle(baseUser.getTitle());
@@ -203,7 +202,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
             DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
                 @Override
-                public void roomSynced(Entities.Room r) {
+                public void roomSynced(Entities.BaseRoom r) {
                     try {
                         if (!(r.getComplex().getTitle().equals(room.getComplex().getTitle())
                                 && r.getTitle().equals(room.getTitle()))) {

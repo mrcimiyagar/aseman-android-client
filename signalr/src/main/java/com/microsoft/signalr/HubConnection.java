@@ -3,7 +3,17 @@
 
 package com.microsoft.signalr;
 
-import java.util.*;
+import com.microsoft.signalr.interfaces.ConfigFetchigController;
+import com.microsoft.signalr.utils.LogHelper;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,6 +38,7 @@ public class HubConnection {
 
     private final String baseUrl;
     private Transport transport;
+    private JsonConverterType converterType;
     private OnReceiveCallBack callback;
     private final CallbackMap handlers = new CallbackMap();
     private HubProtocol protocol;
@@ -39,7 +50,7 @@ public class HubConnection {
     private Single<String> accessTokenProvider;
     private final Map<String, String> headers = new HashMap<>();
     private ConnectionState connectionState = null;
-    private HttpClient httpClient;
+    private final HttpClient httpClient;
     private String stopError;
     private Timer pingTimer = null;
     private final AtomicLong nextServerTimeout = new AtomicLong();
@@ -49,8 +60,8 @@ public class HubConnection {
     private long tickRate = 1000;
     private CompletableSubject handshakeResponseSubject;
     private long handshakeResponseTimeout = 15*1000;
-    private TransportEnum transportEnum = TransportEnum.ALL;
     private final Logger logger = LoggerFactory.getLogger(HubConnection.class);
+    private boolean useLogger = false;
 
     /**
      * Sets the server timeout interval for the connection.
@@ -93,14 +104,23 @@ public class HubConnection {
         this.tickRate = tickRateInMilliseconds;
     }
 
-    HubConnection(String url, Transport transport, boolean skipNegotiate, HttpClient httpClient,
-                  Single<String> accessTokenProvider, long handshakeResponseTimeout, Map<String, String> headers, TransportEnum transportEnum) {
+    HubConnection(String url, Transport transport, JsonConverterType converterType, boolean skipNegotiate, HttpClient httpClient,
+                  Single<String> accessTokenProvider, long handshakeResponseTimeout, Map<String, String> headers, boolean useLogger) {
         if (url == null || url.isEmpty()) {
             throw new IllegalArgumentException("A valid url is required.");
         }
 
         this.baseUrl = url;
-        this.protocol = new JsonHubProtocol();
+        this.protocol = new JsonHubProtocol(new ConfigFetchigController() {
+            @Override
+            public boolean isLoggerEnabled() {
+                return HubConnection.this.useLogger;
+            }
+            @Override
+            public JsonConverterType jsonConverterType() {
+                return HubConnection.this.converterType;
+            }
+        });
 
         if (accessTokenProvider != null) {
             this.accessTokenProvider = accessTokenProvider;
@@ -116,9 +136,11 @@ public class HubConnection {
 
         if (transport != null) {
             this.transport = transport;
-        } else if (transportEnum != null) {
-            this.transportEnum = transportEnum;
         }
+
+        this.converterType = converterType;
+
+        this.useLogger = useLogger;
 
         if (handshakeResponseTimeout > 0) {
             this.handshakeResponseTimeout = handshakeResponseTimeout;
@@ -146,13 +168,9 @@ public class HubConnection {
                 if (handshakeResponse.getHandshakeError() != null) {
                     String errorMessage = "Error in handshake " + handshakeResponse.getHandshakeError();
                     logger.error(errorMessage);
-                    try {
-                        RuntimeException exception = new RuntimeException(errorMessage);
-                        handshakeResponseSubject.onError(exception);
-                        throw exception;
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                    RuntimeException exception = new RuntimeException(errorMessage);
+                    handshakeResponseSubject.onError(exception);
+                    throw exception;
                 }
                 handshakeReceived = true;
                 handshakeResponseSubject.onComplete();
@@ -249,9 +267,10 @@ public class HubConnection {
 
             if (negotiateResponse.getAccessToken() != null) {
                 this.accessTokenProvider = Single.just(negotiateResponse.getAccessToken());
+                String token = "";
                 // We know the Single is non blocking in this case
                 // It's fine to call blockingGet() on it.
-                String token = this.accessTokenProvider.blockingGet();
+                token = this.accessTokenProvider.blockingGet();
                 this.headers.put("Authorization", "Bearer " + token);
             }
 
@@ -266,6 +285,18 @@ public class HubConnection {
      */
     public HubConnectionState getConnectionState() {
         return hubConnectionState;
+    }
+
+    public void setConverterType(JsonConverterType converterType) {
+        this.converterType = converterType;
+    }
+
+    public void enableLogger() {
+        this.useLogger = true;
+    }
+
+    public void disableLogger() {
+        this.useLogger = false;
     }
 
     /**
@@ -301,13 +332,7 @@ public class HubConnection {
         negotiate.flatMapCompletable(url -> {
             logger.debug("Starting HubConnection.");
             if (transport == null) {
-                switch (transportEnum) {
-                    case LONG_POLLING:
-                        transport = new LongPollingTransport(headers, httpClient, accessTokenProvider);
-                        break;
-                    default:
-                        transport = new WebSocketTransport(headers, httpClient);
-                }
+                transport = new WebSocketTransport(headers, httpClient);
             }
 
             transport.setOnReceive(this.callback);
@@ -317,20 +342,37 @@ public class HubConnection {
                 String handshake = HandshakeProtocol.createHandshakeRequestMessage(
                         new HandshakeRequestMessage(protocol.getName(), protocol.getVersion()));
 
-                connectionState = new ConnectionState(this);
-
                 return transport.send(handshake).andThen(Completable.defer(() -> {
                     timeoutHandshakeResponse(handshakeResponseTimeout, TimeUnit.MILLISECONDS);
                     return handshakeResponseSubject.andThen(Completable.defer(() -> {
                         hubConnectionStateLock.lock();
                         try {
+                            connectionState = new ConnectionState(this);
                             hubConnectionState = HubConnectionState.CONNECTED;
                             logger.info("HubConnection started.");
+
                             resetServerTimeout();
-                            //Don't send pings if we're using long polling.
-                            if (transportEnum != TransportEnum.LONG_POLLING) {
-                                activatePingTimer();
-                            }
+                            this.pingTimer = new Timer();
+                            this.pingTimer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        if (System.currentTimeMillis() > nextServerTimeout.get()) {
+                                            stop("Server timeout elapsed without receiving a message from the server.");
+                                            return;
+                                        }
+
+                                        if (System.currentTimeMillis() > nextPingActivation.get()) {
+                                            sendHubMessage(PingMessage.getInstance());
+                                        }
+                                    } catch (Exception e) {
+                                        logger.warn("Error sending ping: {}.", e.getMessage());
+                                        // The connection is probably in a bad or closed state now, cleanup the timer so
+                                        // it stops triggering
+                                        pingTimer.cancel();
+                                    }
+                                }
+                            }, new Date(0), tickRate);
                         } finally {
                             hubConnectionStateLock.unlock();
                         }
@@ -345,30 +387,6 @@ public class HubConnection {
         return start;
     }
 
-    private void activatePingTimer() {
-        this.pingTimer = new Timer();
-        this.pingTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    if (System.currentTimeMillis() > nextServerTimeout.get()) {
-                        stop("Server timeout elapsed without receiving a message from the server.");
-                        return;
-                    }
-
-                    if (System.currentTimeMillis() > nextPingActivation.get()) {
-                        sendHubMessage(PingMessage.getInstance());
-                    }
-                } catch (Exception e) {
-                    logger.warn("Error sending ping: {}.", e.getMessage());
-                    // The connection is probably in a bad or closed state now, cleanup the timer so
-                    // it stops triggering
-                    pingTimer.cancel();
-                }
-            }
-        }, new Date(0), tickRate);
-    }
-
     private Single<String> startNegotiate(String url, int negotiateAttempts) {
         if (hubConnectionState != HubConnectionState.DISCONNECTED) {
             return Single.just(null);
@@ -380,10 +398,7 @@ public class HubConnection {
             }
 
             if (response.getRedirectUrl() == null) {
-                Set<String> transports = response.getAvailableTransports();
-                if ((this.transportEnum == TransportEnum.ALL && !(transports.contains("WebSockets") || transports.contains("LongPolling"))) ||
-                        (this.transportEnum == TransportEnum.WEBSOCKETS && !transports.contains("WebSockets")) ||
-                        (this.transportEnum == TransportEnum.LONG_POLLING && !transports.contains("LongPolling"))) {
+                if (!response.getAvailableTransports().contains("WebSockets")) {
                     throw new RuntimeException("There were no compatible transports on the server.");
                 }
 
@@ -448,18 +463,11 @@ public class HubConnection {
                 errorMessage = stopError;
             }
             if (errorMessage != null) {
-                try {
-                    throw new RuntimeException(errorMessage);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                exception = new RuntimeException(errorMessage);
                 logger.error("HubConnection disconnected with an error {}.", errorMessage);
             }
-            if (connectionState != null) {
-                connectionState.cancelOutstandingInvocations(exception);
-                connectionState = null;
-            }
-
+            connectionState.cancelOutstandingInvocations(exception);
+            connectionState = null;
             logger.info("HubConnection stopped.");
             hubConnectionState = HubConnectionState.DISCONNECTED;
             handshakeResponseSubject.onComplete();
@@ -484,7 +492,7 @@ public class HubConnection {
      */
     public void send(String method, Object... args) {
         if (hubConnectionState != HubConnectionState.CONNECTED) {
-            throw new RuntimeException("The 'send' method cannot be called if the connection is not active.");
+            throw new RuntimeException("The 'send' method cannot be called if the connection is not active");
         }
 
         InvocationMessage invocationMessage = new InvocationMessage(null, method, args);
@@ -502,10 +510,6 @@ public class HubConnection {
      */
     @SuppressWarnings("unchecked")
     public <T> Single<T> invoke(Class<T> returnType, String method, Object... args) {
-        if (hubConnectionState != HubConnectionState.CONNECTED) {
-            throw new RuntimeException("The 'invoke' method cannot be called if the connection is not active.");
-        }
-
         String id = connectionState.getNextInvocationId();
         InvocationMessage invocationMessage = new InvocationMessage(id, method, args);
 
@@ -583,7 +587,7 @@ public class HubConnection {
         } else {
             logger.debug("Sending {} message.", message.getMessageType().name());
         }
-        transport.send(serializedMessage).subscribeWith(CompletableSubject.create());
+        transport.send(serializedMessage);
 
         resetKeepAlive();
     }
@@ -616,7 +620,6 @@ public class HubConnection {
             onClosedCallbackList = new ArrayList<>();
         }
 
-        onClosedCallbackList.clear();
         onClosedCallbackList.add(callback);
     }
 
@@ -829,10 +832,6 @@ public class HubConnection {
         InvocationHandler handler = handlers.put(target, action, types);
         logger.debug("Registering handler for client method: '{}'.", target);
         return new Subscription(handlers, handler, target);
-    }
-
-    public void clearHandlers() {
-        this.handlers.clear();
     }
 
     private final class ConnectionState implements InvocationBinder {

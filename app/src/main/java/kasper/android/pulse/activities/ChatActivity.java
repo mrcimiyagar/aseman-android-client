@@ -35,11 +35,8 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.vanniktech.emoji.EmojiEditText;
 import com.vanniktech.emoji.EmojiPopup;
-import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener;
-import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -58,7 +55,6 @@ import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.DocTypes;
-import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.FileMessageSending;
 import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.models.network.Packet;
@@ -361,7 +357,7 @@ public class ChatActivity extends BaseActivity {
         packet.setComplex(complex);
         Entities.Room room = new Entities.Room();
         room.setRoomId(roomId);
-        packet.setRoom(room);
+        packet.setBaseRoom(room);
         Entities.Message msg = new Entities.Message();
         if (messages.size() > 0) {
             msg.setMessageId(messages.get(0).getMessageId());

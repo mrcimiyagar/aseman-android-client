@@ -30,7 +30,6 @@ import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.InviteCancelled;
 import kasper.android.pulse.rxbus.notifications.InviteCreated;
-import kasper.android.pulse.rxbus.notifications.InviteResolved;
 import kasper.android.pulse.rxbus.notifications.MembershipCreated;
 import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
@@ -116,7 +115,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                     DatabaseHelper.notifyUserCreated(result.getMembership().getUser());
                     DatabaseHelper.notifyComplexCreated(result.getMembership().getComplex());
                     DatabaseHelper.notifyComplexSecretCreated(result.getComplexSecret());
-                    for (Entities.Room room : result.getMembership().getComplex().getRooms())
+                    for (Entities.BaseRoom room : result.getMembership().getComplex().getAllRooms())
                         DatabaseHelper.notifyRoomCreated(room);
                     for (Entities.Bot bot : result.getBots())
                         DatabaseHelper.notifyBotCreated(bot, null);
@@ -132,7 +131,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                     invites.remove(holder.getAdapterPosition());
                     enablers.remove(holder.getAdapterPosition());
                     Core.getInstance().bus().post(new ComplexCreated(result.getMembership().getComplex()));
-                    for (Entities.Room room : result.getMembership().getComplex().getRooms()) {
+                    for (Entities.BaseRoom room : result.getMembership().getComplex().getAllRooms()) {
                         room.setComplex(result.getMembership().getComplex());
                         Core.getInstance().bus().post(new RoomCreated(result.getMembership().getComplex().getComplexId(), room));
                     }
@@ -147,18 +146,18 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.InviteVH> 
                     Core.getInstance().bus().post(new MessageReceived(true, result.getServiceMessage(), messageLocal));
 
                     Packet p = new Packet();
-                    p.setRooms(new ArrayList<>());
-                    for (Entities.Room room : result.getMembership().getComplex().getRooms()) {
+                    p.setBaseRooms(new ArrayList<>());
+                    for (Entities.BaseRoom room : result.getMembership().getComplex().getAllRooms()) {
                         Entities.Room r = new Entities.Room();
                         r.setRoomId(room.getRoomId());
                         r.setComplexId(room.getComplexId());
-                        p.getRooms().add(r);
+                        p.getBaseRooms().add(r);
                     }
                     NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(MessageHandler.class).getLastActions(p)
                             , new ServerCallback() {
                                 @Override
                                 public void onRequestSuccess(Packet packet) {
-                                    for (Entities.Room room : packet.getRooms()) {
+                                    for (Entities.BaseRoom room : packet.getBaseRooms()) {
                                         if (room.getLastAction() != null) {
                                             if (room.getLastAction() instanceof Entities.TextMessage)
                                                 DatabaseHelper.notifyTextMessageReceived((Entities.TextMessage) room.getLastAction());

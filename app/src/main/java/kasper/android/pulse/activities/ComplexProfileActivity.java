@@ -114,7 +114,7 @@ public class ComplexProfileActivity extends BaseActivity {
         fillRooms(DatabaseHelper.getRooms(complex.getComplexId()));
         DataSyncer.syncRoomsWithServer(complex.getComplexId(), new OnRoomsSyncListener() {
             @Override
-            public void roomsSynced(List<Entities.Room> rooms) {
+            public void roomsSynced(List<Entities.BaseRoom> rooms) {
                 fillRooms(rooms);
             }
 
@@ -161,7 +161,7 @@ public class ComplexProfileActivity extends BaseActivity {
         memberCountTV.setText(memberCount + " " + (memberCount == 1 ? "member" : "members"));
     }
 
-    public void fillRooms(List<Entities.Room> rooms) {
+    public void fillRooms(List<Entities.BaseRoom> rooms) {
         roomsRV.setAdapter(new ComplexProfileAdapter(this, myId, rooms));
     }
 

@@ -14,7 +14,6 @@ import com.anadeainc.rxbus.Subscribe;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 
 import java.io.File;
-import java.lang.reflect.Member;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
@@ -51,7 +50,7 @@ public class CreateComplexActivity extends AppCompatActivity {
 
     File selectedImageFile;
     Entities.Complex complex = null;
-    Entities.Room room = null;
+    Entities.BaseRoom room = null;
     Entities.ServiceMessage message = null;
 
     @Override
@@ -114,7 +113,7 @@ public class CreateComplexActivity extends AppCompatActivity {
                 public void onRequestSuccess(Packet packet) {
                     complex = packet.getComplex();
                     Entities.ComplexSecret complexSecret = packet.getComplexSecret();
-                    room = complex.getRooms().get(0);
+                    room = complex.getAllRooms().get(0);
                     message = packet.getServiceMessage();
                     DatabaseHelper.notifyComplexCreated(complex);
                     for (Entities.Membership mem : complex.getMembers()) {
@@ -193,7 +192,7 @@ public class CreateComplexActivity extends AppCompatActivity {
         }
     }
 
-    private void taskDone(Entities.Complex complex, Entities.Room room, Entities.ServiceMessage message) {
+    private void taskDone(Entities.Complex complex, Entities.BaseRoom room, Entities.ServiceMessage message) {
         room.setComplex(complex);
         room.setLastAction(message);
         Core.getInstance().bus().post(new ComplexCreated(complex));

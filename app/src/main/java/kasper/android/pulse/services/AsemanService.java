@@ -11,11 +11,8 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
+import android.util.Log;
 import android.util.Pair;
-
-import com.microsoft.signalr.HubConnection;
-import com.microsoft.signalr.HubConnectionBuilder;
-import com.microsoft.signalr.HubConnectionState;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,6 +30,13 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+
+import com.microsoft.signalr.GsonCore;
+import com.microsoft.signalr.HubConnection;
+import com.microsoft.signalr.HubConnectionBuilder;
+import com.microsoft.signalr.HubConnectionState;
+import com.microsoft.signalr.JsonConverterType;
+
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ComplexProfileActivity;
 import kasper.android.pulse.activities.RoomActivity;
@@ -66,6 +70,7 @@ import kasper.android.pulse.retrofit.UserHandler;
 import kasper.android.pulse.rxbus.notifications.BotProfileUpdated;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
+import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
 import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.FileDownloaded;
@@ -86,6 +91,7 @@ import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.RoomProfileUpdated;
+import kasper.android.pulse.rxbus.notifications.RoomRemoved;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.rxbus.notifications.UserProfileUpdated;
@@ -106,7 +112,8 @@ public class AsemanService extends IntentService {
         return connectionState;
     }
 
-    private HubConnection connection = HubConnectionBuilder.create(NetworkHelper.SERVER_IP + "NotificationsHub/").build();
+    private HubConnection connection = HubConnectionBuilder.create(NetworkHelper.SERVER_IP + "NotificationsHub/")
+            .withJsonConverter(JsonConverterType.JACKSON).useLogger().build();
     Timer timer = new Timer();
     Timer timer2 = new Timer();
 
@@ -154,6 +161,29 @@ public class AsemanService extends IntentService {
 
     public AsemanService() {
         super("AsemanService");
+        connection.on("NotifyMessageSeen", this::onMessageSeen, Notifications.MessageSeenNotification.class);
+        connection.on("NotifyInviteCreated", this::onInviteCreated, Notifications.InviteCreationNotification.class);
+        connection.on("NotifyInviteCancelled", this::onInviteCancelled, Notifications.InviteCancellationNotification.class);
+        connection.on("NotifyUserJointComplex", this::onUserJointComplex, Notifications.UserJointComplexNotification.class);
+        connection.on("NotifyInviteAccepted", this::onInviteAccepted, Notifications.InviteAcceptanceNotification.class);
+        connection.on("NotifyInviteIgnored", this::onInviteIgnored, Notifications.InviteIgnoranceNotification.class);
+        connection.on("NotifyTextMessageReceived", this::onTextMessage, Notifications.TextMessageNotification.class);
+        connection.on("NotifyPhotoMessageReceived", this::onPhotoMessage, Notifications.PhotoMessageNotification.class);
+        connection.on("NotifyAudioMessageReceived", this::onAudioMessage, Notifications.AudioMessageNotification.class);
+        connection.on("NotifyVideoMessageReceived", this::onVideoMessage, Notifications.VideoMessageNotification.class);
+        connection.on("NotifyServiceMessageReceived", this::onServiceMessage, Notifications.ServiceMessageNotification.class);
+        connection.on("NotifyContactCreated", this::onContactCreated, Notifications.ContactCreationNotification.class);
+        connection.on("NotifyComplexDeleted", this::onComplexDeletion, Notifications.ComplexDeletionNotification.class);
+        connection.on("NotifyRoomDeleted", this::onRoomDeletion, Notifications.RoomDeletionNotification.class);
+        connection.on("NotifyBotSentBotView", this::onBotSentBotView, Notifications.BotSentBotViewNotification.class);
+        connection.on("NotifyBotUpdatedBotView", this::onBotUpdatedBotView, Notifications.BotUpdatedBotViewNotification.class);
+        connection.on("NotifyBotAnimatedBotView", this::onBotAnimatedBotView, Notifications.BotAnimatedBotViewNotification.class);
+        connection.on("NotifyBotRanCommandsOnBotView", this::onBotRanCommandsOnBotView, Notifications.BotRanCommandsOnBotViewNotification.class);
+        connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAddedToRoomNotification.class);
+        connection.on("NotifyBotRemovedFromRoom", this::onBotRemovedFromRoom, Notifications.BotRemovedFromRoomNotification.class);
+        connection.on("NotifyMemberAccessUpdated", this::onMemberAccessUpdated, Notifications.MemberAccessUpdatedNotification.class);
+        connection.on("NotifyBotPropertiesChanged", this::onBotPropertiesChanged, Notifications.BotPropertiesChangedNotification.class);
+        connection.on("NotifyRoomCreated", this::onRoomCreated, Notifications.RoomCreationNotification.class);
     }
 
     @Override
@@ -374,6 +404,10 @@ public class AsemanService extends IntentService {
                                             uploadingFileParts.remove(currentUploading.getUploadingId());
                                             uploadingFiles.take();
                                         }
+                                    } else {
+                                        DatabaseHelper.deleteUploadingById(currentUploading.getUploadingId());
+                                        uploadingFileParts.remove(currentUploading.getUploadingId());
+                                        uploadingFiles.take();
                                     }
                                 } else {
                                     DatabaseHelper.deleteUploadingById(currentUploading.getUploadingId());
@@ -484,7 +518,7 @@ public class AsemanService extends IntentService {
                                         packet.setComplex(complex);
                                         Entities.Room room = new Entities.Room();
                                         room.setRoomId(txtMsgSending.getRoomId());
-                                        packet.setRoom(room);
+                                        packet.setBaseRoom(room);
                                         packet.setTextMessage((Entities.TextMessage) message);
                                         MessageHandler messageHandler = NetworkHelper.getRetrofit().create(MessageHandler.class);
                                         currentTextCall = messageHandler.createTextMessage(packet);
@@ -643,29 +677,6 @@ public class AsemanService extends IntentService {
             connectionState = "Preparing";
             started = true;
             LogHelper.log("KasperLogger", "Notification service started");
-            connection.clearHandlers();
-            connection.on("NotifyMessageSeen", this::onMessageSeen, Notifications.MessageSeenNotification.class);
-            connection.on("NotifyInviteCreated", this::onInviteCreated, Notifications.InviteCreationNotification.class);
-            connection.on("NotifyInviteCancelled", this::onInviteCancelled, Notifications.InviteCancellationNotification.class);
-            connection.on("NotifyUserJointComplex", this::onUserJointComplex, Notifications.UserJointComplexNotification.class);
-            connection.on("NotifyInviteAccepted", this::onInviteAccepted, Notifications.InviteAcceptanceNotification.class);
-            connection.on("NotifyInviteIgnored", this::onInviteIgnored, Notifications.InviteIgnoranceNotification.class);
-            connection.on("NotifyTextMessageReceived", this::onTextMessage, Notifications.TextMessageNotification.class);
-            connection.on("NotifyPhotoMessageReceived", this::onPhotoMessage, Notifications.PhotoMessageNotification.class);
-            connection.on("NotifyAudioMessageReceived", this::onAudioMessage, Notifications.AudioMessageNotification.class);
-            connection.on("NotifyVideoMessageReceived", this::onVideoMessage, Notifications.VideoMessageNotification.class);
-            connection.on("NotifyServiceMessageReceived", this::onServiceMessage, Notifications.ServiceMessageNotification.class);
-            connection.on("NotifyContactCreated", this::onContactCreated, Notifications.ContactCreationNotification.class);
-            connection.on("NotifyComplexDeleted", this::onComplexDeletion, Notifications.ComplexDeletionNotification.class);
-            connection.on("NotifyRoomDeleted", this::onRoomDeletion, Notifications.RoomDeletionNotification.class);
-            connection.on("NotifyBotSentBotView", this::onBotSentBotView, Notifications.BotSentBotViewNotification.class);
-            connection.on("NotifyBotUpdatedBotView", this::onBotUpdatedBotView, Notifications.BotUpdatedBotViewNotification.class);
-            connection.on("NotifyBotAnimatedBotView", this::onBotAnimatedBotView, Notifications.BotAnimatedBotViewNotification.class);
-            connection.on("NotifyBotRanCommandsOnBotView", this::onBotRanCommandsOnBotView, Notifications.BotRanCommandsOnBotViewNotification.class);
-            connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAddedToRoomNotification.class);
-            connection.on("NotifyBotRemovedFromRoom", this::onBotRemovedFromRoom, Notifications.BotRemovedFromRoomNotification.class);
-            connection.on("NotifyMemberAccessUpdated", this::onMemberAccessUpdated, Notifications.MemberAccessUpdatedNotification.class);
-            connection.on("NotifyBotPropertiesChanged", this::onBotPropertiesChanged, Notifications.BotPropertiesChangedNotification.class);
 
             connectionState = "Connecting";
             Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connecting));
@@ -990,7 +1001,7 @@ public class AsemanService extends IntentService {
                         packet.setComplex(complex);
                         Entities.Room room = new Entities.Room();
                         room.setRoomId(roomId);
-                        packet.setRoom(room);
+                        packet.setBaseRoom(room);
                         finalFile.setFileId(onlineFileId);
                         packet.setFile(finalFile);
                         MessageHandler messageHandler = NetworkHelper.getRetrofit().create(MessageHandler.class);
@@ -1110,7 +1121,7 @@ public class AsemanService extends IntentService {
                 Entities.Room room = (Entities.Room) object;
                 room.setAvatar(onlineFileId);
                 Packet packet = new Packet();
-                packet.setRoom(room);
+                packet.setBaseRoom(room);
                 NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(RoomHandler.class).updateRoomProfile(packet), new ServerCallback() {
                     @Override
                     public void onRequestSuccess(Packet packet) {
@@ -1233,6 +1244,50 @@ public class AsemanService extends IntentService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void onRoomCreated(Notifications.RoomCreationNotification notif) {
+        LogHelper.log("Aseman", "Received Room Creation notification");
+
+        if (notif.getSingleRoom() != null) {
+            Entities.User me = DatabaseHelper.getMe();
+            if (me != null) {
+                if (notif.getSingleRoom().getUser1().getBaseUserId() != me.getBaseUserId()) {
+                    Log.d("KasperLogger", "test 1");
+                    if (notif.getSingleRoom().getUser1() instanceof Entities.User) {
+                        Log.d("KasperLogger", "test 2");
+                        DatabaseHelper.notifyUserCreated((Entities.User)(notif.getSingleRoom().getUser1()));
+                    } else if (notif.getSingleRoom().getUser1() instanceof Entities.Bot) {
+                        Log.d("KasperLogger", "test 3");
+                        DatabaseHelper.notifyBotCreated((Entities.Bot)(notif.getSingleRoom().getUser1()), null);
+                    }
+                } else if (notif.getSingleRoom().getUser2().getBaseUserId() != me.getBaseUserId()) {
+                    Log.d("KasperLogger", "test 4");
+                    if (notif.getSingleRoom().getUser2() instanceof Entities.User) {
+                        Log.d("KasperLogger", "test 5");
+                        DatabaseHelper.notifyUserCreated((Entities.User)(notif.getSingleRoom().getUser2()));
+                    } else if (notif.getSingleRoom().getUser2() instanceof Entities.Bot) {
+                        Log.d("KasperLogger", "test 6");
+                        DatabaseHelper.notifyBotCreated((Entities.Bot)(notif.getSingleRoom().getUser2()), null);
+                    }
+                }
+            }
+            DatabaseHelper.notifyRoomCreated(notif.getSingleRoom());
+            Core.getInstance().bus().post(new RoomCreated(notif.getSingleRoom().getComplex().getComplexId(), notif.getSingleRoom()));
+        } else {
+            DatabaseHelper.notifyRoomCreated(notif.getRoom());
+            Core.getInstance().bus().post(new RoomCreated(notif.getRoom().getComplex().getComplexId(), notif.getRoom()));
+        }
+
+        DatabaseHelper.notifyServiceMessageReceived(notif.getMessage());
+        Entities.MessageLocal ml = new Entities.MessageLocal();
+        ml.setMessageId(notif.getMessage().getMessageId());
+        ml.setSent(true);
+        Core.getInstance().bus().post(new MessageReceived(true, notif.getMessage(), ml));
+
+        showMessageNotification(notif.getMessage(), notif.getMessage().getText());
+
+        notifyServerNotifReceived(notif.getNotificationId());
     }
 
     public void onBotPropertiesChanged(Notifications.BotPropertiesChangedNotification notif) {
@@ -1370,10 +1425,17 @@ public class AsemanService extends IntentService {
 
         DatabaseHelper.notifyUserCreated(mem.getUser());
         DatabaseHelper.notifyMembershipCreated(mem);
+        DatabaseHelper.notifyServiceMessageReceived(ujcn.getMessage());
         if (mem.getMemberAccess() != null)
             DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
 
         Core.getInstance().bus().post(new MembershipCreated(mem));
+        Entities.MessageLocal ml = new Entities.MessageLocal();
+        ml.setMessageId(ujcn.getMessage().getMessageId());
+        ml.setSent(true);
+        Core.getInstance().bus().post(new MessageReceived(true, ujcn.getMessage(), ml));
+
+        showMessageNotification(ujcn.getMessage(), ujcn.getMessage().getText());
 
         notifyServerNotifReceived(ujcn.getNotificationId());
     }
@@ -1381,11 +1443,26 @@ public class AsemanService extends IntentService {
     private void onComplexDeletion(final Notifications.ComplexDeletionNotification cdn) {
         LogHelper.log("Aseman", "Received Complex Deletion notification");
 
+        showNotification("Complex deleted", "Complex [" +
+                DatabaseHelper.getComplexById(cdn.getComplexId()).getTitle() + "] deleted.",
+                null);
+
+        DatabaseHelper.notifyComplexRemoved(cdn.getComplexId());
+        Core.getInstance().bus().post(new ComplexRemoved(cdn.getComplexId()));
+
         notifyServerNotifReceived(cdn.getNotificationId());
     }
 
     private void onRoomDeletion(final Notifications.RoomDeletionNotification rdn) {
         LogHelper.log("Aseman", "Received Room Deletion notification");
+
+        showNotification("Room deleted", "room [" +
+                DatabaseHelper.getComplexById(rdn.getComplexId()).getTitle() + " : " +
+                DatabaseHelper.getRoomById(rdn.getRoomId())+ "] deleted.", null);
+
+        Entities.BaseRoom baseRoom = DatabaseHelper.getRoomById(rdn.getRoomId());
+        DatabaseHelper.notifyRoomRemoved(rdn.getRoomId());
+        Core.getInstance().bus().post(new RoomRemoved(baseRoom));
 
         notifyServerNotifReceived(rdn.getNotificationId());
     }
@@ -1459,7 +1536,7 @@ public class AsemanService extends IntentService {
 
         Entities.Complex complex = ccn.getContact().getComplex();
         Entities.ComplexSecret complexSecret = ccn.getComplexSecret();
-        Entities.Room room = complex.getRooms().get(0);
+        Entities.BaseRoom room = complex.getAllRooms().get(0);
         room.setComplex(complex);
         Entities.User user = ccn.getContact().getUser();
         Entities.User peer = ccn.getContact().getPeer();
@@ -1480,6 +1557,8 @@ public class AsemanService extends IntentService {
         Core.getInstance().bus().post(new ComplexCreated(complex));
         Core.getInstance().bus().post(new RoomCreated(complex.getComplexId(), room));
         Core.getInstance().bus().post(new ContactCreated(ccn.getContact()));
+
+        handleServiceMessage(ccn.getMessage());
 
         notifyServerNotifReceived(ccn.getNotificationId());
     }
@@ -1563,8 +1642,13 @@ public class AsemanService extends IntentService {
     }
 
     private void onServiceMessage(final Notifications.ServiceMessageNotification mcn) {
+        handleServiceMessage(mcn.getMessage());
+
+        notifyServerNotifReceived(mcn.getNotificationId());
+    }
+
+    private void handleServiceMessage(Entities.ServiceMessage message) {
         LogHelper.log("Aseman", "Received service message notification");
-        final Entities.ServiceMessage message = mcn.getMessage();
         message.setSeenByMe(false);
         if (DatabaseHelper.notifyServiceMessageReceived(message)) {
             Entities.MessageLocal messageLocal = new Entities.MessageLocal();
@@ -1573,8 +1657,6 @@ public class AsemanService extends IntentService {
             Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
             showMessageNotification(message, message.getText());
         }
-
-        notifyServerNotifReceived(mcn.getNotificationId());
     }
 
     private void showNotification(String title, String content, Intent intent) {

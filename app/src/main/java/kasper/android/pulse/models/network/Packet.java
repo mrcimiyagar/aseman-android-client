@@ -15,7 +15,7 @@ public class Packet {
     private Entities.Contact Contact;
     private Entities.ServiceMessage ServiceMessage;
     private List<Entities.Contact> Contacts;
-    private Entities.Room Room;
+    private Entities.BaseRoom BaseRoom;
     private Entities.Complex Complex;
     private Entities.ComplexSecret ComplexSecret;
     private List<Entities.ComplexSecret> ComplexSecrets;
@@ -24,7 +24,7 @@ public class Packet {
     private Entities.Bot Bot;
     private List<Entities.Bot> Bots;
     private List<Entities.Complex> Complexes;
-    private List<Entities.Room> Rooms;
+    private List<Entities.BaseRoom> BaseRooms;
     private String SearchQuery;
     private List<Entities.User> Users;
     private List<Entities.Session> Sessions;
@@ -53,6 +53,7 @@ public class Packet {
     private List<Entities.MemberAccess> MemberAccesses;
     private Boolean FetchNext;
     private String ControlId;
+    private Boolean SingleRoomMode;
 
     public String getStatus() {
         return Status;
@@ -126,12 +127,12 @@ public class Packet {
         Contacts = contacts;
     }
 
-    public Entities.Room getRoom() {
-        return Room;
+    public Entities.BaseRoom getBaseRoom() {
+        return BaseRoom;
     }
 
-    public void setRoom(Entities.Room room) {
-        Room = room;
+    public void setBaseRoom(Entities.BaseRoom baseRoom) {
+        BaseRoom = baseRoom;
     }
 
     public Entities.Complex getComplex() {
@@ -198,12 +199,12 @@ public class Packet {
         Complexes = complexes;
     }
 
-    public List<Entities.Room> getRooms() {
-        return Rooms;
+    public List<Entities.BaseRoom> getBaseRooms() {
+        return BaseRooms;
     }
 
-    public void setRooms(List<Entities.Room> rooms) {
-        Rooms = rooms;
+    public void setBaseRooms(List<Entities.BaseRoom> baseRooms) {
+        BaseRooms = baseRooms;
     }
 
     public String getSearchQuery() {
@@ -428,5 +429,13 @@ public class Packet {
 
     public void setControlId(String controlId) {
         ControlId = controlId;
+    }
+
+    public Boolean isSingleRoomMode() {
+        return SingleRoomMode;
+    }
+
+    public void setSingleRoomMode(Boolean singleRoomMode) {
+        this.SingleRoomMode = singleRoomMode;
     }
 }

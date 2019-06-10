@@ -21,7 +21,6 @@ import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.components.OneClickFAB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.Tuple;
 import kasper.android.pulse.models.entities.Entities;
@@ -53,7 +52,7 @@ public class CreateRoomActivity extends AppCompatActivity {
 
     private long fileId;
     private Entities.Complex complex = null;
-    private Entities.Room room = null;
+    private Entities.BaseRoom room = null;
     private Entities.ServiceMessage message = null;
 
     @Override
@@ -116,13 +115,13 @@ public class CreateRoomActivity extends AppCompatActivity {
             Entities.Room r = new Entities.Room();
             r.setTitle(roomName);
             r.setAvatar(0);
-            packet.setRoom(r);
+            packet.setBaseRoom(r);
             RoomHandler roomHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
             Call<Packet> call = roomHandler.createRoom(packet);
             NetworkHelper.requestServer(call, new ServerCallback() {
                 @Override
                 public void onRequestSuccess(Packet packet) {
-                    room = packet.getRoom();
+                    room = packet.getBaseRoom();
                     message = packet.getServiceMessage();
                     room.setComplex(complex);
                     DatabaseHelper.notifyRoomCreated(room);
@@ -174,7 +173,7 @@ public class CreateRoomActivity extends AppCompatActivity {
             loadingView.setVisibility(View.GONE);
             Packet packet2 = new Packet();
             room.setAvatar(fileUploaded.getOnlineFileId());
-            packet2.setRoom(room);
+            packet2.setBaseRoom(room);
             packet2.setComplex(complex);
             RoomHandler profileHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
             Call<Packet> call2 = profileHandler.updateRoomProfile(packet2);
@@ -198,7 +197,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         }
     }
 
-    private void taskDone(Entities.Complex complex, Entities.Room room, Entities.ServiceMessage message) {
+    private void taskDone(Entities.Complex complex, Entities.BaseRoom room, Entities.ServiceMessage message) {
         room.setComplex(complex);
         room.setLastAction(message);
         Core.getInstance().bus().post(new RoomCreated(complexId, room));

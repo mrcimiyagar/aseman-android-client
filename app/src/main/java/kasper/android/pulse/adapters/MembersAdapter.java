@@ -1,14 +1,18 @@
 package kasper.android.pulse.adapters;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 
+import java.util.Hashtable;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -17,24 +21,38 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ModifyMemberAccessActivity;
+import kasper.android.pulse.activities.RoomActivity;
+import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.retrofit.RoomHandler;
 import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
+import kasper.android.pulse.rxbus.notifications.MessageReceived;
+import kasper.android.pulse.rxbus.notifications.RoomCreated;
+import retrofit2.Call;
 
 public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVH> {
 
     private AppCompatActivity activity;
     private List<Entities.Membership> memberships;
+    private Hashtable<Long, Entities.SingleRoom> singleRooms;
     private Entities.MemberAccess myMemberAccess;
     private long myId = 0, complexId = 0;
     private Entities.Complex complex;
 
-    public MembersAdapter(AppCompatActivity activity, long myId, long complexId, List<Entities.Membership> memberships) {
+    public MembersAdapter(AppCompatActivity activity, long myId, long complexId, List<Entities.Membership> memberships, List<Entities.SingleRoom> singleRooms) {
         this.activity = activity;
         this.memberships = memberships;
+        this.singleRooms = new Hashtable<>();
+        for (Entities.SingleRoom sr : singleRooms) {
+            if (sr.getUser1Id() == myId)
+                this.singleRooms.put(sr.getUser2Id(), sr);
+            else
+                this.singleRooms.put(sr.getUser1Id(), sr);
+        }
         this.myId = myId;
         this.complexId = complexId;
         this.myMemberAccess = DatabaseHelper.getMemberAccessByComplexAndUserId(complexId, myId);
@@ -52,8 +70,33 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVH
         if (updated.getMemberAccess().getMembership().getUserId() == myId
                 && updated.getMemberAccess().getMembership().getComplexId() == complexId) {
             myMemberAccess = updated.getMemberAccess();
-            for (int counter = 0; counter < this.memberships.size(); counter++) {
-                notifyItemChanged(counter);
+            synchronized (memberships) {
+                for (int counter = 0; counter < this.memberships.size(); counter++) {
+                    notifyItemChanged(counter);
+                }
+            }
+        }
+    }
+
+    @Subscribe
+    public void onRoomCreated(RoomCreated roomCreated) {
+        if (roomCreated.getRoom() instanceof Entities.SingleRoom) {
+            Entities.SingleRoom sr = (Entities.SingleRoom) roomCreated.getRoom();
+            long peerId = 0;
+            if (sr.getUser1Id() == myId) {
+                this.singleRooms.put(sr.getUser2Id(), sr);
+                peerId = sr.getUser2Id();
+            } else {
+                this.singleRooms.put(sr.getUser1Id(), sr);
+                peerId = sr.getUser1Id();
+            }
+            synchronized (memberships) {
+                for (int counter = 0; counter < memberships.size(); counter++) {
+                    if (memberships.get(counter).getUserId() == peerId) {
+                        notifyItemChanged(counter);
+                        break;
+                    }
+                }
             }
         }
     }
@@ -82,6 +125,64 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVH
             } else
                 holder.settingsBTN.setVisibility(View.GONE);
         }
+        if (myId == membership.getUserId()) {
+            holder.singleRoomBTN.setVisibility(View.GONE);
+        } else {
+            holder.singleRoomBTN.setVisibility(View.VISIBLE);
+            Entities.SingleRoom sr = this.singleRooms.get(membership.getUserId());
+            if (sr != null) {
+                holder.singleRoomBTN.setColorFilter(
+                        Core.getInstance().getResources().getColor(R.color.colorBlue), PorterDuff.Mode.SRC_ATOP);
+                holder.singleRoomBTN.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        activity.startActivity(new Intent(activity, RoomActivity.class)
+                                .putExtra("complex_id", sr.getComplexId())
+                                .putExtra("room_id", sr.getRoomId()));
+                    }
+                });
+            } else {
+                holder.singleRoomBTN.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+                holder.singleRoomBTN.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Packet p = new Packet();
+                        Entities.Complex com = new Entities.Complex();
+                        com.setComplexId(complexId);
+                        p.setComplex(com);
+                        Entities.User u = new Entities.User();
+                        u.setBaseUserId(membership.getUserId());
+                        p.setUser(u);
+                        p.setSingleRoomMode(true);
+                        Call<Packet> call = NetworkHelper.getRetrofit().create(RoomHandler.class).createRoom(p);
+                        NetworkHelper.requestServer(call, new ServerCallback() {
+                            @Override
+                            public void onRequestSuccess(Packet packet) {
+                                DatabaseHelper.notifyRoomCreated(packet.getBaseRoom());
+                                DatabaseHelper.notifyServiceMessageReceived(packet.getServiceMessage());
+                                Core.getInstance().bus().post(new RoomCreated(complexId, packet.getBaseRoom()));
+                                Entities.MessageLocal messageLocal = new Entities.MessageLocal();
+                                messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
+                                messageLocal.setSent(true);
+                                Core.getInstance().bus().post(new MessageReceived(true, packet.getServiceMessage(), messageLocal));
+                                singleRooms.put(membership.getUserId(), (Entities.SingleRoom) packet.getBaseRoom());
+                                notifyItemChanged(holder.getAdapterPosition());
+                            }
+
+                            @Override
+                            public void onServerFailure() {
+                                Toast.makeText(activity, "Room creation failure", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onConnectionFailure() {
+                                Toast.makeText(activity, "Room creation failure", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                });
+            }
+        }
     }
 
     @Override
@@ -92,12 +193,14 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVH
     class MemberVH extends RecyclerView.ViewHolder {
         CircleImageView avatarIV;
         TextView titleTV;
+        ImageButton singleRoomBTN;
         ImageButton settingsBTN;
 
         MemberVH(View itemView) {
             super(itemView);
             avatarIV = itemView.findViewById(R.id.adapterMembersAvatarIV);
             titleTV = itemView.findViewById(R.id.adapterMembersTitleTV);
+            singleRoomBTN = itemView.findViewById(R.id.adapterMembersCreateSingleRoomBTN);
             settingsBTN = itemView.findViewById(R.id.adapterMembersModifyAccessBTN);
         }
     }

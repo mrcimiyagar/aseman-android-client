@@ -48,9 +48,10 @@ public class ComplexMembersActivity extends AppCompatActivity {
 
     private void initData() {
         List<Entities.Membership> memberships = DatabaseHelper.getMemberships(complexId);
+        List<Entities.SingleRoom> singleRooms = DatabaseHelper.getComplexSingleRooms(complexId);
         Entities.User me = DatabaseHelper.getMe();
         if (me != null)
-            membersRV.setAdapter(new MembersAdapter(this, me.getBaseUserId(), complexId, memberships));
+            membersRV.setAdapter(new MembersAdapter(this, me.getBaseUserId(), complexId, memberships, singleRooms));
     }
 
     public void onBackBtnClicked(View view) {

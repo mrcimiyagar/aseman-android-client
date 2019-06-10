@@ -45,7 +45,7 @@ import kasper.android.pulse.repositories.WorkershipDao;
         , Entities.ComplexSecret.class, Entities.Room.class, Entities.Membership.class
         , Entities.MemberAccess.class, Entities.Workership.class, Entities.MessageLocal.class
         , Entities.FileLocal.class, Entities.IdKeeper.class, Uploading.class, Downloading.class
-        , TextMessageSending.class, FileMessageSending.class}, version = 1, exportSchema = false)
+        , TextMessageSending.class, FileMessageSending.class, Entities.SingleRoom.class}, version = 1, exportSchema = false)
 public abstract class AsemanDB extends RoomDatabase {
     public abstract BotCreationDao getBotCreationDao();
     public abstract BotDao getBotDao();

@@ -2,7 +2,6 @@ package kasper.android.pulse.middleware;
 
 import java.util.List;
 
-import androidx.annotation.NonNull;
 import kasper.android.pulse.callbacks.middleware.OnComplexSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnComplexesSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnMeSyncListener;
@@ -18,8 +17,6 @@ import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.RoomHandler;
 import kasper.android.pulse.retrofit.UserHandler;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class DataSyncer {
 
@@ -59,13 +56,13 @@ public class DataSyncer {
         packet.setComplex(complex);
         final Entities.Room room = new Entities.Room();
         room.setRoomId(roomId);
-        packet.setRoom(room);
+        packet.setBaseRoom(room);
         RoomHandler roomHandler = NetworkHelper.getRetrofit().create(RoomHandler.class);
         Call<Packet> roomCall = roomHandler.getRoomById(packet);
         NetworkHelper.requestServer(roomCall, new ServerCallback() {
             @Override
             public void onRequestSuccess(Packet packet) {
-                Entities.Room serverRoom = packet.getRoom();
+                Entities.BaseRoom serverRoom = packet.getBaseRoom();
                 DatabaseHelper.notifyRoomCreated(serverRoom);
                 serverRoom = DatabaseHelper.getRoomById(roomId);
                 callback.roomSynced(serverRoom);
@@ -150,8 +147,8 @@ public class DataSyncer {
         NetworkHelper.requestServer(roomsCall, new ServerCallback() {
             @Override
             public void onRequestSuccess(Packet packet) {
-                List<Entities.Room> rooms = packet.getRooms();
-                for (Entities.Room room : rooms) {
+                List<Entities.BaseRoom> rooms = packet.getBaseRooms();
+                for (Entities.BaseRoom room : rooms) {
                     DatabaseHelper.notifyRoomCreated(room);
                 }
                 rooms = DatabaseHelper.getRooms(complexId);

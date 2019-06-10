@@ -2,7 +2,6 @@ package kasper.android.pulse.activities;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
@@ -20,11 +19,9 @@ import java.util.Map;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.callbacks.network.ServerCallback2;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
-import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
 import kasper.android.pulse.models.entities.Entities;
@@ -198,7 +195,7 @@ public class RoomActivity extends AppCompatActivity {
         packet.setComplex(complex);
         Entities.Room room = new Entities.Room();
         room.setRoomId(roomId);
-        packet.setRoom(room);
+        packet.setBaseRoom(room);
         final RobotHandler robotHandler = NetworkHelper.getRetrofit().create(RobotHandler.class);
         Call<Packet> call = robotHandler.getWorkerships(packet);
         NetworkHelper.requestServer(call, new ServerCallback() {
@@ -244,7 +241,7 @@ public class RoomActivity extends AppCompatActivity {
             packet.setComplex(c);
             Entities.Room r = new Entities.Room();
             r.setRoomId(roomId);
-            packet.setRoom(r);
+            packet.setBaseRoom(r);
             packet.setBot(bot);
             packet.setControlId(controlId);
             NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(PulseHandler.class).clickBotView(packet)
@@ -278,7 +275,7 @@ public class RoomActivity extends AppCompatActivity {
         packet2.setComplex(packComplex);
         Entities.Room packRoom = new Entities.Room();
         packRoom.setRoomId(roomId);
-        packet2.setRoom(packRoom);
+        packet2.setBaseRoom(packRoom);
         packet2.setBot(bot);
         Call<Packet> call2 = NetworkHelper.getRetrofit()
                 .create(PulseHandler.class).requestBotView(packet2);

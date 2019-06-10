@@ -1,4 +1,4 @@
-package kasper.android.pulse.helpers;
+package com.microsoft.signalr.utils;
 
 import android.util.Log;
 

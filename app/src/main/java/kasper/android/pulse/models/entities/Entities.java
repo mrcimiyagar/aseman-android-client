@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import kasper.android.pulse.models.notifications.Notifications;
@@ -104,7 +105,6 @@ public class Entities {
         private long avatar;
         @Ignore
         private List<Session> sessions;
-        private String type;
 
         public long getBaseUserId() {
             return baseUserId;
@@ -136,14 +136,6 @@ public class Entities {
 
         public void setSessions(List<Session> sessions) {
             this.sessions = sessions;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
         }
     }
 
@@ -620,6 +612,7 @@ public class Entities {
         private long fileId;
         private long size;
         private boolean isPublic;
+        //private boolean asRawFile;
         @Ignore
         private List<FileUsage> fileUsages;
 
@@ -632,6 +625,7 @@ public class Entities {
             File file = new File();
             file.setFileId(this.fileId);
             file.setPublic(this.isPublic);
+            //file.setAsRawFile(this.asRawFile);
             file.setFileUsages(this.fileUsages);
             return file;
         }
@@ -660,6 +654,14 @@ public class Entities {
             isPublic = aPublic;
         }
 
+/*        public boolean isAsRawFile() {
+            return asRawFile;
+        }
+
+        public void setAsRawFile(boolean asRawFile) {
+            this.asRawFile = asRawFile;
+        }
+*/
         public List<FileUsage> getFileUsages() {
             return fileUsages;
         }
@@ -840,7 +842,7 @@ public class Entities {
         private BaseUser author;
         private long roomId;
         @Ignore
-        private Room room;
+        private BaseRoom room;
 
         public Message clone() {
             Message message = new Message();
@@ -909,11 +911,11 @@ public class Entities {
             this.roomId = roomId;
         }
 
-        public Room getRoom() {
+        public BaseRoom getRoom() {
             return room;
         }
 
-        public void setRoom(Room room) {
+        public void setRoom(BaseRoom room) {
             this.room = room;
         }
     }
@@ -1098,6 +1100,8 @@ public class Entities {
         @Ignore
         private List<Room> rooms;
         @Ignore
+        private List<SingleRoom> singleRooms;
+        @Ignore
         private List<Invite> invites;
         @Ignore
         private ComplexSecret complexSecret;
@@ -1142,12 +1146,27 @@ public class Entities {
             this.members = members;
         }
 
+        public List<BaseRoom> getAllRooms() {
+            List<BaseRoom> brs = new ArrayList<>();
+            if (rooms != null) brs.addAll(rooms);
+            if (singleRooms != null) brs.addAll(singleRooms);
+            return brs;
+        }
+
         public List<Room> getRooms() {
             return rooms;
         }
 
         public void setRooms(List<Room> rooms) {
             this.rooms = rooms;
+        }
+
+        public List<SingleRoom> getSingleRooms() {
+            return singleRooms;
+        }
+
+        public void setSingleRooms(List<SingleRoom> singleRooms) {
+            this.singleRooms = singleRooms;
         }
 
         public List<Invite> getInvites() {
@@ -1219,8 +1238,17 @@ public class Entities {
         }
     }
 
+    @JsonTypeInfo(
+            use = JsonTypeInfo.Id.NAME,
+            include = JsonTypeInfo.As.PROPERTY,
+            property = "type")
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = BaseRoom.class, name = "BaseRoom"),
+            @JsonSubTypes.Type(value = Room.class, name = "Room"),
+            @JsonSubTypes.Type(value = SingleRoom.class, name = "SingleRoom")
+    })
     @Entity
-    public static class Room implements Serializable {
+    public static class BaseRoom implements Serializable {
         @PrimaryKey
         private long roomId;
         private String title;
@@ -1307,6 +1335,53 @@ public class Entities {
 
         public void setLastAction(Message lastAction) {
             this.lastAction = lastAction;
+        }
+    }
+
+    @Entity
+    public static class Room extends BaseRoom implements Serializable {
+
+    }
+
+    @Entity
+    public static class SingleRoom extends BaseRoom implements Serializable {
+        private long user1Id;
+        @Ignore
+        private BaseUser user1;
+        private long user2Id;
+        @Ignore
+        private BaseUser user2;
+
+        public long getUser1Id() {
+            return user1Id;
+        }
+
+        public BaseUser getUser1() {
+            return user1;
+        }
+
+        public long getUser2Id() {
+            return user2Id;
+        }
+
+        public BaseUser getUser2() {
+            return user2;
+        }
+
+        public void setUser1Id(long user1Id) {
+            this.user1Id = user1Id;
+        }
+
+        public void setUser1(BaseUser user1) {
+            this.user1 = user1;
+        }
+
+        public void setUser2Id(long user2Id) {
+            this.user2Id = user2Id;
+        }
+
+        public void setUser2(BaseUser user2) {
+            this.user2 = user2;
         }
     }
 

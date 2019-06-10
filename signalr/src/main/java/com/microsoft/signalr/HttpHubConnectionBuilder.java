@@ -14,31 +14,36 @@ import io.reactivex.Single;
 public class HttpHubConnectionBuilder {
     private final String url;
     private Transport transport;
+    private JsonConverterType converterType;
     private HttpClient httpClient;
     private boolean skipNegotiate;
     private Single<String> accessTokenProvider;
     private long handshakeResponseTimeout = 0;
     private Map<String, String> headers;
-    private TransportEnum transportEnum;
+    private boolean log;
 
     HttpHubConnectionBuilder(String url) {
         this.url = url;
     }
 
-    //For testing purposes. The Transport interface isn't public.
-    HttpHubConnectionBuilder withTransportImplementation(Transport transport) {
+    /**
+     * Sets the transport to be used by the {@link HubConnection}.
+     *
+     * @param transport The transport to be used.
+     * @return This instance of the HttpHubConnectionBuilder.
+     */
+    HttpHubConnectionBuilder withTransport(Transport transport) {
         this.transport = transport;
         return this;
     }
 
-    /**
-     * Sets the transport type to indicate which transport to be used by the {@link HubConnection}.
-     *
-     * @param transportEnum The type of transport to be used.
-     * @return This instance of the HttpHubConnectionBuilder.
-     */
-    public HttpHubConnectionBuilder withTransport(TransportEnum transportEnum) {
-        this.transportEnum = transportEnum;
+    public HttpHubConnectionBuilder withJsonConverter(JsonConverterType converterType) {
+        this.converterType = converterType;
+        return this;
+    }
+
+    public HttpHubConnectionBuilder useLogger() {
+        this.log = true;
         return this;
     }
 
@@ -119,6 +124,6 @@ public class HttpHubConnectionBuilder {
      * @return A new instance of {@link HubConnection}.
      */
     public HubConnection build() {
-        return new HubConnection(url, transport, skipNegotiate, httpClient, accessTokenProvider, handshakeResponseTimeout, headers, transportEnum);
+        return new HubConnection(url, transport, converterType, skipNegotiate, httpClient, accessTokenProvider, handshakeResponseTimeout, headers, log);
     }
 }

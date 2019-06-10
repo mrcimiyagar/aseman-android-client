@@ -14,7 +14,6 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
@@ -24,7 +23,6 @@ import kasper.android.pulse.retrofit.InviteHandler;
 import kasper.android.pulse.retrofit.MessageHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
-import kasper.android.pulse.rxbus.notifications.UiThreadRequested;
 import kasper.android.pulse.services.AsemanService;
 import kasper.android.pulse.services.MusicsService;
 import retrofit2.Call;
@@ -283,9 +281,9 @@ public class StartupActivity extends BaseActivity {
     }
 
     private void initLastActions() {
-        List<Entities.Room> rooms = new ArrayList<>();
+        List<Entities.BaseRoom> rooms = new ArrayList<>();
         for (Entities.Complex complex : syncedComplexes) {
-            for (Entities.Room room : complex.getRooms()) {
+            for (Entities.BaseRoom room : complex.getAllRooms()) {
                 Entities.Room r = new Entities.Room();
                 r.setComplexId(room.getComplexId());
                 r.setRoomId(room.getRoomId());
@@ -293,14 +291,14 @@ public class StartupActivity extends BaseActivity {
             }
         }
         Packet packet = new Packet();
-        packet.setRooms(rooms);
+        packet.setBaseRooms(rooms);
         Call<Packet> call = NetworkHelper.getRetrofit().create(MessageHandler.class).getLastActions(packet);
         NetworkHelper.requestServer(call, new ServerCallback() {
             @Override
             public void onRequestSuccess(Packet packet) {
                 new Thread(() -> {
                     syncedMessages = new ArrayList<>();
-                    for (Entities.Room room : packet.getRooms()) {
+                    for (Entities.BaseRoom room : packet.getBaseRooms()) {
                         if (room.getLastAction() != null)
                             syncedMessages.add(room.getLastAction());
                     }
@@ -340,7 +338,7 @@ public class StartupActivity extends BaseActivity {
                 }
                 for (Entities.Complex complex : syncedComplexes) {
                     DatabaseHelper.notifyComplexCreated(complex);
-                    for (Entities.Room room : complex.getRooms()) {
+                    for (Entities.BaseRoom room : complex.getAllRooms()) {
                         DatabaseHelper.notifyRoomCreated(room);
                     }
                     for (Entities.Membership mem : complex.getMembers()) {

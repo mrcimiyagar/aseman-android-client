@@ -254,7 +254,7 @@ public class HomeActivity extends BaseActivity {
             public void onRequestSuccess(Packet packet) {
                 DatabaseHelper.notifyComplexRemoved(complexId);
                 Core.getInstance().bus().post(new ComplexRemoved(complexId));
-                for (Entities.Room room : complex.getRooms()) {
+                for (Entities.BaseRoom room : complex.getAllRooms()) {
                     Core.getInstance().bus().post(new RoomRemoved(room));
                 }
                 Entities.User user = DatabaseHelper.getMe();
@@ -342,7 +342,7 @@ public class HomeActivity extends BaseActivity {
         initRoomsAdapter(complex, DatabaseHelper.getRooms(complex.getComplexId()));
         DataSyncer.syncRoomsWithServer(complex.getComplexId(), new OnRoomsSyncListener() {
             @Override
-            public void roomsSynced(List<Entities.Room> rooms) {
+            public void roomsSynced(List<Entities.BaseRoom> rooms) {
                 if (complex.getComplexId() == chosenComplexId)
                     initRoomsAdapter(complex, rooms);
             }
@@ -351,7 +351,7 @@ public class HomeActivity extends BaseActivity {
         });
     }
 
-    private void initRoomsAdapter(Entities.Complex complex, List<Entities.Room> rooms) {
+    private void initRoomsAdapter(Entities.Complex complex, List<Entities.BaseRoom> rooms) {
         if (menuRoomsRV.getAdapter() != null)
             ((RoomsAdapter) menuRoomsRV.getAdapter()).dispose();
         @SuppressLint("RtlHardcoded")

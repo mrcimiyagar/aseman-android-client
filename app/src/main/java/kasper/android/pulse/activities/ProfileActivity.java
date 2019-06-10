@@ -110,7 +110,7 @@ public class ProfileActivity extends AppCompatActivity {
         if (me != null) {
             if (humanId == me.getBaseUserId()) {
                 Entities.Complex homeComplex = DatabaseHelper.getMe().getUserSecret().getHome();
-                Entities.Room mainRoom = homeComplex.getRooms().get(0);
+                Entities.BaseRoom mainRoom = homeComplex.getAllRooms().get(0);
                 startActivity(new Intent(ProfileActivity
                         .this, RoomActivity.class)
                         .putExtra("complex_id", homeComplex.getComplexId())
@@ -123,7 +123,7 @@ public class ProfileActivity extends AppCompatActivity {
                             complexId = contact.getComplexId();
                         }
                     }
-                    Entities.Room room = DatabaseHelper.getRooms(complexId).get(0);
+                    Entities.BaseRoom room = DatabaseHelper.getRooms(complexId).get(0);
                     final long foundRoomId = room.getRoomId();
                     startActivity(new Intent(ProfileActivity
                             .this, RoomActivity.class)
@@ -142,7 +142,7 @@ public class ProfileActivity extends AppCompatActivity {
                             Entities.Contact contact = packet.getContact();
                             Entities.Complex complex = packet.getContact().getComplex();
                             Entities.ComplexSecret complexSecret = packet.getComplexSecret();
-                            Entities.Room room = complex.getRooms().get(0);
+                            Entities.BaseRoom room = complex.getAllRooms().get(0);
                             room.setComplex(complex);
                             Entities.ServiceMessage message = packet.getServiceMessage();
                             DatabaseHelper.notifyComplexCreated(complex);
@@ -169,7 +169,7 @@ public class ProfileActivity extends AppCompatActivity {
                                     .putExtra("complex_id", packet.getContact()
                                             .getComplex().getComplexId())
                                     .putExtra("room_id", packet.getContact()
-                                            .getComplex().getRooms().get(0).getRoomId()));
+                                            .getComplex().getAllRooms().get(0).getRoomId()));
                         }
                         @Override
                         public void onServerFailure() {

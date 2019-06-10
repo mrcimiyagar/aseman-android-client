@@ -1,6 +1,7 @@
 package kasper.android.pulseframework.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import kasper.android.pulseframework.components.CustomHashtable;
 import kasper.android.pulseframework.engines.UiInitiatorEngine;
 import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Controls;
@@ -66,7 +68,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int i) {
         Tuple<View, List<Pair<Controls.Control, View>>,
-                Hashtable<String, Pair<Controls.Control, View>>> pair =
+                CustomHashtable<String, Pair<Controls.Control, View>>> pair =
                 uiInitiatorEngine.buildViewTree(
                         Controls.PanelCtrl.LayoutType.RELATIVE,
                         items.get(i));
@@ -75,13 +77,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter {
             if (entry.second instanceof RecyclerView)
                 ((RecyclerView) entry.second).setRecycledViewPool(viewPool);
         uiInitiatorEngine.initFingerprint(pair.getItem2(), i);
-        Locks.runInQueue(() -> {
-            for (Map.Entry<String, Pair<Controls.Control, View>> entry : pair.getItem3().entrySet()) {
-                idTable.remove(entry.getKey());
-                idTable.put(entry.getKey(), entry.getValue());
-            }
-            ((ItemHolder) holder).containerIds = new HashSet<>(idTable.keySet());
-        });
+        ((ItemHolder) holder).containerIds = new HashSet<>(pair.getItem3().keySet());
         ((ViewGroup)((ItemHolder) holder).itemView).addView(itemView);
     }
 

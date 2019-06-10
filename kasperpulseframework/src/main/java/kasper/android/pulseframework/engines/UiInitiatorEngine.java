@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
@@ -47,7 +46,6 @@ import com.moos.library.CircleProgressView;
 import com.moos.library.HorizontalProgressView;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
@@ -57,9 +55,9 @@ import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import kasper.android.pulseframework.R;
 import kasper.android.pulseframework.adapters.DropDownAdapter;
 import kasper.android.pulseframework.adapters.RecyclerAdapter;
+import kasper.android.pulseframework.components.CustomHashtable;
 import kasper.android.pulseframework.components.CustomSeekBar;
 import kasper.android.pulseframework.interfaces.IClickNotifier;
 import kasper.android.pulseframework.interfaces.IMainThreadRunner;
@@ -73,21 +71,23 @@ import tcking.github.com.giraffeplayer2.VideoView;
 public class UiInitiatorEngine {
 
     private Context context;
+    private CustomHashtable<String, Pair<Controls.Control, View>> idTable;
     private IMainThreadRunner mainThreadRunner;
     private IClickNotifier clickNotifier;
 
-    public UiInitiatorEngine(Context context, IMainThreadRunner mainThreadRunner, IClickNotifier clickNotifier) {
+    public UiInitiatorEngine(Context context, CustomHashtable<String, Pair<Controls.Control, View>> idTable
+            , IMainThreadRunner mainThreadRunner, IClickNotifier clickNotifier) {
         this.context = context;
+        this.idTable = idTable;
         this.mainThreadRunner = mainThreadRunner;
         this.clickNotifier = clickNotifier;
     }
 
     @SuppressLint("RtlHardcoded")
     public Tuple<View, List<Pair<Controls.Control, View>>
-            , Hashtable<String, Pair<Controls.Control, View>>> buildViewTree(
+            , CustomHashtable<String, Pair<Controls.Control, View>>> buildViewTree(
             Controls.PanelCtrl.LayoutType parentLayoutType, Controls.Control control) {
         View result = null;
-        Hashtable<String, Pair<Controls.Control, View>> idTable = new Hashtable<>();
         List<Pair<Controls.Control, View>> statefulCtrls = new ArrayList<>();
         if (control instanceof Controls.PanelCtrl) {
             Controls.PanelCtrl panelCtrl = (Controls.PanelCtrl) control;
@@ -96,7 +96,7 @@ public class UiInitiatorEngine {
                     RelativeLayout relativeLayout = new RelativeLayout(context);
                     for (Controls.Control el : panelCtrl.getControls()) {
                         Tuple<View, List<Pair<Controls.Control, View>>
-                                , Hashtable<String, Pair<Controls.Control, View>>> pair =
+                                , CustomHashtable<String, Pair<Controls.Control, View>>> pair =
                                 buildViewTree(panelCtrl.getLayoutType(), el);
                         View childView = pair.getItem1();
                         statefulCtrls.addAll(pair.getItem2());
@@ -109,7 +109,7 @@ public class UiInitiatorEngine {
                     linearLayout.setOrientation(LinearLayout.VERTICAL);
                     for (Controls.Control el : panelCtrl.getControls()) {
                         Tuple<View, List<Pair<Controls.Control, View>>
-                                , Hashtable<String, Pair<Controls.Control, View>>> pair =
+                                , CustomHashtable<String, Pair<Controls.Control, View>>> pair =
                                 buildViewTree(panelCtrl.getLayoutType(), el);
                         View childView = pair.getItem1();
                         statefulCtrls.addAll(pair.getItem2());
@@ -122,7 +122,7 @@ public class UiInitiatorEngine {
                     linearLayout.setOrientation(LinearLayout.HORIZONTAL);
                     for (Controls.Control el : panelCtrl.getControls()) {
                         Tuple<View, List<Pair<Controls.Control, View>>
-                                , Hashtable<String, Pair<Controls.Control, View>>> pair =
+                                , CustomHashtable<String, Pair<Controls.Control, View>>> pair =
                                 buildViewTree(panelCtrl.getLayoutType(), el);
                         View childView = pair.getItem1();
                         statefulCtrls.addAll(pair.getItem2());
@@ -135,7 +135,7 @@ public class UiInitiatorEngine {
                 RelativeLayout relativeLayout = new RelativeLayout(context);
                 for (Controls.Control el : panelCtrl.getControls()) {
                     Tuple<View, List<Pair<Controls.Control, View>>
-                            , Hashtable<String, Pair<Controls.Control, View>>> pair =
+                            , CustomHashtable<String, Pair<Controls.Control, View>>> pair =
                             buildViewTree(panelCtrl.getLayoutType(), el);
                     View childView = pair.getItem1();
                     statefulCtrls.addAll(pair.getItem2());
@@ -457,7 +457,7 @@ public class UiInitiatorEngine {
             Controls.ScrollerCtrl scrollerCtrl = (Controls.ScrollerCtrl) control;
             NestedScrollView scrollView = new NestedScrollView(context);
             Tuple<View, List<Pair<Controls.Control, View>>
-                    , Hashtable<String, Pair<Controls.Control, View>>> pair =
+                    , CustomHashtable<String, Pair<Controls.Control, View>>> pair =
                     buildViewTree(Controls.PanelCtrl.LayoutType.RELATIVE, scrollerCtrl.getPanel());
             View panelView = pair.getItem1();
             statefulCtrls.addAll(pair.getItem2());
@@ -565,8 +565,10 @@ public class UiInitiatorEngine {
                             context, recyclerCtrl.getGridSpanCount()
                             , RecyclerView.VERTICAL, false));
             }
+
             recyclerView.setAdapter(new RecyclerAdapter(
                     context, this, idTable, recyclerCtrl.getItems()));
+
             statefulCtrls.add(new Pair<>(recyclerCtrl, recyclerView));
             result = recyclerView;
         } else if (control instanceof Controls.SeekBarCtrl) {
