@@ -163,7 +163,7 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new RoomItem(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.home_room_item, parent, false));
+                .inflate(R.layout.home_room_item_middle, parent, false));
     }
 
     @SuppressLint("SetTextI18n")

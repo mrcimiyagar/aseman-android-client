@@ -16,7 +16,7 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
 
-public class MusicPlayerActivity extends AppCompatActivity {
+public class MusicPlayerActivity extends BaseActivity {
 
     TextView captionTV;
     SeekBar progressSB;

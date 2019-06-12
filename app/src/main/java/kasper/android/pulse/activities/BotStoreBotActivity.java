@@ -28,7 +28,7 @@ import com.bumptech.glide.Glide;
 
 import java.util.Objects;
 
-public class BotStoreBotActivity extends AppCompatActivity {
+public class BotStoreBotActivity extends BaseActivity {
 
     private TextView titleTV;
     private CircleImageView avatarIV;

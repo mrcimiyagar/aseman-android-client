@@ -1,0 +1,29 @@
+-- Merging decision tree log ---
+manifest
+ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:1-12:12
+INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:1-12:12
+INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:1-12:12
+INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:1-12:12
+INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:1-12:12
+INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:1-12:12
+INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:1-12:12
+	package
+		ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:3:5-36
+		INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml
+		INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml
+	android:versionName
+		ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:5:5-30
+		INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml
+		INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml
+	xmlns:android
+		ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:2:11-69
+	android:versionCode
+		ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:4:5-28
+		INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml
+		INJECTED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml
+application
+ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:7:5-10:19
+	android:label
+		ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:8:9-41
+	android:theme
+		ADDED from D:\My Documents\Projects\Android\AsemanAndroidClient\StackBlur\AndroidManifest.xml:9:9-40

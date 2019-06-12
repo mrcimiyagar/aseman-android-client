@@ -27,7 +27,7 @@ import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import retrofit2.Call;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends BaseActivity {
 
     private long humanId;
 

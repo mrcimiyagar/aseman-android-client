@@ -44,7 +44,7 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.components.ZoomableExoPlayerView;
 import kasper.android.pulse.helpers.LogHelper;
 
-public class VideoPlayerActivity extends AppCompatActivity implements ExoPlayer.EventListener {
+public class VideoPlayerActivity extends BaseActivity implements ExoPlayer.EventListener {
 
     private String videoUri = "https://www.w3schools.com/html/mov_bbb.mp4";
     private SimpleExoPlayer player;

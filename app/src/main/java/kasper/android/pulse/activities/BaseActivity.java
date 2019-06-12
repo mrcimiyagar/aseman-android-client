@@ -16,6 +16,7 @@ import android.widget.PopupMenu;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.google.android.material.snackbar.Snackbar;
+import com.r0adkll.slidr.Slidr;
 
 import androidx.annotation.MenuRes;
 import androidx.annotation.Nullable;
@@ -27,7 +28,19 @@ import kasper.android.pulse.rxbus.notifications.ConnectionStateChanged;
 
 public class BaseActivity extends AppCompatActivity {
 
+    private boolean isHome = false;
+    public void thisIsHome() {
+        this.isHome = true;
+    }
+
     private Snackbar statusSnackbar;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!this.isHome)
+            Slidr.attach(this);
+    }
 
     @Override
     public void onBackPressed() {

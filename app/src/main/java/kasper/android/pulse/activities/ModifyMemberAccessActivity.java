@@ -21,7 +21,7 @@ import android.widget.Switch;
 
 import com.anadeainc.rxbus.Subscribe;
 
-public class ModifyMemberAccessActivity extends AppCompatActivity {
+public class ModifyMemberAccessActivity extends BaseActivity {
 
     private Switch canCreateMessageSwitch;
     private Switch canSendInviteSwitch;

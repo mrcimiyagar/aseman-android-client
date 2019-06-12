@@ -194,6 +194,37 @@ public class DatabaseHelper {
         return result;
     }
 
+    public static List<Entities.BaseRoom> getHomeRooms() {
+        List<Entities.BaseRoom> rooms = new ArrayList<>();
+        Entities.User me = getMe();
+        if (me != null) {
+            long homeId = me.getUserSecret().getHomeId();
+            rooms = AsemanDB.getInstance().getRoomDao().getComplexRooms(homeId);
+            Entities.Complex home = AsemanDB.getInstance().getComplexDao().getComplexById(homeId);
+            for (Entities.BaseRoom room : rooms) {
+                room.setComplex(home);
+            }
+        }
+        return rooms;
+    }
+
+    public static List<Entities.BaseRoom> getContactRooms() {
+        List<Entities.Room> rooms = AsemanDB.getInstance().getRoomDao().getAllContactRooms();
+        List<Entities.BaseRoom> baseRooms = new ArrayList<>();
+        Hashtable<Long, Entities.Complex> cache = new Hashtable<>();
+        for (Entities.BaseRoom room : rooms) {
+            if (cache.containsKey(room.getComplexId())) {
+                Entities.Complex c = AsemanDB.getInstance().getComplexDao().getComplexById(room.getComplexId());
+                room.setComplex(c);
+                cache.put(c.getComplexId(), c);
+            } else {
+                room.setComplex(cache.get(room.getComplexId()));
+            }
+            baseRooms.add(room);
+        }
+        return baseRooms;
+    }
+
     public static List<Entities.BaseRoom> getRooms(long complexId) {
         Entities.Complex complex = AsemanDB.getInstance().getComplexDao().getComplexById(complexId);
         List<Entities.BaseRoom> rooms = AsemanDB.getInstance().getRoomDao().getComplexRooms(complexId);
@@ -210,13 +241,26 @@ public class DatabaseHelper {
         return rooms;
     }
 
-    public static List<Entities.SingleRoom> getComplexSingleRooms(long complexId) {
+    public static List<Entities.BaseRoom> getComplexSingleRooms(long complexId) {
         List<Entities.SingleRoom> singleRooms = AsemanDB.getInstance().getRoomDao().getComplexSingleRooms(complexId);
+        List<Entities.BaseRoom> baseRooms = new ArrayList<>();
         Entities.Complex c = AsemanDB.getInstance().getComplexDao().getComplexById(complexId);
         for (Entities.SingleRoom sr : singleRooms) {
             sr.setComplex(c);
+            baseRooms.add(sr);
         }
-        return singleRooms;
+        return baseRooms;
+    }
+
+    public static List<Entities.BaseRoom> getComplexNonSingleRooms(long complexId) {
+        List<Entities.Room> rooms = AsemanDB.getInstance().getRoomDao().getComplexNonSingleRooms(complexId);
+        List<Entities.BaseRoom> baseRooms = new ArrayList<>();
+        Entities.Complex c = AsemanDB.getInstance().getComplexDao().getComplexById(complexId);
+        for (Entities.Room r : rooms) {
+            r.setComplex(c);
+            baseRooms.add(r);
+        }
+        return baseRooms;
     }
 
     public static long getMembersCount(long complexId) {

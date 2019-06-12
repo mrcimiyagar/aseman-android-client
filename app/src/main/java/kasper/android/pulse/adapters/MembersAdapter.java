@@ -43,15 +43,15 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVH
     private long myId = 0, complexId = 0;
     private Entities.Complex complex;
 
-    public MembersAdapter(AppCompatActivity activity, long myId, long complexId, List<Entities.Membership> memberships, List<Entities.SingleRoom> singleRooms) {
+    public MembersAdapter(AppCompatActivity activity, long myId, long complexId, List<Entities.Membership> memberships, List<Entities.BaseRoom> singleRooms) {
         this.activity = activity;
         this.memberships = memberships;
         this.singleRooms = new Hashtable<>();
-        for (Entities.SingleRoom sr : singleRooms) {
-            if (sr.getUser1Id() == myId)
-                this.singleRooms.put(sr.getUser2Id(), sr);
+        for (Entities.BaseRoom sr : singleRooms) {
+            if (((Entities.SingleRoom)sr).getUser1Id() == myId)
+                this.singleRooms.put(((Entities.SingleRoom)sr).getUser2Id(), ((Entities.SingleRoom)sr));
             else
-                this.singleRooms.put(sr.getUser1Id(), sr);
+                this.singleRooms.put(((Entities.SingleRoom)sr).getUser1Id(), ((Entities.SingleRoom)sr));
         }
         this.myId = myId;
         this.complexId = complexId;

@@ -35,7 +35,7 @@ import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 import kasper.android.pulseframework.components.PulseView;
 import retrofit2.Call;
 
-public class RoomActivity extends AppCompatActivity {
+public class RoomActivity extends BaseActivity {
 
     private long complexId;
     private long roomId;

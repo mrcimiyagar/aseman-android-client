@@ -4,10 +4,13 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import com.bumptech.glide.Glide;
+
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.FileMessageSending;
+import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.repositories.BotCreationDao;
@@ -72,7 +75,7 @@ public abstract class AsemanDB extends RoomDatabase {
     public abstract DownloadingDao getDownloadingDao();
     public abstract MessageSendingDao getMessageSendingDao();
 
-    public static void deleteAllData() {
+    public static void deleteAllData(Runnable callback) {
         getInstance().getBotCreationDao().deleteAll();
         getInstance().getBotDao().deleteAll();
         getInstance().getBotSecretDao().deleteAll();
@@ -98,7 +101,14 @@ public abstract class AsemanDB extends RoomDatabase {
         getInstance().getDownloadingDao().deleteAll();
         getInstance().getMessageSendingDao().deleteAll();
 
-        DatabaseHelper.setup();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                GlideApp.get(Core.getInstance()).clearDiskCache();
+                DatabaseHelper.setup();
+                callback.run();
+            }
+        }).start();
     }
 
     private static AsemanDB db;

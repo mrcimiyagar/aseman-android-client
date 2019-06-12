@@ -20,7 +20,7 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 
-public class AddBotToRoomActivity extends AppCompatActivity {
+public class AddBotToRoomActivity extends BaseActivity {
 
     boolean modified = false;
     String modifieds = "";

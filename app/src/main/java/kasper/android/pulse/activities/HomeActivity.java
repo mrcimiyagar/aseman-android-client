@@ -4,38 +4,90 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 
+import android.os.PersistableBundle;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
+import com.astuetz.PagerSlidingTabStrip;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.crashlytics.android.Crashlytics;
+
 import com.github.javiersantos.bottomdialogs.BottomDialog;
+import com.google.android.material.tabs.TabLayout;
+import com.mapbox.android.core.location.LocationEngine;
+import com.mapbox.android.core.location.LocationEngineCallback;
+import com.mapbox.android.core.location.LocationEngineProvider;
+import com.mapbox.android.core.location.LocationEngineRequest;
+import com.mapbox.android.core.location.LocationEngineResult;
+import com.mapbox.android.core.permissions.PermissionsListener;
+import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.location.LocationComponent;
+import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
+import com.mapbox.mapboxsdk.location.modes.CameraMode;
+import com.mapbox.mapboxsdk.location.modes.RenderMode;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.snapshotter.MapSnapshot;
+import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter;
+import com.ogaclejapan.smarttablayout.SmartTabLayout;
+import com.r0adkll.slidr.Slidr;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
 import de.hdodenhof.circleimageview.CircleImageView;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
+import kasper.android.pulse.adapters.ActiveNowAdapter;
 import kasper.android.pulse.adapters.ComplexesAdapter;
+import kasper.android.pulse.adapters.FragmentsAdapter;
 import kasper.android.pulse.adapters.HomeAdapter;
 import kasper.android.pulse.adapters.RoomsAdapter;
 import kasper.android.pulse.callbacks.middleware.OnRoomsSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.components.CustomMapView;
 import kasper.android.pulse.core.Core;
+import kasper.android.pulse.fragments.BaseFragment;
+import kasper.android.pulse.fragments.FeedFragment;
+import kasper.android.pulse.fragments.RoomsFragment;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.GlideApp;
+import kasper.android.pulse.models.extras.RoomTypes;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
@@ -49,8 +101,11 @@ import retrofit2.Call;
 public class HomeActivity extends BaseActivity {
 
     DrawerLayout drawerLayout;
+    CoordinatorLayout parent;
 
-    RecyclerView homeRV;
+    ViewPager homeVP;
+    SmartTabLayout homeTB;
+    RecyclerView peopleRV;
 
     RecyclerView menuComplexesRV;
     RecyclerView menuRoomsRV;
@@ -63,18 +118,172 @@ public class HomeActivity extends BaseActivity {
 
     private long chosenComplexId;
 
+    MapView mapView;
+    MapboxMap mapboxMap;
+
+    private LocationEngine locationEngine;
+    private long DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L;
+    private long DEFAULT_MAX_WAIT_TIME = DEFAULT_INTERVAL_IN_MILLISECONDS * 5;
+    private HomeActivityLocationCallback callback = new HomeActivityLocationCallback(this);
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mapView.onStart();
+    }
+
+    @Override
+    protected void onPause() {
+        mapView.onPause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        mapView.onStop();
+        super.onStop();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+        mapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
+    PermissionsManager permissionsManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Mapbox.getInstance(this, getResources().getString(R.string.mapbox_access_token));
+
         setContentView(R.layout.activity_home);
+
+        this.thisIsHome();
 
         Core.getInstance().bus().register(this);
 
         Entities.User me = DatabaseHelper.getMe();
         if (me != null) Crashlytics.setUserEmail(me.getUserSecret().getEmail());
         initViews();
+        mapView = findViewById(R.id.mapView);
         initUiData();
         startServices();
+
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(@NonNull MapboxMap mapboxMap) {
+                HomeActivity.this.mapboxMap = mapboxMap;
+                mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/theprogrammermachine/cjwqcofhy05c41cqnc6wl1ech")
+                        , new Style.OnStyleLoaded() {
+                    @Override
+                    public void onStyleLoaded(@NonNull Style style) {
+                        enableLocationComponent(mapboxMap, style);
+                    }
+                });
+            }
+        });
+
+        mapView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        homeVP.requestDisallowInterceptTouchEvent(true);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        homeVP.requestDisallowInterceptTouchEvent(false);
+                        break;
+                }
+                return mapView.onTouchEvent(event);
+            }
+        });
+    }
+
+    @SuppressWarnings( {"MissingPermission"})
+    public void enableLocationComponent(MapboxMap mapboxMap, Style style) {
+        if (PermissionsManager.areLocationPermissionsGranted(HomeActivity.this)) {
+            LocationComponent locationComponent = mapboxMap.getLocationComponent();
+            LocationComponentActivationOptions locationComponentActivationOptions =
+                    LocationComponentActivationOptions.builder(this, style)
+                            .useDefaultLocationEngine(false)
+                            .build();
+            locationComponent.activateLocationComponent(locationComponentActivationOptions);
+            locationComponent.setLocationComponentEnabled(true);
+            locationComponent.setCameraMode(CameraMode.TRACKING);
+            locationComponent.setRenderMode(RenderMode.COMPASS);
+            initLocationEngine();
+        } else {
+            permissionsManager = new PermissionsManager(new PermissionsListener() {
+                @Override
+                public void onExplanationNeeded(List<String> permissionsToExplain) {
+
+                }
+                @Override
+                public void onPermissionResult(boolean granted) {
+                    if (granted) {
+                        enableLocationComponent(mapboxMap, style);
+                    }
+                }
+            });
+            permissionsManager.requestLocationPermissions(HomeActivity.this);
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void initLocationEngine() {
+        locationEngine = LocationEngineProvider.getBestLocationEngine(this);
+
+        LocationEngineRequest request = new LocationEngineRequest.Builder(DEFAULT_INTERVAL_IN_MILLISECONDS)
+                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                .setMaxWaitTime(DEFAULT_MAX_WAIT_TIME).build();
+
+        locationEngine.requestLocationUpdates(request, callback, getMainLooper());
+        locationEngine.getLastLocation(callback);
+    }
+
+    private static class HomeActivityLocationCallback implements LocationEngineCallback<LocationEngineResult> {
+
+        private final WeakReference<HomeActivity> activityWeakReference;
+
+        HomeActivityLocationCallback(HomeActivity activity) {
+            this.activityWeakReference = new WeakReference<>(activity);
+        }
+        @Override
+        public void onSuccess(LocationEngineResult result) {
+            HomeActivity activity = activityWeakReference.get();
+            if (activity != null) {
+                Location location = result.getLastLocation();
+                if (location == null) return;
+                if (activity.mapboxMap != null && result.getLastLocation() != null) {
+                    activity.mapboxMap.getLocationComponent().forceLocationUpdate(result.getLastLocation());
+                }
+            }
+        }
+        @Override
+        public void onFailure(@NonNull Exception exception) {
+
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
@@ -83,17 +292,20 @@ public class HomeActivity extends BaseActivity {
             ((ComplexesAdapter) menuComplexesRV.getAdapter()).dispose();
         if (menuRoomsRV.getAdapter() != null)
             ((RoomsAdapter) menuRoomsRV.getAdapter()).dispose();
-        if (homeRV.getAdapter() != null)
-            ((HomeAdapter) homeRV.getAdapter()).dispose();
+        if (homeVP.getAdapter() != null)
+            ((FragmentsAdapter) homeVP.getAdapter()).dispose();
         Core.getInstance().bus().unregister(this);
         super.onDestroy();
+        if (locationEngine != null) {
+            locationEngine.removeLocationUpdates(callback);
+        }
+        mapView.onDestroy();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (homeRV.getAdapter() != null)
-            ((HomeAdapter) homeRV.getAdapter()).softRefresh();
+        mapView.onResume();
     }
 
     @SuppressLint("RtlHardcoded")
@@ -276,8 +488,11 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void initViews() {
+        parent = findViewById(R.id.parent);
         drawerLayout = findViewById(R.id.homeDL);
-        homeRV = findViewById(R.id.homeRV);
+        homeVP = findViewById(R.id.homeVP);
+        homeTB = findViewById(R.id.homeTB);
+        peopleRV = findViewById(R.id.peopleRV);
         menuComplexesRV = findViewById(R.id.menuComplexesRV);
         menuRoomsRV = findViewById(R.id.menuRoomsRV);
         complexNameTV = findViewById(R.id.homeComplexNameTV);
@@ -305,9 +520,73 @@ public class HomeActivity extends BaseActivity {
         myTitleTV.setText(profileUpdated.getUser().getTitle());
     }
 
+    TextView[] tabs = new TextView[3];
+    String[] tabTitles = new String[3];
+    private int chosenTab = 0;
+    SmartTabLayout.TabProvider tabProvider = new SmartTabLayout.TabProvider() {
+        @Override
+        public View createTabView(ViewGroup container, int position, PagerAdapter adapter) {
+            Log.d("KasperLogger", "tab " + position);
+            TextView textView = new TextView(HomeActivity.this);
+            LinearLayout.LayoutParams paranms = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT);
+            textView.setLayoutParams(paranms);
+            textView.setText(tabTitles[position]);
+            if (position == homeVP.getCurrentItem()) {
+                textView.setTextColor(getResources().getColor(R.color.colorBlackBlue));
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+            } else {
+                textView.setTextColor(Color.WHITE);
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            }
+            textView.setTypeface(null, Typeface.BOLD);
+            textView.setPadding(GraphicHelper.dpToPx(16), 0, GraphicHelper.dpToPx(16), 0);
+            textView.setGravity(Gravity.CENTER);
+            tabs[position] = textView;
+            return textView;
+        }
+    };
+
     private void initUiData() {
-        homeRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-        homeRV.setAdapter(new HomeAdapter(this, DatabaseHelper.getAllRooms()));
+        List<BaseFragment> pages = new ArrayList<>();
+        pages.add(FeedFragment.instantiate(chosenComplexId));
+        pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Private));
+        pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Contact));
+        homeVP.setOffscreenPageLimit(3);
+        homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
+        chosenTab = 0;
+        tabs = new TextView[3];
+        tabTitles = new String[] {
+                "What's going on", "Home Rooms", "Contact Rooms"
+        };
+        homeTB.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+            @Override
+            public void onPageSelected(int position) {
+                tabs[chosenTab].setTextColor(Color.WHITE);
+                tabs[chosenTab].setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                chosenTab = position;
+                tabs[chosenTab].setTextColor(getResources().getColor(R.color.colorBlackBlue));
+                tabs[chosenTab].setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+            }
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+        homeTB.setCustomTabView(tabProvider);
+        homeTB.setViewPager(homeVP);
+
+        peopleRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        List<Entities.Contact> contacts = DatabaseHelper.getContacts();
+        List<Entities.User> users = new ArrayList<>();
+        users.add(DatabaseHelper.getMe());
+        for (Entities.Contact contact : contacts) users.add(contact.getPeer());
+        peopleRV.setAdapter(new ActiveNowAdapter(this, users));
         menuComplexesRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         menuRoomsRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
 
@@ -349,6 +628,32 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void syncFailed() { }
         });
+        List<BaseFragment> pages = new ArrayList<>();
+        if (chosenComplexId == DatabaseHelper.getMe().getUserSecret().getHomeId()) {
+            pages.add(FeedFragment.instantiate(chosenComplexId));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Private));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Contact));
+            homeVP.setOffscreenPageLimit(3);
+            homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
+            chosenTab = 0;
+            tabs = new TextView[3];
+            tabTitles = new String[] {
+                    "What's going on", "Home Rooms", "Contac Rooms"
+            };
+            homeTB.setViewPager(homeVP);
+        } else {
+            pages.add(FeedFragment.instantiate(chosenComplexId));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Group));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Single));
+            homeVP.setOffscreenPageLimit(3);
+            homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
+            chosenTab = 0;
+            tabs = new TextView[3];
+            tabTitles = new String[] {
+                    "What's going on", "Complex Groups", "Complex Privateds"
+            };
+            homeTB.setViewPager(homeVP);
+        }
     }
 
     private void initRoomsAdapter(Entities.Complex complex, List<Entities.BaseRoom> rooms) {

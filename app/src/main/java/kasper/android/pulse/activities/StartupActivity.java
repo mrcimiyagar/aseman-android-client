@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.anadeainc.rxbus.Subscribe;
 
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ import kasper.android.pulse.services.AsemanService;
 import kasper.android.pulse.services.MusicsService;
 import retrofit2.Call;
 
-public class StartupActivity extends BaseActivity {
+public class StartupActivity extends AppCompatActivity {
 
     long startTime;
 

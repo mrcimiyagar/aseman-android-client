@@ -228,9 +228,9 @@ public class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.Holder> {
         ViewGroup rootView = decorView.findViewById(android.R.id.content);
         Drawable windowBackground = decorView.getBackground();
         holder.blurView.setupWith(rootView)
-                .windowBackground(windowBackground)
-                .blurAlgorithm(new RenderScriptBlur(activity))
-                .blurRadius(20);
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(activity))
+                .setBlurRadius(20);
         GlideApp.with(Core.getInstance()).load(path).listener(new RequestListener<Drawable>() {
             @Override
             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {

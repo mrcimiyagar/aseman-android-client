@@ -35,7 +35,7 @@ import kasper.android.pulse.rxbus.notifications.FileUploaded;
 import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
-public class CreateBotActivity extends AppCompatActivity {
+public class CreateBotActivity extends BaseActivity {
 
     private CircleImageView avatarIV;
     private EditText nameET;

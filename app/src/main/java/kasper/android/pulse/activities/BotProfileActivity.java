@@ -21,7 +21,7 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 
-public class BotProfileActivity extends AppCompatActivity {
+public class BotProfileActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

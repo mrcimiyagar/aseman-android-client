@@ -19,6 +19,235 @@ import kasper.android.pulse.models.notifications.Notifications;
 
 public class Entities {
 
+    public interface FeedItem {
+
+    }
+
+    public static class Event implements FeedItem, Serializable {
+        private long eventId;
+        private String title;
+        private String description;
+
+        public long getEventId() {
+            return eventId;
+        }
+
+        public void setEventId(long eventId) {
+            this.eventId = eventId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+    }
+
+    public static class Wall implements Serializable {
+        private long wallId;
+        private String title;
+        private long avatar;
+        private long complexId;
+        private Complex complex;
+        private List<Post> posts;
+
+        public long getWallId() {
+            return wallId;
+        }
+
+        public void setWallId(long wallId) {
+            this.wallId = wallId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public long getAvatar() {
+            return avatar;
+        }
+
+        public void setAvatar(long avatar) {
+            this.avatar = avatar;
+        }
+
+        public long getComplexId() {
+            return complexId;
+        }
+
+        public void setComplexId(long complexId) {
+            this.complexId = complexId;
+        }
+
+        public Complex getComplex() {
+            return complex;
+        }
+
+        public void setComplex(Complex complex) {
+            this.complex = complex;
+        }
+
+        public List<Post> getPosts() {
+            return posts;
+        }
+
+        public void setPosts(List<Post> posts) {
+            this.posts = posts;
+        }
+    }
+
+    public static class Post implements FeedItem, Serializable {
+        private long postId;
+        private String title;
+        private String imageUrl;
+        private long authorId;
+        private BaseUser author;
+        private long time;
+        private long wallId;
+        private Wall wall;
+        private List<PostSection> sections;
+
+        public long getPostId() {
+            return postId;
+        }
+
+        public void setPostId(long postId) {
+            this.postId = postId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getImageUrl() {
+            return imageUrl;
+        }
+
+        public void setImageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
+        }
+
+        public long getAuthorId() {
+            return authorId;
+        }
+
+        public void setAuthorId(long authorId) {
+            this.authorId = authorId;
+        }
+
+        public BaseUser getAuthor() {
+            return author;
+        }
+
+        public void setAuthor(BaseUser author) {
+            this.author = author;
+        }
+
+        public long getTime() {
+            return time;
+        }
+
+        public void setTime(long time) {
+            this.time = time;
+        }
+
+        public long getWallId() {
+            return wallId;
+        }
+
+        public void setWallId(long wallId) {
+            this.wallId = wallId;
+        }
+
+        public Wall getWall() {
+            return wall;
+        }
+
+        public void setWall(Wall wall) {
+            this.wall = wall;
+        }
+
+        public List<PostSection> getSections() {
+            return sections;
+        }
+
+        public void setSections(List<PostSection> sections) {
+            this.sections = sections;
+        }
+    }
+
+    public static class PostSection implements Serializable {
+        private long postSectionId;
+        private long postId;
+        private Post post;
+
+        public long getPostSectionId() {
+            return postSectionId;
+        }
+
+        public void setPostSectionId(long feedPostSectionId) {
+            this.postSectionId = feedPostSectionId;
+        }
+
+        public long getPostId() {
+            return postId;
+        }
+
+        public void setPostId(long postId) {
+            this.postId = postId;
+        }
+
+        public Post getPost() {
+            return post;
+        }
+
+        public void setPost(Post post) {
+            this.post = post;
+        }
+    }
+
+    public static class PostTextSection extends PostSection {
+        private String text;
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+    }
+
+    public static class PostImageSection extends PostSection {
+        private String imageUrl;
+
+        public String getImageUrl() {
+            return imageUrl;
+        }
+
+        public void setImageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
+        }
+    }
+
     @Entity
     public static class Session implements Serializable {
         @PrimaryKey

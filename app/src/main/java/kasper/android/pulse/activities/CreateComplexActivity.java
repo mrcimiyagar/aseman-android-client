@@ -38,7 +38,7 @@ import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
-public class CreateComplexActivity extends AppCompatActivity {
+public class CreateComplexActivity extends BaseActivity {
 
     private CircleImageView avatarIV;
     private EditText nameET;

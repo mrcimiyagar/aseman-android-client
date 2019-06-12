@@ -8,7 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-public class TitleEditorActivity extends AppCompatActivity {
+public class TitleEditorActivity extends BaseActivity {
 
     ExtendedEditText titleTV;
 

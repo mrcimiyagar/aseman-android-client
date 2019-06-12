@@ -33,7 +33,7 @@ import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.services.AsemanService;
 
-public class DocsActivity extends AppCompatActivity {
+public class DocsActivity extends BaseActivity {
 
     private long complexId;
     private long roomId;

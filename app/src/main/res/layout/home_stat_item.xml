@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardBackgroundColor="@color/colorBlackBlue2"
+    app:cardCornerRadius="3dp"
+    app:cardElevation="6dp"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="16dp"
+    android:layout_marginLeft="16dp"
+    android:layout_marginRight="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="16dp">
+
+        <TextView
+            android:id="@+id/complexCountTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#fff"
+            android:textSize="18sp"
+            android:text="member of 4 complexes"/>
+
+        <TextView
+            android:id="@+id/complexGroupRoomCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#fff"
+            android:textSize="18sp"
+            android:text="60 complex group rooms"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/complexPrivateRoomCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#fff"
+            android:textSize="18sp"
+            android:text="54 complex private rooms"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/contactPrivateRoomCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#fff"
+            android:textSize="18sp"
+            android:text="48 contact private rooms"
+            android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

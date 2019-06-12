@@ -16,7 +16,7 @@ import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
 
-public class PhotoViewerActivity extends AppCompatActivity {
+public class PhotoViewerActivity extends BaseActivity {
 
     @SuppressLint("ClickableViewAccessibility")
     @Override

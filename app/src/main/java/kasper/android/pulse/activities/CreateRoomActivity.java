@@ -38,7 +38,7 @@ import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.services.AsemanService;
 import retrofit2.Call;
 
-public class CreateRoomActivity extends AppCompatActivity {
+public class CreateRoomActivity extends BaseActivity {
 
     private long complexId = -1;
 

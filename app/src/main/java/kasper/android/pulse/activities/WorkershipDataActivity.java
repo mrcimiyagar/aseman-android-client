@@ -18,7 +18,7 @@ import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 import retrofit2.Call;
 
-public class WorkershipDataActivity extends AppCompatActivity {
+public class WorkershipDataActivity extends BaseActivity {
 
     long botId, complexId, roomId, wsId;
     EditText xET, yET, widthET, heightET;

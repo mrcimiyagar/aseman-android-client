@@ -21,7 +21,7 @@ import retrofit2.Call;
 import studio.carbonylgroup.textfieldboxes.ExtendedEditText;
 import studio.carbonylgroup.textfieldboxes.TextFieldBoxes;
 
-public class RegisterActivity extends AppCompatActivity {
+public class RegisterActivity extends BaseActivity {
 
     private TextFieldBoxes entryBox;
     private ExtendedEditText entryET;

@@ -22,7 +22,7 @@ import kasper.android.pulse.adapters.FilesAdapter;
 import kasper.android.pulse.callbacks.ui.OnFileSelectListener;
 import kasper.android.pulse.tasks.DocsLoadTask;
 
-public class PickImageActivity extends AppCompatActivity {
+public class PickImageActivity extends BaseActivity {
 
     private ImageButton backBTN;
     private RecyclerView photosRV;

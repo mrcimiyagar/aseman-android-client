@@ -21,7 +21,7 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.models.entities.Entities;
 
-public class BotsActivity extends AppCompatActivity {
+public class BotsActivity extends BaseActivity {
 
     RecyclerView recyclerView;
     TextView allBtn, createdBtn;

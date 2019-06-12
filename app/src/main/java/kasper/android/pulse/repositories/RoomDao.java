@@ -66,6 +66,9 @@ public abstract class RoomDao {
     @Query("select * from singleroom where ((user1Id = :user1Id and user2Id = :user2Id) or (user1Id = :user2Id and user2Id = :user1Id))")
     public abstract Entities.SingleRoom getSingleRoomByParticipantsIds(long user1Id, long user2Id);
 
+    @Query("select * from room where (select mode from complex where complex.complexId = room.complexId) = 2")
+    public abstract List<Entities.Room> getAllContactRooms();
+
     @Transaction
     public Entities.BaseRoom getRoomById(long roomId) {
         Entities.SingleRoom singleRoom = getSingleRoomById(roomId);

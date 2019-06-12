@@ -6,6 +6,8 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +44,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.Holder> impl
         this.docs = new ArrayList<>(docs);
         this.blockSize = blockSize;
         this.selectCallback = selectCallback;
-        this.notifyDataSetChanged();
+        //this.notifyDataSetChanged();
     }
 
     @NonNull
@@ -55,7 +57,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.Holder> impl
 
     @Override
     public void onViewRecycled(@NonNull Holder holder) {
-
         holder.cleanup();
     }
 
@@ -121,7 +122,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.Holder> impl
 
     @Override
     public String getSectionTitle(int position) {
-
         Doc doc = docs.get(position);
         String title = "";
         int index = doc.getPath().lastIndexOf("/");

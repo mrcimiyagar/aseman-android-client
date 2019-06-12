@@ -54,6 +54,7 @@ public class Packet {
     private Boolean FetchNext;
     private String ControlId;
     private Boolean SingleRoomMode;
+    private Boolean FileTransferFinished;
 
     public String getStatus() {
         return Status;
@@ -437,5 +438,13 @@ public class Packet {
 
     public void setSingleRoomMode(Boolean singleRoomMode) {
         this.SingleRoomMode = singleRoomMode;
+    }
+
+    public Boolean isFileTransferFinished() {
+        return this.FileTransferFinished;
+    }
+
+    public void setFileTransferFinished(Boolean fileTransferFinished) {
+        this.FileTransferFinished = fileTransferFinished;
     }
 }

@@ -10,7 +10,7 @@ import kasper.android.pulse.helpers.DatabaseHelper;
 import android.os.Bundle;
 import android.view.View;
 
-public class UserInvitesActivity extends AppCompatActivity {
+public class UserInvitesActivity extends BaseActivity {
 
     RecyclerView recyclerView;
 

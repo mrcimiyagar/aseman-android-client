@@ -1,1 +1,1 @@
-include ':app', ':carouselview', ':carouselview', ':kasperpulseframework', ':bottomsheet', ':bottomdialog', ':textfieldboxes', ':smoothAppBar', ':rxbus', ':signalr', ':jacksondatabind', ':signalr', ':signalr'
+include ':app', ':carouselview', ':carouselview', ':kasperpulseframework', ':bottomsheet', ':bottomdialog', ':textfieldboxes', ':smoothAppBar', ':rxbus', ':signalr', ':jacksondatabind', ':signalr', ':signalr', ':StackBlur', ':stackblur', ':blurview'

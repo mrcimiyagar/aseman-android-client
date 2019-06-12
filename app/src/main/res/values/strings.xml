@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Aseman</string>
     <string name="title_activity_complex_invites">ComplexInvitesActivity</string>
+    <string name="mapbox_access_token">pk.eyJ1IjoidGhlcHJvZ3JhbW1lcm1hY2hpbmUiLCJhIjoiY2p3Y2Vvb2txMHNldTQ4bXFiZHpxZzR2OSJ9.cIRV4HvOVLlRkf1r8v07VA</string>
 </resources>

@@ -358,7 +358,8 @@ public class UiUpdaterEngine {
                     ((Controls.TextCtrl) control).setTextSize(
                             ((Updates.TextCtrlUpdateTextSize) update).getValue());
                     view = getOrigin(view);
-                    ((TextView) view).setTextSize(((Updates.TextCtrlUpdateTextSize) update).getValue());
+                    ((TextView) view).setTextSize(TypedValue.COMPLEX_UNIT_SP,
+                            ((Updates.TextCtrlUpdateTextSize) update).getValue());
                 }
             } else if (update instanceof Updates.TextCtrlUpdateTextColor) {
                 if (control instanceof Controls.TextCtrl) {
@@ -456,7 +457,7 @@ public class UiUpdaterEngine {
                     ((Controls.InputFieldCtrl) control).setTextSize(
                             ((Updates.InputFieldCtrlUpdateTextSize) update).getValue());
                     view = getOrigin(view);
-                    ((EditText) view).setTextSize(
+                    ((EditText) view).setTextSize(TypedValue.COMPLEX_UNIT_SP,
                             ((Updates.InputFieldCtrlUpdateTextSize) update).getValue());
                 }
             } else if (update instanceof Updates.InputFieldCtrlUpdateLineColor) {
@@ -480,7 +481,8 @@ public class UiUpdaterEngine {
                     ((Controls.ButtonCtrl) control).setCaptionSize(
                             ((Updates.ButtonCtrlUpdateCaptionSize) update).getValue());
                     view = getOrigin(view);
-                    ((Button) view).setTextSize(((Updates.ButtonCtrlUpdateCaptionSize) update).getValue());
+                    ((Button) view).setTextSize(TypedValue.COMPLEX_UNIT_SP,
+                            ((Updates.ButtonCtrlUpdateCaptionSize) update).getValue());
                 }
             } else if (update instanceof Updates.ButtonCtrlUpdateCaptionColor) {
                 if (control instanceof Controls.ButtonCtrl) {

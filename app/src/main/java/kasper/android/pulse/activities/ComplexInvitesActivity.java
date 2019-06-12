@@ -12,7 +12,7 @@ import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.ComplexesInviteAdapter;
 import kasper.android.pulse.helpers.DatabaseHelper;
 
-public class ComplexInvitesActivity extends AppCompatActivity {
+public class ComplexInvitesActivity extends BaseActivity {
 
     private RecyclerView recyclerView;
 

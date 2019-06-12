@@ -571,13 +571,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 }
                 holder.container.setLayoutParams(params);
             }
-            View decorView = activity.getWindow().getDecorView();
-            ViewGroup rootView = decorView.findViewById(android.R.id.content);
-            Drawable windowBackground = decorView.getBackground();
-            holder.blurView.setupWith(rootView)
-                    .windowBackground(windowBackground)
-                    .blurAlgorithm(new RenderScriptBlur(activity))
-                    .blurRadius(20);
             loadAvatarImage(message.getAuthorId(), holder);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(message.getTime());
@@ -785,10 +778,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             View decorView = activity.getWindow().getDecorView();
             ViewGroup rootView = decorView.findViewById(android.R.id.content);
             Drawable windowBackground = decorView.getBackground();
-            holder.blurView.setupWith(rootView)
-                    .windowBackground(windowBackground)
-                    .blurAlgorithm(new RenderScriptBlur(activity))
-                    .blurRadius(20);
             loadAvatarImage(message.getAuthorId(), holder);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(message.getTime());
@@ -1029,6 +1018,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 leftContainer.setVisibility(View.GONE);
                 rightContainer.setVisibility(View.VISIBLE);
             }
+            View decorView = activity.getWindow().getDecorView();
+            ViewGroup rootView = decorView.findViewById(android.R.id.content);
+            Drawable windowBackground = decorView.getBackground();
+            this.blurView.setupWith(rootView)
+                    .setFrameClearDrawable(windowBackground)
+                    .setBlurAlgorithm(new RenderScriptBlur(activity))
+                    .setBlurRadius(20)
+                    .setHasFixedTransformationMatrix(false);
+
         }
     }
 
@@ -1118,6 +1116,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 leftContainer.setVisibility(View.GONE);
                 rightContainer.setVisibility(View.VISIBLE);
             }
+            View decorView = activity.getWindow().getDecorView();
+            ViewGroup rootView = decorView.findViewById(android.R.id.content);
+            Drawable windowBackground = decorView.getBackground();
+            this.blurView.setupWith(rootView)
+                    .setFrameClearDrawable(windowBackground)
+                    .setBlurAlgorithm(new RenderScriptBlur(activity))
+                    .setBlurRadius(20)
+                    .setHasFixedTransformationMatrix(false);
         }
     }
 }

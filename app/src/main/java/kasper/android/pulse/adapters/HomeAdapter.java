@@ -1,33 +1,36 @@
 package kasper.android.pulse.adapters;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityOptions;
 import android.content.Intent;
-import android.util.Log;
+import android.graphics.Color;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.anadeainc.rxbus.Subscribe;
-import com.microsoft.signalr.JsonHelper;
 
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ChatActivity;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
 import kasper.android.pulse.callbacks.middleware.OnRoomSyncListener;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
-import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
@@ -65,7 +68,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public void softRefresh() {
-        for (int counter = 2; counter < getItemCount(); counter++) {
+        for (int counter = 0; counter < getItemCount(); counter++) {
             notifyItemChanged(counter);
         }
     }
@@ -78,10 +81,10 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             for (Entities.BaseRoom room : rooms) {
                 if (message.getRoom().getRoomId() == room.getRoomId()) {
                     room.setLastAction(message);
-                    notifyItemChanged(counter + 2);
+                    notifyItemChanged(counter);
                     rooms.add(0, room);
                     rooms.remove(counter + 1);
-                    notifyItemMoved(counter + 2, 2);
+                    notifyItemMoved(counter, 0);
                     break;
                 }
                 counter++;
@@ -97,10 +100,10 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (message.getRoom().getRoomId() == room.getRoomId()) {
                 sendingMessages.put(message.getMessageId(), message.clone());
                 room.setLastAction(message);
-                notifyItemChanged(counter + 2);
+                notifyItemChanged(counter);
                 rooms.add(0, room);
                 rooms.remove(counter + 1);
-                notifyItemMoved(counter + 2, 2);
+                notifyItemMoved(counter, 0);
                 break;
             }
             counter++;
@@ -118,10 +121,10 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             for (Entities.BaseRoom room : rooms) {
                 if (message.getRoom().getRoomId() == room.getRoomId()) {
                     room.setLastAction(message);
-                    notifyItemChanged(counter + 2);
+                    notifyItemChanged(counter);
                     rooms.add(0, room);
                     rooms.remove(counter + 1);
-                    notifyItemMoved(counter + 2, 2);
+                    notifyItemMoved(counter, 0);
                     break;
                 }
                 counter++;
@@ -151,7 +154,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         int counter = 0;
         for (Entities.BaseRoom room : rooms) {
             if (room.getRoomId() == unreadChanged.getRoomId()) {
-                notifyItemChanged(counter + 2);
+                notifyItemChanged(counter);
                 break;
             }
             counter++;
@@ -165,7 +168,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (room.getRoomId() == messageSeen.getMessage().getRoom().getRoomId()) {
                 if (room.getLastAction() != null) {
                     room.getLastAction().setSeenCount(messageSeen.getMessage().getSeenCount());
-                    notifyItemChanged(counter + 2);
+                    notifyItemChanged(counter);
                 }
                 break;
             }
@@ -183,7 +186,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         if (!exists) {
             rooms.add(0, room);
-            notifyItemInserted(2);
+            notifyItemInserted(0);
         }
     }
 
@@ -192,7 +195,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (Entities.BaseRoom r : rooms) {
             if (r.getRoomId() == room.getRoomId()) {
                 rooms.remove(counter);
-                notifyItemRemoved(counter + 2);
+                notifyItemRemoved(counter);
                 break;
             }
             counter++;
@@ -212,40 +215,42 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == 0) {
-            return new PeopleItem(LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.home_people_item, parent, false));
-        } else if (viewType == 1) {
-            return new ConvHeaderItem(LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.home_conv_header, parent, false));
-        } else {
+        if (viewType == 1)
             return new RoomItem(LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.home_room_item, parent, false));
-        }
+                    .inflate(R.layout.home_room_item_top, parent, false));
+        else if (viewType == 2)
+            return new RoomItem(LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.home_room_item_middle, parent, false));
+        else if (viewType == 3)
+            return new RoomItem(LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.home_room_item_bottom, parent, false));
+        else
+            return null;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return position == 0 ? 0 : position == 1 ? 1 : 2;
+        return position == 0 ? 1 : position == getItemCount() - 1 ? 3 : 2;
+    }
+
+    private void colorText(TextView t, String before, String text, String after, int color) {
+        t.setText(before + text + after, TextView.BufferType.SPANNABLE);
+        Spannable s = (Spannable)t.getText();
+        int start = before.length();
+        int end = start + text.length();
+        s.setSpan(new ForegroundColorSpan(color), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (position == 0) {
-            PeopleItem vh = (PeopleItem) holder;
-            peopleRV = vh.peopleRV;
-            vh.peopleRV.setLayoutManager(new LinearLayoutManager(activity, RecyclerView.HORIZONTAL, false));
-            List<Entities.Contact> contacts = DatabaseHelper.getContacts();
-            List<Entities.User> users = new ArrayList<>();
-            users.add(DatabaseHelper.getMe());
-            for (Entities.Contact contact : contacts) {
-                users.add(contact.getPeer());
-            }
-            vh.peopleRV.setAdapter(new ActiveNowAdapter(activity, users));
-        } else if (position != 1) {
-            Entities.BaseRoom room = rooms.get(position - 2);
+
+        int viewType = getItemViewType(position);
+
+        if (viewType == 1 || viewType == 2 || viewType == 3) {
+            Entities.BaseRoom room = rooms.get(position);
             RoomItem vh = (RoomItem) holder;
+
             if (room.getComplex().getMode() == 2) {
                 Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
                 Entities.User user = contact.getPeer();
@@ -263,14 +268,19 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                                         vh.nameTV.setText(baseUser.getTitle().split(" ")[0] + " : " + room.getTitle());
                                     }
                                     NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
-                                } catch (Exception ignored) { }
+                                } catch (Exception ignored) {
+                                }
                             }
+
                             @Override
-                            public void syncFailed() { }
+                            public void syncFailed() {
+                            }
                         });
                     }
+
                     @Override
-                    public void syncFailed() { }
+                    public void syncFailed() {
+                    }
                 });
             } else {
                 if (room instanceof Entities.SingleRoom) {
@@ -278,11 +288,9 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     final Entities.User peer;
                     if (sr.getUser1().getBaseUserId() == myId) {
                         peer = DatabaseHelper.getHumanById(sr.getUser2Id());
-                    }
-                    else if (sr.getUser2().getBaseUserId() == myId) {
+                    } else if (sr.getUser2().getBaseUserId() == myId) {
                         peer = DatabaseHelper.getHumanById(sr.getUser1Id());
-                    }
-                    else {
+                    } else {
                         peer = null;
                     }
                     if (peer != null) {
@@ -300,14 +308,19 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                                                 vh.nameTV.setText(sr.getComplex().getTitle() + " : " + peer.getTitle().split(" ")[0]);
                                             }
                                             NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
-                                        } catch (Exception ignored) { }
+                                        } catch (Exception ignored) {
+                                        }
                                     }
+
                                     @Override
-                                    public void syncFailed() { }
+                                    public void syncFailed() {
+                                    }
                                 });
                             }
+
                             @Override
-                            public void syncFailed() { }
+                            public void syncFailed() {
+                            }
                         });
                     }
                 } else {
@@ -408,7 +421,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        return this.rooms.size() + 2;
+        return this.rooms.size();
     }
 
     class PeopleItem extends RecyclerView.ViewHolder {
@@ -421,10 +434,19 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    class ConvHeaderItem extends RecyclerView.ViewHolder {
+    class StatItem extends RecyclerView.ViewHolder {
 
-        ConvHeaderItem(View itemView) {
+        private TextView complexCountTV;
+        private TextView complexGroupRoomCountTV;
+        private TextView complexPrivateRoomCountTV;
+        private TextView contactPrivateRoomCountTV;
+
+        StatItem(View itemView) {
             super(itemView);
+            this.complexCountTV = itemView.findViewById(R.id.complexCountTV);
+            this.complexGroupRoomCountTV = itemView.findViewById(R.id.complexGroupRoomCount);
+            this.complexPrivateRoomCountTV = itemView.findViewById(R.id.complexPrivateRoomCount);
+            this.contactPrivateRoomCountTV = itemView.findViewById(R.id.contactPrivateRoomCount);
         }
     }
 

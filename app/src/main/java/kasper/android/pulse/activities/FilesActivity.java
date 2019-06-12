@@ -31,7 +31,7 @@ import kasper.android.pulse.fragments.FileFragment;
 import kasper.android.pulse.helpers.CallbackHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 
-public class FilesActivity extends AppCompatActivity {
+public class FilesActivity extends BaseActivity {
 
     private long selectCallbackId;
 

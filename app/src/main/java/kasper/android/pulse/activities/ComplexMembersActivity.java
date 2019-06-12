@@ -13,7 +13,7 @@ import android.view.View;
 
 import java.util.List;
 
-public class ComplexMembersActivity extends AppCompatActivity {
+public class ComplexMembersActivity extends BaseActivity {
 
     private long complexId;
     private RecyclerView membersRV;
@@ -48,7 +48,7 @@ public class ComplexMembersActivity extends AppCompatActivity {
 
     private void initData() {
         List<Entities.Membership> memberships = DatabaseHelper.getMemberships(complexId);
-        List<Entities.SingleRoom> singleRooms = DatabaseHelper.getComplexSingleRooms(complexId);
+        List<Entities.BaseRoom> singleRooms = DatabaseHelper.getComplexSingleRooms(complexId);
         Entities.User me = DatabaseHelper.getMe();
         if (me != null)
             membersRV.setAdapter(new MembersAdapter(this, me.getBaseUserId(), complexId, memberships, singleRooms));

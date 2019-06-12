@@ -1,5 +1,7 @@
 package kasper.android.pulse.helpers;
 
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
@@ -52,6 +54,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 
 public class NetworkHelper {
 
+    //public static String SERVER_IP = "http://10.0.2.2:8080/";
     public static String SERVER_IP = "http://192.168.43.151:8080/";
     //public static String SERVER_IP = "http://134.209.50.254:8080/";
     private static String API_PATH = SERVER_IP + "api/";
@@ -301,19 +304,19 @@ public class NetworkHelper {
     }
 
     public static void loadUserAvatar(long avatarId, ImageView imageView) {
-        loadAvatar(createUserAvatarLink(avatarId), R.drawable.user_empty_icon, imageView);
+        loadAvatar(createUserAvatarLink(avatarId), R.drawable.user_empty_final, imageView);
     }
 
     public static void loadComplexAvatar(long avatarId, ImageView imageView) {
-        loadAvatar(createComplexAvatarLink(avatarId), R.drawable.complex_empty_icon, imageView);
+        loadAvatar(createComplexAvatarLink(avatarId), R.drawable.complex_empty_final, imageView);
     }
 
     public static void loadRoomAvatar(long avatarId, ImageView imageView) {
-        loadAvatar(createRoomAvatarLink(avatarId), R.drawable.room_empty_icon, imageView);
+        loadAvatar(createRoomAvatarLink(avatarId), R.drawable.room_empty_final, imageView);
     }
 
     public static void loadBotAvatar(long avatarId, ImageView imageView) {
-        loadAvatar(createBotAvatarLink(avatarId), R.drawable.robot_empty_icon, imageView);
+        loadAvatar(createBotAvatarLink(avatarId), R.drawable.robot_empty_final, imageView);
     }
 
     public static void requestServer(Call<Packet> call, ServerCallback callback) {
@@ -393,7 +396,7 @@ public class NetworkHelper {
             return API_PATH + "file/download_file" +
                     "?fileId=" + avatarId;
         } else {
-            return R.drawable.user_empty_icon;
+            return R.drawable.user_empty_final;
         }
     }
 
@@ -402,7 +405,7 @@ public class NetworkHelper {
             return API_PATH + "file/download_file" +
                     "?fileId=" + avatarId;
         } else {
-            return R.drawable.complex_empty_icon;
+            return R.drawable.complex_empty_final;
         }
     }
 
@@ -411,7 +414,7 @@ public class NetworkHelper {
             return API_PATH + "file/download_file" +
                     "?fileId=" + avatarId;
         } else {
-            return R.drawable.room_empty_icon;
+            return R.drawable.room_empty_final;
         }
     }
 
@@ -420,7 +423,7 @@ public class NetworkHelper {
             return API_PATH + "file/download_file" +
                     "?fileId=" + avatarId;
         } else {
-            return R.drawable.robot_empty_icon;
+            return R.drawable.robot_empty_final;
         }
     }
 }

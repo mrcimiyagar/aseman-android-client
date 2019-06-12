@@ -108,21 +108,33 @@ public class SettingsActivity extends BaseActivity {
                                     , new ServerCallback() {
                                         @Override
                                         public void onRequestSuccess(Packet packet) {
-                                            AsemanDB.deleteAllData();
-                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                            AsemanDB.deleteAllData(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                }
+                                            });
                                         }
                                         @Override
                                         public void onServerFailure() {
-                                            AsemanDB.deleteAllData();
-                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                            AsemanDB.deleteAllData(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                }
+                                            });
                                         }
                                         @Override
                                         public void onConnectionFailure() {
-                                            AsemanDB.deleteAllData();
-                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                            AsemanDB.deleteAllData(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                }
+                                            });
                                         }
                                     }))
                             .setNegativeText("Cancel")
@@ -146,23 +158,35 @@ public class SettingsActivity extends BaseActivity {
                                             new ServerCallback() {
                                                 @Override
                                                 public void onRequestSuccess(Packet packet) {
-                                                    AsemanDB.deleteAllData();
-                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                    AsemanDB.deleteAllData(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                        }
+                                                    });
                                                 }
 
                                                 @Override
                                                 public void onServerFailure() {
-                                                    AsemanDB.deleteAllData();
-                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                    AsemanDB.deleteAllData(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                        }
+                                                    });
                                                 }
 
                                                 @Override
                                                 public void onConnectionFailure() {
-                                                    AsemanDB.deleteAllData();
-                                                    startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
-                                                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                    AsemanDB.deleteAllData(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            startActivity(new Intent(SettingsActivity.this, RegisterActivity.class)
+                                                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                                                        }
+                                                    });
                                                 }
                                             }))
                             .setNegativeText("Cancel")
