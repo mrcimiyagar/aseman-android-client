@@ -16,6 +16,7 @@ import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.models.extras.FileMessageSending;
 import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.models.extras.Uploading;
+import kasper.android.pulse.models.extras.YoloBoundingBox;
 import kasper.android.pulse.repositories.BotDao;
 import kasper.android.pulse.repositories.BotSecretDao;
 import kasper.android.pulse.repositories.ComplexDao;
@@ -99,6 +100,14 @@ public class DatabaseHelper {
 
     public static boolean isContactInDatabase(long peerId) {
         return AsemanDB.getInstance().getContactDao().getContactByPeerId(peerId) != null;
+    }
+
+    public static void notifyYoloBoundingBoxCreated(YoloBoundingBox box) {
+        AsemanDB.getInstance().getYoloBoundingBoxDao().insert(box);
+    }
+
+    public static List<YoloBoundingBox> getImageYoloBoundingBoxes(long imageId) {
+        return AsemanDB.getInstance().getYoloBoundingBoxDao().getImageYoloBoundingBoxes(imageId);
     }
 
     public static boolean notifyComplexCreated(Entities.Complex complex) {

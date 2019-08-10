@@ -3,7 +3,10 @@ package kasper.android.pulse.models.notifications;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.util.List;
+
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.YoloBoundingBox;
 
 public class Notifications {
 
@@ -32,7 +35,8 @@ public class Notifications {
             @JsonSubTypes.Type(value = BotUpdatedBotViewNotification.class, name = "BotUpdatedBotViewNotification"),
             @JsonSubTypes.Type(value = BotAnimatedBotViewNotification.class, name = "BotAnimatedBotViewNotification"),
             @JsonSubTypes.Type(value = BotRanCommandsOnBotViewNotification.class, name = "BotRanCommandsOnBotViewNotification"),
-            @JsonSubTypes.Type(value = RoomCreationNotification.class, name = "RoomCreationNotification")
+            @JsonSubTypes.Type(value = RoomCreationNotification.class, name = "RoomCreationNotification"),
+            @JsonSubTypes.Type(value = ImageAnalyzedNotification.class, name = "ImageAnalyzedNotification")
     })
     public static class Notification {
         private String notificationId;
@@ -52,6 +56,27 @@ public class Notifications {
 
         public void setSession(Entities.Session session) {
             this.session = session;
+        }
+    }
+
+    public static class ImageAnalyzedNotification extends Notification {
+        private long fileId;
+        private List<YoloBoundingBox> boxes;
+
+        public long getFileId() {
+            return fileId;
+        }
+
+        public void setFileId(long fileId) {
+            this.fileId = fileId;
+        }
+
+        public List<YoloBoundingBox> getBoxes() {
+            return boxes;
+        }
+
+        public void setBoxes(List<YoloBoundingBox> boxes) {
+            this.boxes = boxes;
         }
     }
 

@@ -202,6 +202,8 @@ public class RoomActivity extends BaseActivity {
             @Override
             public void onRequestSuccess(Packet packet) {
                 workerships = packet.getWorkerships();
+                if (workerships == null)
+                    workerships = new ArrayList<>();
                 bots = new ArrayList<>();
                 pulseTable = new Hashtable<>();
                 int maxHeight = 0;

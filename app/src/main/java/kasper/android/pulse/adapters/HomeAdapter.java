@@ -23,8 +23,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
-import eightbitlab.com.blurview.BlurView;
-import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ChatActivity;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;

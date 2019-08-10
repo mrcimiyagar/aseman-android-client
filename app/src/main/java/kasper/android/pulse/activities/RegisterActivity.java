@@ -59,7 +59,7 @@ public class RegisterActivity extends BaseActivity {
                         Entities.UserSecret userSecret = packet.getUserSecret();
                         Entities.ComplexSecret complexSecret = packet.getComplexSecret();
                         DatabaseHelper.createSession(session, true);
-                        DatabaseHelper.notifyUserCreated((Entities.User) session.getBaseUser());
+                        DatabaseHelper.notifyUserCreated(packet.getUser());
                         DatabaseHelper.notifyUserSecretCreated(userSecret);
                         DatabaseHelper.notifyComplexCreated(userSecret.getHome());
                         DatabaseHelper.notifyComplexSecretCreated(complexSecret);

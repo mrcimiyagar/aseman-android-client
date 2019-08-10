@@ -14,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.google.android.exoplayer2.util.Log;
@@ -22,6 +23,7 @@ import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.microsoft.signalr.JsonHelper;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 import com.vanniktech.emoji.EmojiTextView;
 
@@ -38,6 +40,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
+import kasper.android.pulse.activities.ImageTagsActivity;
 import kasper.android.pulse.activities.MusicPlayerActivity;
 import kasper.android.pulse.activities.PhotoViewerActivity;
 import kasper.android.pulse.activities.VideoPlayerActivity;
@@ -675,6 +678,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     holder.avatarIV.setVisibility(View.GONE);
                 }
             }
+            holder.tagTV.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    activity.startActivity(new Intent(activity, ImageTagsActivity.class)
+                            .putExtra("image-id", message.getPhoto().getFileId()));
+                }
+            });
 
         } else if (viewType == 3 || viewType == 8) {
             final Entities.AudioMessage message = (Entities.AudioMessage) rawMessage;
@@ -981,6 +991,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         private ImageView imageIV;
         private ImageView avatarIV;
         private TextView timeTV;
+        private TextView tagTV;
         private ImageView signIV;
         private FrameLayout loadingContainer;
         private CircularProgressBar loadingPB;
@@ -997,6 +1008,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 this.imageIV = itemView.findViewById(R.id.adapter_messages_image_left_image_image_view);
                 this.avatarIV = itemView.findViewById(R.id.adapter_messages_image_left_avatar_image_view);
                 this.timeTV = itemView.findViewById(R.id.adapter_messages_image_left_time_text_view);
+                this.tagTV = itemView.findViewById(R.id.adapter_messages_image_left_tag_text_view);
                 this.loadingContainer = itemView.findViewById(R.id.adapter_messages_image_left_loading_container);
                 this.loadingPB = itemView.findViewById(R.id.adapter_messages_image_left_loading_progress_bar);
                 this.loadingCancelBTN = itemView.findViewById(R.id.adapter_messages_image_left_loading_cancel_image_button);
@@ -1009,6 +1021,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 this.imageIV = itemView.findViewById(R.id.adapter_messages_image_right_image_image_view);
                 this.avatarIV = itemView.findViewById(R.id.adapter_messages_image_right_avatar_image_view);
                 this.timeTV = itemView.findViewById(R.id.adapter_messages_image_right_time_text_view);
+                this.tagTV = itemView.findViewById(R.id.adapter_messages_image_right_tag_text_view);
                 this.signIV = itemView.findViewById(R.id.adapter_messages_image_right_sign_image_view);
                 this.loadingContainer = itemView.findViewById(R.id.adapter_messages_image_right_loading_container);
                 this.loadingPB = itemView.findViewById(R.id.adapter_messages_image_right_loading_progress_bar);

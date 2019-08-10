@@ -13,6 +13,7 @@ import kasper.android.pulse.models.extras.FileMessageSending;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.models.extras.Uploading;
+import kasper.android.pulse.models.extras.YoloBoundingBox;
 import kasper.android.pulse.repositories.BotCreationDao;
 import kasper.android.pulse.repositories.BotDao;
 import kasper.android.pulse.repositories.BotSecretDao;
@@ -37,6 +38,7 @@ import kasper.android.pulse.repositories.UploadingDao;
 import kasper.android.pulse.repositories.UserDao;
 import kasper.android.pulse.repositories.UserSecretDao;
 import kasper.android.pulse.repositories.WorkershipDao;
+import kasper.android.pulse.repositories.YoloBoundingBoxDao;
 
 @Database(entities = {Entities.Session.class, Entities.Bot.class, Entities.BotCreation.class
         , Entities.BotSubscription.class, Entities.BotSecret.class, Entities.User.class
@@ -48,7 +50,9 @@ import kasper.android.pulse.repositories.WorkershipDao;
         , Entities.ComplexSecret.class, Entities.Room.class, Entities.Membership.class
         , Entities.MemberAccess.class, Entities.Workership.class, Entities.MessageLocal.class
         , Entities.FileLocal.class, Entities.IdKeeper.class, Uploading.class, Downloading.class
-        , TextMessageSending.class, FileMessageSending.class, Entities.SingleRoom.class}, version = 1, exportSchema = false)
+        , TextMessageSending.class, FileMessageSending.class, Entities.SingleRoom.class
+        , YoloBoundingBox.class}
+        , version = 1, exportSchema = false)
 public abstract class AsemanDB extends RoomDatabase {
     public abstract BotCreationDao getBotCreationDao();
     public abstract BotDao getBotDao();
@@ -74,6 +78,7 @@ public abstract class AsemanDB extends RoomDatabase {
     public abstract UploadingDao getUploadingDao();
     public abstract DownloadingDao getDownloadingDao();
     public abstract MessageSendingDao getMessageSendingDao();
+    public abstract YoloBoundingBoxDao getYoloBoundingBoxDao();
 
     public static void deleteAllData(Runnable callback) {
         getInstance().getBotCreationDao().deleteAll();
@@ -100,6 +105,7 @@ public abstract class AsemanDB extends RoomDatabase {
         getInstance().getUploadingDao().deleteAll();
         getInstance().getDownloadingDao().deleteAll();
         getInstance().getMessageSendingDao().deleteAll();
+        getInstance().getYoloBoundingBoxDao().deleteAll();
 
         new Thread(new Runnable() {
             @Override

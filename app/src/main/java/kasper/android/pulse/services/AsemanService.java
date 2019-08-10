@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,11 +37,13 @@ import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
 import com.microsoft.signalr.JsonConverterType;
+import com.microsoft.signalr.JsonHelper;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ComplexProfileActivity;
 import kasper.android.pulse.activities.RoomActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.LogHelper;
@@ -58,6 +61,7 @@ import kasper.android.pulse.models.extras.RoomProfileUpdating;
 import kasper.android.pulse.models.extras.TextMessageSending;
 import kasper.android.pulse.models.extras.Uploading;
 import kasper.android.pulse.models.extras.UserProfileUpdating;
+import kasper.android.pulse.models.extras.YoloBoundingBox;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.models.notifications.Notifications;
 import kasper.android.pulse.retrofit.ComplexHandler;
@@ -184,6 +188,7 @@ public class AsemanService extends IntentService {
         connection.on("NotifyMemberAccessUpdated", this::onMemberAccessUpdated, Notifications.MemberAccessUpdatedNotification.class);
         connection.on("NotifyBotPropertiesChanged", this::onBotPropertiesChanged, Notifications.BotPropertiesChangedNotification.class);
         connection.on("NotifyRoomCreated", this::onRoomCreated, Notifications.RoomCreationNotification.class);
+        connection.on("NotifyImageAnalyzed", this::onImageAnalyzed, Notifications.ImageAnalyzedNotification.class);
     }
 
     @Override
@@ -1244,6 +1249,20 @@ public class AsemanService extends IntentService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void onImageAnalyzed(Notifications.ImageAnalyzedNotification notif) {
+        LogHelper.log("Aseman", "Received Image Analyzed notification");
+
+        long fileId = notif.getFileId();
+        List<YoloBoundingBox> boxes = notif.getBoxes();
+
+        for (YoloBoundingBox box : boxes) {
+            box.setImageId(fileId);
+            DatabaseHelper.notifyYoloBoundingBoxCreated(box);
+        }
+
+        notifyServerNotifReceived(notif.getNotificationId());
     }
 
     public void onRoomCreated(Notifications.RoomCreationNotification notif) {

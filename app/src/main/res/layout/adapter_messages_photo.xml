@@ -87,6 +87,17 @@
                 android:tint="#fff" />
 
             <TextView
+                android:id="@+id/adapter_messages_image_right_tag_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#"
+                android:textSize="30sp"
+                android:textColor="#fff"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginLeft="8dp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
                 android:id="@+id/adapter_messages_image_right_time_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -176,6 +187,17 @@
                     android:background="@android:color/transparent"/>
 
             </FrameLayout>
+
+            <TextView
+                android:id="@+id/adapter_messages_image_left_tag_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#"
+                android:textSize="30sp"
+                android:textColor="#fff"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginLeft="8dp"
+                android:layout_marginBottom="8dp"/>
 
             <TextView
                 android:id="@+id/adapter_messages_image_left_time_text_view"

@@ -3,6 +3,7 @@ package kasper.android.pulse.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,11 +12,14 @@ import com.anadeainc.rxbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.logging.LoggingMXBean;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.network.Packet;
@@ -27,6 +31,7 @@ import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.services.AsemanService;
 import kasper.android.pulse.services.MusicsService;
+import lombok.Synchronized;
 import retrofit2.Call;
 
 public class StartupActivity extends AppCompatActivity {
@@ -117,9 +122,10 @@ public class StartupActivity extends AppCompatActivity {
             public void onRequestSuccess(Packet p) {
                 new Thread(() -> {
                     syncedContacts = p.getContacts();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    if (syncedContacts == null)
+                        syncedContacts = new ArrayList<>();
+                    LogHelper.log("Startup", "done contacts.");
+                    notifyTaskDone();
                 }).start();
             }
             @Override
@@ -151,11 +157,14 @@ public class StartupActivity extends AppCompatActivity {
             public void onRequestSuccess(Packet p) {
                 new Thread(() -> {
                     syncedComplexes = p.getComplexes();
+                    if (syncedComplexes == null)
+                        syncedComplexes = new ArrayList<>();
                     syncedComplexSecrets = p.getComplexSecrets();
+                    if (syncedComplexSecrets == null)
+                        syncedComplexSecrets = new ArrayList<>();
                     initLastActions();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    LogHelper.log("Startup", "done complexes.");
+                    notifyTaskDone();
                 }).start();
             }
 
@@ -188,10 +197,13 @@ public class StartupActivity extends AppCompatActivity {
             public void onRequestSuccess(Packet p) {
                 new Thread(() -> {
                     syncedBotCreationsBots = p.getBots();
+                    if (syncedBotCreationsBots == null)
+                        syncedBotCreationsBots = new ArrayList<>();
                     syncedBotCreations = p.getBotCreations();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    if (syncedBotCreations == null)
+                        syncedBotCreations = new ArrayList<>();
+                    LogHelper.log("Startup", "done bots.");
+                    notifyTaskDone();
                 }).start();
             }
 
@@ -221,10 +233,13 @@ public class StartupActivity extends AppCompatActivity {
             public void onRequestSuccess(Packet p) {
                 new Thread(() -> {
                     syncedBotSubscriptionsBots = p.getBots();
+                    if (syncedBotSubscriptionsBots == null)
+                        syncedBotSubscriptionsBots = new ArrayList<>();
                     syncedBotSubscriptions = p.getBotSubscriptions();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    if (syncedBotSubscriptions == null)
+                        syncedBotSubscriptions = new ArrayList<>();
+                    LogHelper.log("Startup", "done subscriptions.");
+                    notifyTaskDone();
                 }).start();
             }
 
@@ -256,9 +271,10 @@ public class StartupActivity extends AppCompatActivity {
             public void onRequestSuccess(Packet p) {
                 new Thread(() -> {
                     syncedInvites = p.getInvites();
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    if (syncedInvites == null)
+                        syncedInvites = new ArrayList<>();
+                    LogHelper.log("Startup", "done invites.");
+                    notifyTaskDone();
                 }).start();
             }
             @Override
@@ -300,13 +316,15 @@ public class StartupActivity extends AppCompatActivity {
             public void onRequestSuccess(Packet packet) {
                 new Thread(() -> {
                     syncedMessages = new ArrayList<>();
-                    for (Entities.BaseRoom room : packet.getBaseRooms()) {
+                    List<Entities.BaseRoom> baseRooms = packet.getBaseRooms();
+                    if (baseRooms == null)
+                        baseRooms = new ArrayList<>();
+                    for (Entities.BaseRoom room : baseRooms) {
                         if (room.getLastAction() != null)
                             syncedMessages.add(room.getLastAction());
                     }
-                    synchronized (TASKS_LOCK) {
-                        notifyTaskDone();
-                    }
+                    LogHelper.log("Startup", "done last actions.");
+                    notifyTaskDone();
                 }).start();
             }
             @Override
@@ -330,63 +348,63 @@ public class StartupActivity extends AppCompatActivity {
         });
     }
 
+    @Synchronized
     private void notifyTaskDone() {
-        synchronized (TASKS_LOCK) {
-            doneTasksCount++;
-            if (doneTasksCount >= 6) {
-                for (Entities.Contact contact : syncedContacts) {
-                    DatabaseHelper.notifyContactCreated(contact);
-                    DatabaseHelper.notifyUserCreated(contact.getPeer());
-                }
-                for (Entities.Complex complex : syncedComplexes) {
-                    DatabaseHelper.notifyComplexCreated(complex);
-                    for (Entities.BaseRoom room : complex.getAllRooms()) {
-                        DatabaseHelper.notifyRoomCreated(room);
-                    }
-                    for (Entities.Membership mem : complex.getMembers()) {
-                        DatabaseHelper.notifyUserCreated(mem.getUser());
-                        DatabaseHelper.notifyMembershipCreated(mem);
-                        if (mem.getMemberAccess() != null)
-                            DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
-                    }
-                    if (complex.getInvites() != null) {
-                        for (Entities.Invite invite : complex.getInvites()) {
-                            DatabaseHelper.notifyUserCreated(invite.getUser());
-                            DatabaseHelper.notifyInviteReceived(invite);
-                        }
-                    }
-                }
-                for (Entities.ComplexSecret complexSecret : syncedComplexSecrets) {
-                    DatabaseHelper.notifyComplexSecretCreated(complexSecret);
-                }
-                for (int counter = 0; counter < syncedBotCreationsBots.size(); counter++) {
-                    DatabaseHelper.notifyBotCreated(syncedBotCreationsBots.get(counter)
-                            , syncedBotCreations.get(counter));
-                }
-                for (int counter = 0; counter < syncedBotSubscriptionsBots.size(); counter++) {
-                    DatabaseHelper.notifyBotSubscribed(syncedBotSubscriptionsBots.get(counter)
-                            , syncedBotSubscriptions.get(counter));
-                }
-                for (Entities.Invite invite : syncedInvites) {
-                    DatabaseHelper.notifyComplexCreated(invite.getComplex());
-                    DatabaseHelper.notifyUserCreated(invite.getUser());
-                    DatabaseHelper.notifyInviteReceived(invite);
-                }
-                for (Entities.Message message : syncedMessages) {
-                    if (message instanceof Entities.TextMessage) {
-                        DatabaseHelper.notifyTextMessageReceived((Entities.TextMessage) message);
-                    } else if (message instanceof Entities.PhotoMessage) {
-                        DatabaseHelper.notifyPhotoMessageReceived((Entities.PhotoMessage) message);
-                    } else if (message instanceof Entities.AudioMessage) {
-                        DatabaseHelper.notifyAudioMessageReceived((Entities.AudioMessage) message);
-                    } else if (message instanceof Entities.VideoMessage) {
-                        DatabaseHelper.notifyVideoMessageReceived((Entities.VideoMessage) message);
-                    } else if (message instanceof Entities.ServiceMessage) {
-                        DatabaseHelper.notifyServiceMessageReceived((Entities.ServiceMessage) message);
-                    }
-                }
-                runOnUiThread(this::syncDone);
+        doneTasksCount++;
+        LogHelper.log("Startup", "task done count " + doneTasksCount);
+        if (doneTasksCount >= 6) {
+            for (Entities.Contact contact : syncedContacts) {
+                DatabaseHelper.notifyContactCreated(contact);
+                DatabaseHelper.notifyUserCreated(contact.getPeer());
             }
+            for (Entities.Complex complex : syncedComplexes) {
+                DatabaseHelper.notifyComplexCreated(complex);
+                for (Entities.BaseRoom room : complex.getAllRooms()) {
+                    DatabaseHelper.notifyRoomCreated(room);
+                }
+                for (Entities.Membership mem : complex.getMembers()) {
+                    DatabaseHelper.notifyUserCreated(mem.getUser());
+                    DatabaseHelper.notifyMembershipCreated(mem);
+                    if (mem.getMemberAccess() != null)
+                        DatabaseHelper.notifyMemberAccessCreated(mem.getMemberAccess());
+                }
+                if (complex.getInvites() != null) {
+                    for (Entities.Invite invite : complex.getInvites()) {
+                        DatabaseHelper.notifyUserCreated(invite.getUser());
+                        DatabaseHelper.notifyInviteReceived(invite);
+                    }
+                }
+            }
+            for (Entities.ComplexSecret complexSecret : syncedComplexSecrets) {
+                DatabaseHelper.notifyComplexSecretCreated(complexSecret);
+            }
+            for (int counter = 0; counter < syncedBotCreationsBots.size(); counter++) {
+                DatabaseHelper.notifyBotCreated(syncedBotCreationsBots.get(counter)
+                        , syncedBotCreations.get(counter));
+            }
+            for (int counter = 0; counter < syncedBotSubscriptionsBots.size(); counter++) {
+                DatabaseHelper.notifyBotSubscribed(syncedBotSubscriptionsBots.get(counter)
+                        , syncedBotSubscriptions.get(counter));
+            }
+            for (Entities.Invite invite : syncedInvites) {
+                DatabaseHelper.notifyComplexCreated(invite.getComplex());
+                DatabaseHelper.notifyUserCreated(invite.getUser());
+                DatabaseHelper.notifyInviteReceived(invite);
+            }
+            for (Entities.Message message : syncedMessages) {
+                if (message instanceof Entities.TextMessage) {
+                    DatabaseHelper.notifyTextMessageReceived((Entities.TextMessage) message);
+                } else if (message instanceof Entities.PhotoMessage) {
+                    DatabaseHelper.notifyPhotoMessageReceived((Entities.PhotoMessage) message);
+                } else if (message instanceof Entities.AudioMessage) {
+                    DatabaseHelper.notifyAudioMessageReceived((Entities.AudioMessage) message);
+                } else if (message instanceof Entities.VideoMessage) {
+                    DatabaseHelper.notifyVideoMessageReceived((Entities.VideoMessage) message);
+                } else if (message instanceof Entities.ServiceMessage) {
+                    DatabaseHelper.notifyServiceMessageReceived((Entities.ServiceMessage) message);
+                }
+            }
+            runOnUiThread(this::syncDone);
         }
     }
 }

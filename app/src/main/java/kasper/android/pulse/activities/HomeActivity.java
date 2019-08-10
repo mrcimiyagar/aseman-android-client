@@ -7,7 +7,6 @@ import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 
 import android.os.PersistableBundle;
@@ -18,18 +17,14 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
-import com.astuetz.PagerSlidingTabStrip;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.crashlytics.android.Crashlytics;
 
 import com.github.javiersantos.bottomdialogs.BottomDialog;
-import com.google.android.material.tabs.TabLayout;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineProvider;
@@ -46,10 +41,7 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.snapshotter.MapSnapshot;
-import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter;
 import com.ogaclejapan.smarttablayout.SmartTabLayout;
-import com.r0adkll.slidr.Slidr;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
@@ -66,17 +58,13 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import de.hdodenhof.circleimageview.CircleImageView;
-import eightbitlab.com.blurview.BlurView;
-import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.ActiveNowAdapter;
 import kasper.android.pulse.adapters.ComplexesAdapter;
 import kasper.android.pulse.adapters.FragmentsAdapter;
-import kasper.android.pulse.adapters.HomeAdapter;
 import kasper.android.pulse.adapters.RoomsAdapter;
 import kasper.android.pulse.callbacks.middleware.OnRoomsSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.components.CustomMapView;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.fragments.BaseFragment;
 import kasper.android.pulse.fragments.FeedFragment;
