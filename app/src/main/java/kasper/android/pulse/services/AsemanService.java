@@ -13,7 +13,6 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.Pair;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,18 +31,15 @@ import java.util.concurrent.LinkedBlockingDeque;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import com.microsoft.signalr.GsonCore;
 import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
 import com.microsoft.signalr.JsonConverterType;
-import com.microsoft.signalr.JsonHelper;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ComplexProfileActivity;
 import kasper.android.pulse.activities.RoomActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
-import kasper.android.pulse.core.AsemanDB;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.LogHelper;
@@ -1272,21 +1268,15 @@ public class AsemanService extends IntentService {
             Entities.User me = DatabaseHelper.getMe();
             if (me != null) {
                 if (notif.getSingleRoom().getUser1().getBaseUserId() != me.getBaseUserId()) {
-                    Log.d("KasperLogger", "test 1");
                     if (notif.getSingleRoom().getUser1() instanceof Entities.User) {
-                        Log.d("KasperLogger", "test 2");
                         DatabaseHelper.notifyUserCreated((Entities.User)(notif.getSingleRoom().getUser1()));
                     } else if (notif.getSingleRoom().getUser1() instanceof Entities.Bot) {
-                        Log.d("KasperLogger", "test 3");
                         DatabaseHelper.notifyBotCreated((Entities.Bot)(notif.getSingleRoom().getUser1()), null);
                     }
                 } else if (notif.getSingleRoom().getUser2().getBaseUserId() != me.getBaseUserId()) {
-                    Log.d("KasperLogger", "test 4");
                     if (notif.getSingleRoom().getUser2() instanceof Entities.User) {
-                        Log.d("KasperLogger", "test 5");
                         DatabaseHelper.notifyUserCreated((Entities.User)(notif.getSingleRoom().getUser2()));
                     } else if (notif.getSingleRoom().getUser2() instanceof Entities.Bot) {
-                        Log.d("KasperLogger", "test 6");
                         DatabaseHelper.notifyBotCreated((Entities.Bot)(notif.getSingleRoom().getUser2()), null);
                     }
                 }

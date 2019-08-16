@@ -37,7 +37,7 @@
                     android:src="@drawable/ic_back"
                     android:tint="#fff"
                     android:background="@android:color/transparent"
-                    android:onClick="onBackBtnClicked"/>
+                    android:onClick="onEditCloseBtnClicked"/>
 
             </FrameLayout>
 

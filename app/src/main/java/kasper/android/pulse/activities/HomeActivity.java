@@ -74,7 +74,6 @@ import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
-import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.extras.RoomTypes;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.ComplexHandler;

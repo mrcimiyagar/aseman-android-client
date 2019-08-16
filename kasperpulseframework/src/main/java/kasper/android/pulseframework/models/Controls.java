@@ -294,6 +294,24 @@ public class Controls {
         private int textSize;
         private String textColor;
         private GravityType gravityType;
+        private boolean multiline;
+        private int lineCount;
+
+        public boolean isMultiline() {
+            return multiline;
+        }
+
+        public void setMultiline(boolean multiline) {
+            this.multiline = multiline;
+        }
+
+        public int getLineCount() {
+            return lineCount;
+        }
+
+        public void setLineCount(int lineCount) {
+            this.lineCount = lineCount;
+        }
 
         public String getText() {
             return text;

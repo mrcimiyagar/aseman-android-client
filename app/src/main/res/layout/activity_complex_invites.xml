@@ -25,7 +25,7 @@
                 android:background="@android:color/transparent"
                 android:tint="#fff"
                 android:src="@drawable/ic_back"
-                android:onClick="onBackBtnClicked"/>
+                android:onClick="onEditCloseBtnClicked"/>
 
             <TextView
                 android:layout_width="wrap_content"

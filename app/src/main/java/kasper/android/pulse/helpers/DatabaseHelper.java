@@ -533,7 +533,9 @@ public class DatabaseHelper {
         for (Entities.Bot bot : bots) {
             bot.setBotSecret(botSecretTable.get(bot.getBaseUserId()));
             List<Entities.Session> sessions = new ArrayList<>();
-            sessions.add(AsemanDB.getInstance().getSessionDao().getSessionByUserId(bot.getBaseUserId()));
+            Entities.Session session = AsemanDB.getInstance().getSessionDao().getSessionByUserId(bot.getBaseUserId());
+            if (session != null)
+                sessions.add(session);
             bot.setSessions(sessions);
         }
         return bots;

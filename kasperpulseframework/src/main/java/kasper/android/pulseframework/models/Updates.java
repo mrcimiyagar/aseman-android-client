@@ -25,7 +25,7 @@ public class Updates {
             @JsonSubTypes.Type(value = ControlUpdatePaddingLeft.class, name = "ControlUpdatePaddingLeft"),
             @JsonSubTypes.Type(value = ControlUpdatePaddingBottom.class, name = "ControlUpdatePaddingBottom"),
             @JsonSubTypes.Type(value = ControlUpdatePaddingRight.class, name = "ControlUpdatePaddingRight"),
-            @JsonSubTypes.Type(value = ControlUpdateRotation.class, name = "ControlUpdatePaddingRight"),
+            @JsonSubTypes.Type(value = ControlUpdateRotation.class, name = "ControlUpdateRotation"),
             @JsonSubTypes.Type(value = ControlUpdateRotationX.class, name = "ControlUpdateRotationX"),
             @JsonSubTypes.Type(value = ControlUpdateRotationY.class, name = "ControlUpdateRotationY"),
             @JsonSubTypes.Type(value = ControlUpdateMarginBottom.class, name = "ControlUpdateMarginBottom"),
@@ -195,15 +195,15 @@ public class Updates {
 
     }
 
-    public static class ControlUpdateRotationX extends IntUpdate {
+    public static class ControlUpdateRotationX extends FloatUpdate {
 
     }
 
-    public static class ControlUpdateRotationY extends IntUpdate {
+    public static class ControlUpdateRotationY extends FloatUpdate {
 
     }
 
-    public static class ControlUpdateRotation extends IntUpdate {
+    public static class ControlUpdateRotation extends FloatUpdate {
 
     }
 

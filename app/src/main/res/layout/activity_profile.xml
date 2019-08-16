@@ -83,6 +83,6 @@
         android:layout_gravity="right"
         android:src="@drawable/ic_back"
         android:tint="#fff"
-        android:onClick="onBackBtnClicked"/>
+        android:onClick="onEditCloseBtnClicked"/>
 
 </RelativeLayout>

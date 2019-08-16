@@ -39,6 +39,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
 import androidx.cardview.widget.CardView;
@@ -208,13 +209,13 @@ public class UiUpdaterEngine {
                 params.setMargins(bw, bw, bw, bw);
                 ((ViewGroup) view).getChildAt(0).setLayoutParams(params);
             } else if (update instanceof Updates.ControlUpdateRotationX) {
-                control.setRotationX(((Updates.ControlUpdateRotationX) update).getValue());
+                control.setRotationX(Float.valueOf(((Updates.ControlUpdateRotationX) update).getValue()).intValue());
                 view.setRotationX(((Updates.ControlUpdateRotationX) update).getValue());
             } else if (update instanceof Updates.ControlUpdateRotationY) {
-                control.setRotationY(((Updates.ControlUpdateRotationY) update).getValue());
+                control.setRotationY(Float.valueOf(((Updates.ControlUpdateRotationY) update).getValue()).intValue());
                 view.setRotationY(((Updates.ControlUpdateRotationY) update).getValue());
             } else if (update instanceof Updates.ControlUpdateRotation) {
-                control.setRotation(((Updates.ControlUpdateRotation) update).getValue());
+                control.setRotation(Float.valueOf(((Updates.ControlUpdateRotation) update).getValue()).intValue());
                 view.setRotation(((Updates.ControlUpdateRotation) update).getValue());
             } else if (update instanceof Updates.ControlUpdateCornerRadius) {
                 control.setCornerRadius(((Updates.ControlUpdateCornerRadius) update).getValue());
@@ -1229,13 +1230,6 @@ public class UiUpdaterEngine {
     }
 
     public void updateUi(CustomHashtable<String, Pair<Controls.Control, View>> idTable, Updates.Update update) {
-        if (!update.getControlId().contains("sign") && !update.getControlId().contains("pn") && !update.getControlId().contains("pe")) {
-            String ids = "";
-            for (String id : idTable.keySet()) {
-                ids += id + ";";
-            }
-            Log.d("Kasper", "hello : \n" + ids);
-        }
         Pair<Controls.Control, View> pair = idTable.get(update.getControlId());
         if (pair != null) {
             Locks.runInQueue(() -> {

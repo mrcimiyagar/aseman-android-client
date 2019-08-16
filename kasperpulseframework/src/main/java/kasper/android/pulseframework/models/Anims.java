@@ -29,6 +29,7 @@ public class Anims {
     public static class Anim {
         private String controlId;
         private long duration;
+        private Codes.Variable variable;
 
         public String getControlId() {
             return controlId;
@@ -44,6 +45,14 @@ public class Anims {
 
         public void setDuration(long duration) {
             this.duration = duration;
+        }
+
+        public void setVariable(Codes.Variable var) {
+            this.variable = var;
+        }
+
+        public Codes.Variable getVariable() {
+            return variable;
         }
     }
 

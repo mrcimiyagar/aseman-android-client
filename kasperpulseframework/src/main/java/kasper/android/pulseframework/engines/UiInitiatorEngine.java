@@ -14,6 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.core.widget.CompoundButtonCompat;
 
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Pair;
 import android.util.TypedValue;
@@ -153,6 +154,11 @@ public class UiInitiatorEngine {
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, textCtrl.getTextSize());
             if (!FieldValidator.isFieldEmpty(textCtrl.getTextColor()))
                 textView.setTextColor(Color.parseColor(textCtrl.getTextColor()));
+            if (!FieldValidator.isFieldEmpty(textCtrl.getLineCount()))
+                textView.setLines(textCtrl.getLineCount());
+            if (!textCtrl.isMultiline())
+                textView.setEllipsize(TextUtils.TruncateAt.END);
+            textView.setSingleLine(!textCtrl.isMultiline());
             if (!FieldValidator.isFieldEmpty(textCtrl.getGravityType())) {
                 if (textCtrl.getGravityType() == Controls.TextCtrl.GravityType.LEFT) {
                     textView.setGravity(Gravity.LEFT);

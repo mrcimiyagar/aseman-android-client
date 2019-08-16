@@ -1,9 +1,13 @@
 package kasper.android.pulseframework.components;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,6 +26,8 @@ import kasper.android.pulseframework.engines.UiAnimatorEngine;
 import kasper.android.pulseframework.engines.UiInitiatorEngine;
 import kasper.android.pulseframework.engines.UiUpdaterEngine;
 import kasper.android.pulseframework.interfaces.IClickNotifier;
+import kasper.android.pulseframework.interfaces.IFetchVarValue;
+import kasper.android.pulseframework.interfaces.IHandleValueAnimator;
 import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Anims;
 import kasper.android.pulseframework.models.Bindings;
@@ -80,10 +86,196 @@ public class PulseView extends RelativeLayout {
                 controlClickNotifier);
         this.uiAnimatorEngine = new UiAnimatorEngine(
                 update -> uiUpdaterEngine.updateUi(idTable, update),
-                activity::runOnUiThread);
+                activity::runOnUiThread,
+                variableName -> {
+                    Codes.Variable var = erEngine.getVariableTable().get(variableName);
+                    if (var != null) {
+                        return var.getValue().getValue();
+                    } else {
+                        return new Object();
+                    }
+                },
+                (controlId, property, value) -> {
+                    Pair<Controls.Control, View> pair = idTable.get(controlId);
+                    if (pair != null) {
+                        View view = pair.second;
+                        Controls.Control control = pair.first;
+                        switch (property) {
+                            case "x": {
+                                control.setX((int)value);
+                                if ((int)value != Controls.Control.CENTER)
+                                    view.setX(GraphicsHelper.dpToPx((int)value));
+                                else
+                                    view.setX((int)value);
+                                break;
+                            }
+                            case "y": {
+                                control.setY((int)value);
+                                if ((int)value != Controls.Control.CENTER)
+                                    view.setY(GraphicsHelper.dpToPx((int)value));
+                                else
+                                    view.setY((int)value);
+                                break;
+                            }
+                            case "width": {
+                                control.setWidth((int)value);
+                                ViewGroup.LayoutParams params = view.getLayoutParams();
+                                if ((int)value != Controls.Control.MATCH_PARENT
+                                        && (int)value != Controls.Control.WRAP_CONTENT)
+                                    params.width = GraphicsHelper.dpToPx((int)value);
+                                else
+                                    params.width = (int)value;
+                                view.setLayoutParams(params);
+                                break;
+                            }
+                            case "height": {
+                                control.setHeight((int)value);
+                                ViewGroup.LayoutParams params = view.getLayoutParams();
+                                if ((int)value != Controls.Control.MATCH_PARENT
+                                        && (int)value != Controls.Control.WRAP_CONTENT)
+                                    params.height = GraphicsHelper.dpToPx((int)value);
+                                else
+                                    params.height = (int)value;
+                                view.setLayoutParams(params);
+                                break;
+                            }
+                            case "marginLeft": {
+                                control.setMarginLeft((int)value);
+                                ViewGroup.LayoutParams params = view.getLayoutParams();
+                                if (params instanceof RelativeLayout.LayoutParams) {
+                                    ((RelativeLayout.LayoutParams) params).setMargins(
+                                            GraphicsHelper.dpToPx((int)value),
+                                            ((RelativeLayout.LayoutParams) params).topMargin,
+                                            ((RelativeLayout.LayoutParams) params).rightMargin,
+                                            ((RelativeLayout.LayoutParams) params).bottomMargin);
+                                } else if (params instanceof LinearLayout.LayoutParams) {
+                                    ((LinearLayout.LayoutParams) params).setMargins(
+                                            GraphicsHelper.dpToPx((int)value),
+                                            ((LinearLayout.LayoutParams) params).topMargin,
+                                            ((LinearLayout.LayoutParams) params).rightMargin,
+                                            ((LinearLayout.LayoutParams) params).bottomMargin);
+                                }
+                                view.setLayoutParams(params);
+                                break;
+                            }
+                            case "marginTop": {
+                                control.setMarginLeft((int)value);
+                                ViewGroup.LayoutParams params = view.getLayoutParams();
+                                if (params instanceof RelativeLayout.LayoutParams) {
+                                    ((RelativeLayout.LayoutParams) params).setMargins(
+                                            ((RelativeLayout.LayoutParams) params).leftMargin,
+                                            GraphicsHelper.dpToPx((int)value),
+                                            ((RelativeLayout.LayoutParams) params).rightMargin,
+                                            ((RelativeLayout.LayoutParams) params).bottomMargin);
+                                } else if (params instanceof LinearLayout.LayoutParams) {
+                                    ((LinearLayout.LayoutParams) params).setMargins(
+                                            ((LinearLayout.LayoutParams) params).leftMargin,
+                                            GraphicsHelper.dpToPx((int)value),
+                                            ((LinearLayout.LayoutParams) params).rightMargin,
+                                            ((LinearLayout.LayoutParams) params).bottomMargin);
+                                }
+                                view.setLayoutParams(params);
+                                break;
+                            }
+                            case "marginRight": {
+                                control.setMarginLeft((int)value);
+                                ViewGroup.LayoutParams params = view.getLayoutParams();
+                                if (params instanceof RelativeLayout.LayoutParams) {
+                                    ((RelativeLayout.LayoutParams) params).setMargins(
+                                            ((RelativeLayout.LayoutParams) params).leftMargin,
+                                            ((RelativeLayout.LayoutParams) params).topMargin,
+                                            GraphicsHelper.dpToPx((int)value),
+                                            ((RelativeLayout.LayoutParams) params).bottomMargin);
+                                } else if (params instanceof LinearLayout.LayoutParams) {
+                                    ((LinearLayout.LayoutParams) params).setMargins(
+                                            ((LinearLayout.LayoutParams) params).leftMargin,
+                                            ((LinearLayout.LayoutParams) params).topMargin,
+                                            GraphicsHelper.dpToPx((int)value),
+                                            ((LinearLayout.LayoutParams) params).bottomMargin);
+                                }
+                                view.setLayoutParams(params);
+                                break;
+                            }
+                            case "marginBottom": {
+                                control.setMarginLeft((int)value);
+                                ViewGroup.LayoutParams params = view.getLayoutParams();
+                                if (params instanceof RelativeLayout.LayoutParams) {
+                                    ((RelativeLayout.LayoutParams) params).setMargins(
+                                            ((RelativeLayout.LayoutParams) params).leftMargin,
+                                            ((RelativeLayout.LayoutParams) params).topMargin,
+                                            ((RelativeLayout.LayoutParams) params).rightMargin,
+                                            GraphicsHelper.dpToPx((int)value));
+                                } else if (params instanceof LinearLayout.LayoutParams) {
+                                    ((LinearLayout.LayoutParams) params).setMargins(
+                                            ((LinearLayout.LayoutParams) params).leftMargin,
+                                            ((LinearLayout.LayoutParams) params).topMargin,
+                                            ((LinearLayout.LayoutParams) params).rightMargin,
+                                            GraphicsHelper.dpToPx((int)value));
+                                }
+                                view.setLayoutParams(params);
+                                break;
+                            }
+                            case "paddingLeft": {
+                                control.setPaddingLeft((int)value);
+                                view.setPadding(
+                                        GraphicsHelper.dpToPx((int)value),
+                                        view.getPaddingTop(),
+                                        view.getPaddingRight(),
+                                        view.getPaddingBottom());
+                                break;
+                            }
+                            case "paddingTop": {
+                                control.setPaddingTop((int)value);
+                                view.setPadding(
+                                        view.getPaddingLeft(),
+                                        GraphicsHelper.dpToPx((int)value),
+                                        view.getPaddingRight(),
+                                        view.getPaddingBottom());
+                                break;
+                            }
+                            case "paddingRight": {
+                                control.setPaddingRight((int)value);
+                                view.setPadding(
+                                        view.getPaddingLeft(),
+                                        view.getPaddingTop(),
+                                        GraphicsHelper.dpToPx((int)value),
+                                        view.getPaddingBottom());
+                                break;
+                            }
+                            case "paddingBottom": {
+                                control.setPaddingBottom((int)value);
+                                view.setPadding(
+                                        view.getPaddingLeft(),
+                                        view.getPaddingTop(),
+                                        view.getPaddingRight(),
+                                        GraphicsHelper.dpToPx((int)value));
+                                break;
+                            }
+                            case "rotationX": {
+                                control.setRotationX((int)value);
+                                view.setRotationX((int)value);
+                                break;
+                            }
+                            case "rotationY": {
+                                control.setRotationY((int)value);
+                                view.setRotationY((int)value);
+                                break;
+                            }
+                            case "rotation": {
+                                control.setRotation((int)value);
+                                view.setRotation((int)value);
+                                break;
+                            }
+                        }
+                    }
+                });
         this.erEngine = new EREngine(
                 (mirror, value) -> uiUpdaterEngine.handleMirrorEffect(idTable, mirror, value),
                 (anim) -> uiAnimatorEngine.animateUi(idTable, anim));
+    }
+
+    private void registerValueAnimator(String controlId, String property) {
+
     }
 
     public void buildUi(Controls.Control control) {

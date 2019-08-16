@@ -2,12 +2,14 @@ package kasper.android.pulseframework.engines;
 
 import android.util.Log;
 
+import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import kasper.android.pulseframework.interfaces.ICodeToAnim;
+import kasper.android.pulseframework.interfaces.IFetchVarValue;
 import kasper.android.pulseframework.interfaces.IMirrorEffect;
 import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Anims;
@@ -15,6 +17,7 @@ import kasper.android.pulseframework.models.Bindings;
 import kasper.android.pulseframework.models.Codes;
 import kasper.android.pulseframework.models.Exceptions;
 import kasper.android.pulseframework.models.Tuple;
+import kasper.android.pulseframework.utils.JsonHelper;
 
 public class EREngine {
 
@@ -33,6 +36,11 @@ public class EREngine {
     private IMirrorEffect mirrorEffect;
     private ICodeToAnim codeToAnimation;
     private Hashtable<String, Codes.Variable> variableTable;
+
+    public Hashtable<String, Codes.Variable> getVariableTable() {
+        return variableTable;
+    }
+
     private Hashtable<String, Tuple<Codes.Task, TimerHolder, Boolean>> taskTable;
 
     public EREngine(IMirrorEffect mirrorEffect, ICodeToAnim codeToAnimation) {
@@ -70,9 +78,53 @@ public class EREngine {
         });
     }
 
-    private void runCommands(List<Codes.Code> codes) throws Exceptions.ELangException {
+    private Codes.Code runCommands(List<Codes.Code> codes) throws Exceptions.ELangException {
         for (Codes.Code code : codes) {
-            if (code instanceof Codes.PerformAnim) {
+            if (code instanceof Codes.GetTime) {
+                Codes.GetTime getTime = (Codes.GetTime) code;
+                Calendar rightNow = Calendar.getInstance();
+                if (getTime.getDetail() == Codes.GetTime.TimeDetail.SECOND) {
+                    int value = rightNow.get(Calendar.SECOND);
+                    Codes.Value result = new Codes.Value();
+                    result.setValueType(Codes.DataType.INT);
+                    result.setValue(value);
+                    return result;
+                } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.MINUTE) {
+                    int value = rightNow.get(Calendar.MINUTE);
+                    Codes.Value result = new Codes.Value();
+                    result.setValueType(Codes.DataType.INT);
+                    result.setValue(value);
+                    return result;
+                } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.HOUR12) {
+                    int value = rightNow.get(Calendar.HOUR);
+                    Codes.Value result = new Codes.Value();
+                    result.setValueType(Codes.DataType.INT);
+                    result.setValue(value);
+                    return result;
+                } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.HOUR24) {
+                    int value = rightNow.get(Calendar.HOUR_OF_DAY);
+                    Codes.Value result = new Codes.Value();
+                    result.setValueType(Codes.DataType.INT);
+                    result.setValue(value);
+                    return result;
+                } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.FULL12) {
+                    int value1 = rightNow.get(Calendar.SECOND);
+                    int value2 = rightNow.get(Calendar.MINUTE);
+                    int value3 = rightNow.get(Calendar.HOUR);
+                    Codes.Value result = new Codes.Value();
+                    result.setValueType(Codes.DataType.STRING);
+                    result.setValue(value3 + ":" + value2 + ":" + value1);
+                    return result;
+                } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.FULL24) {
+                    int value1 = rightNow.get(Calendar.SECOND);
+                    int value2 = rightNow.get(Calendar.MINUTE);
+                    int value3 = rightNow.get(Calendar.HOUR_OF_DAY);
+                    Codes.Value result = new Codes.Value();
+                    result.setValueType(Codes.DataType.STRING);
+                    result.setValue(value3 + ":" + value2 + ":" + value1);
+                    return result;
+                }
+            } else if (code instanceof Codes.PerformAnim) {
                 Codes.PerformAnim performAnim = (Codes.PerformAnim) code;
                 Anims.Anim anim = performAnim.getAnim();
                 this.codeToAnimation.performAnimation(anim);
@@ -296,10 +348,55 @@ public class EREngine {
                 }
             }
         }
+        return new Codes.Code();
     }
 
     private Codes.Value resolveObjectTree(Codes.Code code) throws Exceptions.ELangException {
-        if (code instanceof Codes.EQCompare) {
+        if (code instanceof Codes.GetTime) {
+            Codes.GetTime getTime = (Codes.GetTime) code;
+            Calendar rightNow = Calendar.getInstance();
+            if (getTime.getDetail() == Codes.GetTime.TimeDetail.SECOND) {
+                int value = rightNow.get(Calendar.SECOND);
+                Codes.Value result = new Codes.Value();
+                result.setValueType(Codes.DataType.INT);
+                result.setValue(value);
+                return result;
+            } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.MINUTE) {
+                int value = rightNow.get(Calendar.MINUTE);
+                Codes.Value result = new Codes.Value();
+                result.setValueType(Codes.DataType.INT);
+                result.setValue(value);
+                return result;
+            } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.HOUR12) {
+                int value = rightNow.get(Calendar.HOUR);
+                Codes.Value result = new Codes.Value();
+                result.setValueType(Codes.DataType.INT);
+                result.setValue(value);
+                return result;
+            } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.HOUR24) {
+                int value = rightNow.get(Calendar.HOUR_OF_DAY);
+                Codes.Value result = new Codes.Value();
+                result.setValueType(Codes.DataType.INT);
+                result.setValue(value);
+                return result;
+            } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.FULL12) {
+                int value1 = rightNow.get(Calendar.SECOND);
+                int value2 = rightNow.get(Calendar.MINUTE);
+                int value3 = rightNow.get(Calendar.HOUR);
+                Codes.Value result = new Codes.Value();
+                result.setValueType(Codes.DataType.STRING);
+                result.setValue(value3 + ":" + value2 + ":" + value1);
+                return result;
+            } else if (getTime.getDetail() == Codes.GetTime.TimeDetail.FULL24) {
+                int value1 = rightNow.get(Calendar.SECOND);
+                int value2 = rightNow.get(Calendar.MINUTE);
+                int value3 = rightNow.get(Calendar.HOUR_OF_DAY);
+                Codes.Value result = new Codes.Value();
+                result.setValueType(Codes.DataType.STRING);
+                result.setValue(value3 + ":" + value2 + ":" + value1);
+                return result;
+            }
+        } else if (code instanceof Codes.EQCompare) {
             Codes.EQCompare compare = (Codes.EQCompare) code;
             Codes.Value value1 = resolveObjectTree(compare.getItem1());
             Codes.Value value2 = resolveObjectTree(compare.getItem2());

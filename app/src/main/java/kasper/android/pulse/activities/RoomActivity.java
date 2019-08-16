@@ -1,30 +1,47 @@
 package kasper.android.pulse.activities;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+
+import android.os.Handler;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.anadeainc.rxbus.Subscribe;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import org.michaelbel.bottomsheet.BottomSheet;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
+import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
@@ -42,11 +59,16 @@ public class RoomActivity extends BaseActivity {
     private long myId;
     private boolean afterChat;
 
+    private CardView dock;
+    private TextView roomTitleTV;
+    private CircleImageView roomAvatarIV;
     private ImageView backgroundView;
     private RelativeLayout widgetContainer;
     private ImageButton msgFAB;
     private ImageButton docsFAB;
-    private ImageButton botsFAB;
+    private ImageView botsFAB;
+    private FloatingActionButton addBotFAB;
+    private CardView closeEditBtn;
 
     private List<Entities.Workership> workerships;
     private List<Entities.Bot> bots;
@@ -87,6 +109,12 @@ public class RoomActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        initSettings();
+    }
+
+    @Override
     protected void onDestroy() {
         PulseHelper.setCurrentComplexId(-1);
         PulseHelper.setCurrentRoomId(-1);
@@ -99,8 +127,7 @@ public class RoomActivity extends BaseActivity {
     private void load() {
         initViews();
         widgetContainer.removeAllViews();
-        backgroundView.setBackgroundResource(0);
-        backgroundView.setBackgroundColor(Color.TRANSPARENT);
+        backgroundView.setImageResource(0);
         initListeners();
         loadBots();
     }
@@ -136,12 +163,114 @@ public class RoomActivity extends BaseActivity {
         removeExistingPulseView(workership);
     }
 
+    public void onBotsBtnClicked(View v) {
+        if (memberAccess.isCanModifyWorkers()) {
+            botsFAB.setOnClickListener(view ->
+                    startActivityForResult(new Intent(RoomActivity.this, AddBotToRoomActivity.class)
+                                    .putExtra("complex_id", complexId)
+                                    .putExtra("room_id", roomId)
+                                    .putExtra("existing_bots", workerships
+                                            .toArray(new Entities.Workership[0]))
+                            , 1));
+        } else {
+            botsFAB.setOnClickListener(view -> {});
+        }
+    }
+
+    public void onMenuBtnClicked(View view) {
+        Drawable messageDrw = getResources().getDrawable(R.drawable.ic_message);
+        messageDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable fileDrw = getResources().getDrawable(R.drawable.ic_folder);
+        fileDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable settingsDrw = getResources().getDrawable(R.drawable.ic_settings);
+        settingsDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable editDrw = getResources().getDrawable(R.drawable.ic_edit);
+        editDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+
+        String[] itemTitles = new String[] {
+                "Messages", "Files", "Settings", "Edit Bots"
+        };
+        Drawable[] itemIcons = new Drawable[] {
+                messageDrw, fileDrw, settingsDrw, editDrw
+        };
+
+        BottomSheet.Builder builder = new BottomSheet.Builder(this);
+        builder.setItems(itemTitles, itemIcons,
+                (dialogInterface, i) -> {
+            if (i == 0) {
+                startActivity(new Intent(RoomActivity.this, ChatActivity.class)
+                        .putExtra("complex_id", complexId)
+                        .putExtra("room_id", roomId)
+                        .putExtra("start_file_id", -1L)
+                        .putExtra("after_room", true));
+            } else if (i == 1) {
+                startActivity(new Intent(RoomActivity.this, DocsActivity.class)
+                        .putExtra("complex_id", complexId)
+                        .putExtra("room_id", roomId));
+            } else if (i == 2) {
+                startActivity(new Intent(RoomActivity.this, EditRoomDesktopActivity.class)
+                        .putExtra("room-id", roomId));
+            } else if (i == 3) {
+                ValueAnimator valAnim = ValueAnimator.ofInt(GraphicHelper.dpToPx(-48), GraphicHelper.dpToPx(-148));
+                valAnim.addUpdateListener(animation -> {
+                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) dock.getLayoutParams();
+                    lp.bottomMargin = (int)animation.getAnimatedValue();
+                    dock.setLayoutParams(lp);
+                });
+                valAnim.setDuration(300);
+                ValueAnimator valAnim2 = ValueAnimator.ofInt(GraphicHelper.dpToPx(-96), GraphicHelper.dpToPx(16));
+                valAnim2.addUpdateListener(animation -> {
+                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) addBotFAB.getLayoutParams();
+                    lp.bottomMargin = (int)animation.getAnimatedValue();
+                    addBotFAB.setLayoutParams(lp);
+                });
+                valAnim2.setDuration(550);
+                ValueAnimator valAnim3 = ValueAnimator.ofInt(GraphicHelper.dpToPx(-96), GraphicHelper.dpToPx(-28));
+                valAnim3.addUpdateListener(animation -> {
+                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) closeEditBtn.getLayoutParams();
+                    lp.leftMargin = (int)animation.getAnimatedValue();
+                    closeEditBtn.setLayoutParams(lp);
+                });
+                valAnim3.setDuration(425);
+                valAnim.start();
+                valAnim2.start();
+                valAnim3.start();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        addBotFAB.show();
+                    }
+                }, 450);
+            }
+                }).setTitle("GoTo...")
+                .setDarkTheme(true)
+                .setTitleTextColor(Color.WHITE)
+                .setContentType(BottomSheet.LIST)
+                .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                .setItemTextColor(Color.WHITE)
+                .show();
+    }
+
     private void initViews() {
-        backgroundView = findViewById(R.id.fragment_room_background_container);
+        dock = findViewById(R.id.dock);
+        roomTitleTV = findViewById(R.id.roomTitle);
+        roomAvatarIV = findViewById(R.id.roomAvatar);
+        backgroundView = findViewById(R.id.roomBackground);
         widgetContainer = findViewById(R.id.fragment_room_widget_container);
         msgFAB = findViewById(R.id.roomMessagesFAB);
         docsFAB = findViewById(R.id.roomFilesFAB);
         botsFAB = findViewById(R.id.roomBotsFAB);
+        addBotFAB = findViewById(R.id.addBotFAB);
+        closeEditBtn = findViewById(R.id.closeEditBtn);
+    }
+
+    private void initSettings() {
+        addBotFAB.setVisibility(View.VISIBLE);
+        addBotFAB.hide();
+        Entities.BaseRoom room = DatabaseHelper.getRoomById(roomId);
+        roomTitleTV.setText(room.getTitle());
+        NetworkHelper.loadRoomAvatar(room.getAvatar(), roomAvatarIV);
+        GlideApp.with(this).load(room.getBackgroundUrl()).into(backgroundView);
     }
 
     private void initListeners() {
@@ -166,16 +295,8 @@ public class RoomActivity extends BaseActivity {
     private void handleWorkerAccess() {
         if (memberAccess.isCanModifyWorkers()) {
             botsFAB.setColorFilter(Color.WHITE);
-            botsFAB.setOnClickListener(view ->
-                    startActivityForResult(new Intent(RoomActivity.this, AddBotToRoomActivity.class)
-                                    .putExtra("complex_id", complexId)
-                                    .putExtra("room_id", roomId)
-                                    .putExtra("existing_bots", workerships
-                                            .toArray(new Entities.Workership[0]))
-                            , 1));
         } else {
             botsFAB.setColorFilter(Color.GRAY);
-            botsFAB.setOnClickListener(view -> {});
         }
     }
 
@@ -337,7 +458,40 @@ public class RoomActivity extends BaseActivity {
         }
     }
 
-    public void onBackBtnClicked(View view) {
+    @Override
+    public void onBackPressed() {
+        if (((RelativeLayout.LayoutParams) closeEditBtn.getLayoutParams()).leftMargin > GraphicHelper.dpToPx(-90)) {
+            ValueAnimator valAnim = ValueAnimator.ofInt(GraphicHelper.dpToPx(-148), GraphicHelper.dpToPx(-48));
+            valAnim.addUpdateListener(animation -> {
+                RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) dock.getLayoutParams();
+                lp.bottomMargin = (int) animation.getAnimatedValue();
+                dock.setLayoutParams(lp);
+            });
+            valAnim.setDuration(300);
+            ValueAnimator valAnim2 = ValueAnimator.ofInt(GraphicHelper.dpToPx(16), GraphicHelper.dpToPx(-96));
+            valAnim2.addUpdateListener(animation -> {
+                RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) addBotFAB.getLayoutParams();
+                lp.bottomMargin = (int) animation.getAnimatedValue();
+                addBotFAB.setLayoutParams(lp);
+            });
+            valAnim2.setDuration(550);
+            ValueAnimator valAnim3 = ValueAnimator.ofInt(GraphicHelper.dpToPx(-28), GraphicHelper.dpToPx(-96));
+            valAnim3.addUpdateListener(animation -> {
+                RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) closeEditBtn.getLayoutParams();
+                lp.leftMargin = (int) animation.getAnimatedValue();
+                closeEditBtn.setLayoutParams(lp);
+            });
+            valAnim3.setDuration(425);
+            valAnim.start();
+            valAnim2.start();
+            valAnim3.start();
+            addBotFAB.hide();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    public void onEditCloseBtnClicked(View view) {
         this.onBackPressed();
     }
 }

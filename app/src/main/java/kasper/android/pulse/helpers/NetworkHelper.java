@@ -118,7 +118,7 @@ public class NetworkHelper {
                     log += "\n" + ("--> END " + request.method());
                 } else if (bodyHasUnknownEncoding(request.headers())) {
                     log += "\n" + ("--> END " + request.method() + " (encoded body omitted)");
-                } else if (requestBody.contentLength() < 256) {
+                } else if (requestBody.contentLength() < 512) {
                     Buffer buffer = new Buffer();
                     requestBody.writeTo(buffer);
 
@@ -137,7 +137,7 @@ public class NetworkHelper {
                         log += "\n" + ("--> END " + request.method() + " (binary "
                                 + requestBody.contentLength() + "-byte body omitted)");
                     }
-                } else if (requestBody.contentLength() > 256) {
+                } else if (requestBody.contentLength() > 512) {
                     log += "\n" + ("--> END " + request.method()
                             + " (" + requestBody.contentLength() + "-byte body)");
                 }
@@ -181,7 +181,7 @@ public class NetworkHelper {
             } else {
                 BufferedSource source;
                 if (responseBody != null) {
-                    if (responseBody.contentLength() < 256) {
+                    if (responseBody.contentLength() < 512) {
                         source = responseBody.source();
                         source.request(Long.MAX_VALUE); // Buffer the entire body.
                         Buffer buffer = source.buffer();

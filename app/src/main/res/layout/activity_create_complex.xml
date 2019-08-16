@@ -35,7 +35,7 @@
                     android:layout_height="56dp"
                     android:background="@android:color/transparent"
                     android:src="@drawable/ic_back"
-                    android:onClick="onBackBtnClicked"/>
+                    android:onClick="onEditCloseBtnClicked"/>
 
             </RelativeLayout>
 

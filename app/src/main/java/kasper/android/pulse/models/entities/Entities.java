@@ -1482,6 +1482,7 @@ public class Entities {
         private long roomId;
         private String title;
         private long avatar;
+        private String backgroundUrl;
         private long complexId;
         @Ignore
         private Complex complex;
@@ -1493,6 +1494,14 @@ public class Entities {
         private List<FileUsage> files;
         @Ignore
         private Message lastAction;
+
+        public String getBackgroundUrl() {
+            return backgroundUrl;
+        }
+
+        public void setBackgroundUrl(String backgroundUrl) {
+            this.backgroundUrl = backgroundUrl;
+        }
 
         public long getRoomId() {
             return roomId;

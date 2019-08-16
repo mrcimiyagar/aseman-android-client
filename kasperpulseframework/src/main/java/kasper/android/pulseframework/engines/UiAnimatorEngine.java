@@ -2,6 +2,7 @@ package kasper.android.pulseframework.engines;
 
 import android.animation.ValueAnimator;
 import android.os.Handler;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 
@@ -9,174 +10,213 @@ import java.util.Hashtable;
 import java.util.List;
 
 import kasper.android.pulseframework.interfaces.IAnimToUpdate;
+import kasper.android.pulseframework.interfaces.IFetchVarValue;
+import kasper.android.pulseframework.interfaces.IHandleValueAnimator;
 import kasper.android.pulseframework.interfaces.IMainThreadRunner;
 import kasper.android.pulseframework.locks.Locks;
 import kasper.android.pulseframework.models.Anims;
+import kasper.android.pulseframework.models.Codes;
 import kasper.android.pulseframework.models.Controls;
 import kasper.android.pulseframework.models.Updates;
 import kasper.android.pulseframework.utils.GraphicsHelper;
+import kasper.android.pulseframework.utils.JsonHelper;
 
 public class UiAnimatorEngine {
 
     private IAnimToUpdate animToUpdate;
     private IMainThreadRunner mainThreadRunner;
+    private IFetchVarValue fetchVarValue;
+    private IHandleValueAnimator handleValueAnimator;
 
-    public UiAnimatorEngine(IAnimToUpdate animToUpdate, IMainThreadRunner mainThreadRunner) {
+    public UiAnimatorEngine(IAnimToUpdate animToUpdate, IMainThreadRunner mainThreadRunner, IFetchVarValue fetchVarValue, IHandleValueAnimator handleValueAnimator) {
         this.animToUpdate = animToUpdate;
         this.mainThreadRunner = mainThreadRunner;
+        this.fetchVarValue = fetchVarValue;
+        this.handleValueAnimator = handleValueAnimator;
     }
 
     private void animateUiAsync(Controls.Control control, View view, Anims.Anim anim) {
         ValueAnimator valueAnimator = new ValueAnimator();
+        Codes.Variable var = anim.getVariable();
         if (anim instanceof Anims.ControlAnimX) {
-            valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getX())
-                    , ((Anims.ControlAnimX) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getX())
+                        , ((Anims.ControlAnimX) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getX())
+                        , (float)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 float value = (float) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateX updateX = new Updates.ControlUpdateX();
-                updateX.setControlId(anim.getControlId());
-                updateX.setValue((int)value);
-                animToUpdate.update(updateX);
+                handleValueAnimator.handleValueAnimation(control.getId(), "x", value);
             });
         } else if (anim instanceof Anims.ControlAnimY) {
-            valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getY())
-                    , ((Anims.ControlAnimY) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getY())
+                        , ((Anims.ControlAnimY) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getY())
+                        , (float)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 float value = (float) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateY updateY = new Updates.ControlUpdateY();
-                updateY.setControlId(anim.getControlId());
-                updateY.setValue((int)value);
-                animToUpdate.update(updateY);
+                handleValueAnimator.handleValueAnimation(control.getId(), "y", value);
             });
         } else if (anim instanceof Anims.ControlAnimWidth) {
-            valueAnimator = ValueAnimator.ofInt(GraphicsHelper.pxToDp(view.getMeasuredWidth())
-                    , ((Anims.ControlAnimWidth) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getMeasuredWidth())
+                        , ((Anims.ControlAnimWidth) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getMeasuredWidth())
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateWidth updateWidth = new Updates.ControlUpdateWidth();
-                updateWidth.setControlId(anim.getControlId());
-                updateWidth.setValue(value);
-                animToUpdate.update(updateWidth);
+                handleValueAnimator.handleValueAnimation(control.getId(), "width", value);
             });
         } else if (anim instanceof Anims.ControlAnimHeight) {
-            valueAnimator = ValueAnimator.ofInt(GraphicsHelper.pxToDp(view.getMeasuredHeight())
-                    , ((Anims.ControlAnimHeight) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(GraphicsHelper.pxToDp(view.getMeasuredHeight())
+                        , ((Anims.ControlAnimHeight) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getMeasuredHeight())
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateHeight updateHeight = new Updates.ControlUpdateHeight();
-                updateHeight.setControlId(anim.getControlId());
-                updateHeight.setValue(value);
-                animToUpdate.update(updateHeight);
+                handleValueAnimator.handleValueAnimation(control.getId(), "height", value);
             });
         } else if (anim instanceof Anims.ControlAnimMarginLeft) {
-            valueAnimator = ValueAnimator.ofInt(control.getMarginLeft()
-                    , ((Anims.ControlAnimMarginLeft) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getMarginLeft()
+                        , ((Anims.ControlAnimMarginLeft) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getMarginLeft()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateMarginLeft updateMarginLeft = new Updates.ControlUpdateMarginLeft();
-                updateMarginLeft.setControlId(anim.getControlId());
-                updateMarginLeft.setValue(value);
-                animToUpdate.update(updateMarginLeft);
+                handleValueAnimator.handleValueAnimation(control.getId(), "marginLeft", value);
             });
         } else if (anim instanceof Anims.ControlAnimMarginRight) {
-            valueAnimator = ValueAnimator.ofInt(control.getMarginRight()
-                    , ((Anims.ControlAnimMarginRight) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getMarginRight()
+                        , ((Anims.ControlAnimMarginRight) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getMarginRight()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateMarginRight updateMarginRight = new Updates.ControlUpdateMarginRight();
-                updateMarginRight.setControlId(anim.getControlId());
-                updateMarginRight.setValue(value);
-                animToUpdate.update(updateMarginRight);
+                handleValueAnimator.handleValueAnimation(control.getId(), "marginRight", value);
             });
         } else if (anim instanceof Anims.ControlAnimMarginTop) {
-            valueAnimator = ValueAnimator.ofInt(control.getMarginTop()
-                    , ((Anims.ControlAnimMarginTop) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getMarginTop()
+                        , ((Anims.ControlAnimMarginTop) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getMarginTop()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateMarginTop updateMarginTop = new Updates.ControlUpdateMarginTop();
-                updateMarginTop.setControlId(anim.getControlId());
-                updateMarginTop.setValue(value);
-                animToUpdate.update(updateMarginTop);
+                handleValueAnimator.handleValueAnimation(control.getId(), "marginTop", value);
             });
         } else if (anim instanceof Anims.ControlAnimMarginBottom) {
-            valueAnimator = ValueAnimator.ofInt(control.getMarginBottom()
-                    , ((Anims.ControlAnimMarginBottom) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getMarginBottom()
+                        , ((Anims.ControlAnimMarginBottom) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getMarginBottom()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateMarginBottom updateMarginBottom = new Updates.ControlUpdateMarginBottom();
-                updateMarginBottom.setControlId(anim.getControlId());
-                updateMarginBottom.setValue(value);
-                animToUpdate.update(updateMarginBottom);
+                handleValueAnimator.handleValueAnimation(control.getId(), "marginBottom", value);
             });
         } else if (anim instanceof Anims.ControlAnimPaddingLeft) {
-            valueAnimator = ValueAnimator.ofInt(control.getPaddingLeft()
-                    , ((Anims.ControlAnimPaddingLeft) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getPaddingLeft()
+                        , ((Anims.ControlAnimPaddingLeft) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getPaddingLeft()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdatePaddingLeft updatePaddingLeft = new Updates.ControlUpdatePaddingLeft();
-                updatePaddingLeft.setControlId(anim.getControlId());
-                updatePaddingLeft.setValue(value);
-                animToUpdate.update(updatePaddingLeft);
+                handleValueAnimator.handleValueAnimation(control.getId(), "paddingLeft", value);
             });
         } else if (anim instanceof Anims.ControlAnimPaddingTop) {
-            valueAnimator = ValueAnimator.ofInt(control.getPaddingTop()
-                    , ((Anims.ControlAnimPaddingTop) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getPaddingTop()
+                        , ((Anims.ControlAnimPaddingTop) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getPaddingTop()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdatePaddingTop updatePaddingTop = new Updates.ControlUpdatePaddingTop();
-                updatePaddingTop.setControlId(anim.getControlId());
-                updatePaddingTop.setValue(value);
-                animToUpdate.update(updatePaddingTop);
+                handleValueAnimator.handleValueAnimation(control.getId(), "paddingTop", value);
             });
         } else if (anim instanceof Anims.ControlAnimPaddingRight) {
-            valueAnimator = ValueAnimator.ofInt(control.getPaddingRight()
-                    , ((Anims.ControlAnimPaddingRight) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getPaddingRight()
+                        , ((Anims.ControlAnimPaddingRight) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getPaddingRight()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdatePaddingRight updatePaddingRight = new Updates.ControlUpdatePaddingRight();
-                updatePaddingRight.setControlId(anim.getControlId());
-                updatePaddingRight.setValue(value);
-                animToUpdate.update(updatePaddingRight);
+                handleValueAnimator.handleValueAnimation(control.getId(), "paddingRight", value);
             });
         } else if (anim instanceof Anims.ControlAnimPaddingBottom) {
-            valueAnimator = ValueAnimator.ofInt(control.getPaddingBottom()
-                    , ((Anims.ControlAnimPaddingBottom) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getPaddingBottom()
+                        , ((Anims.ControlAnimPaddingBottom) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofFloat(control.getPaddingBottom()
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdatePaddingBottom updatePaddingBottom = new Updates.ControlUpdatePaddingBottom();
-                updatePaddingBottom.setControlId(anim.getControlId());
-                updatePaddingBottom.setValue(value);
-                animToUpdate.update(updatePaddingBottom);
+                handleValueAnimator.handleValueAnimation(control.getId(), "paddingBottom", value);
             });
         } else if (anim instanceof Anims.ControlAnimRotationX) {
-            valueAnimator = ValueAnimator.ofInt(control.getRotationX()
-                    , ((Anims.ControlAnimRotationX) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getRotationX()
+                        , ((Anims.ControlAnimRotationX) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofInt(control.getRotationX()
+                        , Float.valueOf((float)fetchVarValue.fetchVarValue(var.getName())).intValue());
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateRotationX updateRotationX = new Updates.ControlUpdateRotationX();
-                updateRotationX.setControlId(anim.getControlId());
-                updateRotationX.setValue(value);
-                animToUpdate.update(updateRotationX);
+                handleValueAnimator.handleValueAnimation(control.getId(), "rotationX", value);
             });
         } else if (anim instanceof Anims.ControlAnimRotationY) {
-            valueAnimator = ValueAnimator.ofInt(control.getRotationY()
-                    , ((Anims.ControlAnimRotationY) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getRotationY()
+                        , ((Anims.ControlAnimRotationY) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofInt(control.getRotationY()
+                        , Float.valueOf((float)fetchVarValue.fetchVarValue(var.getName())).intValue());
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateRotationY updateRotationY = new Updates.ControlUpdateRotationY();
-                updateRotationY.setControlId(anim.getControlId());
-                updateRotationY.setValue(value);
-                animToUpdate.update(updateRotationY);
+                handleValueAnimator.handleValueAnimation(control.getId(), "rotationY", value);
             });
         } else if (anim instanceof Anims.ControlAnimRotation) {
-            valueAnimator = ValueAnimator.ofInt(control.getRotation()
-                    , ((Anims.ControlAnimRotation) anim).getFinalValue());
+            if (var == null) {
+                valueAnimator = ValueAnimator.ofInt(control.getRotation()
+                        , ((Anims.ControlAnimRotation) anim).getFinalValue());
+            } else {
+                valueAnimator = ValueAnimator.ofInt(control.getRotation()
+                        , Float.valueOf((float)fetchVarValue.fetchVarValue(var.getName())).intValue());
+            }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
                 int value = (int) valueAnimator1.getAnimatedValue();
-                Updates.ControlUpdateRotation updateRotation = new Updates.ControlUpdateRotation();
-                updateRotation.setControlId(anim.getControlId());
-                updateRotation.setValue(value);
-                animToUpdate.update(updateRotation);
+                handleValueAnimator.handleValueAnimation(control.getId(), "rotation", value);
             });
         }
         valueAnimator.setDuration(anim.getDuration());

@@ -40,7 +40,7 @@ public class Notifications {
     })
     public static class Notification {
         private String notificationId;
-        private Entities.Session session;
+        private long sessionId;
 
         public String getNotificationId() {
             return notificationId;
@@ -50,12 +50,12 @@ public class Notifications {
             this.notificationId = notificationId;
         }
 
-        public Entities.Session getSession() {
-            return session;
+        public long getSessionId() {
+            return sessionId;
         }
 
-        public void setSession(Entities.Session session) {
-            this.session = session;
+        public void setSessionId(long sessionId) {
+            this.sessionId = sessionId;
         }
     }
 

@@ -28,7 +28,7 @@
             android:src="@drawable/ic_back"
             android:tint="#fff"
             android:layout_marginLeft="28dp"
-            android:onClick="onBackBtnClicked"
+            android:onClick="onEditCloseBtnClicked"
             android:background="@android:color/transparent"/>
 
     </androidx.cardview.widget.CardView>

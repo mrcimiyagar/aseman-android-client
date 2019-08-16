@@ -47,10 +47,31 @@ public class Codes {
             @JsonSubTypes.Type(value = Task.class, name = "Task"),
             @JsonSubTypes.Type(value = DefineTask.class, name = "DefineTask"),
             @JsonSubTypes.Type(value = StartTask.class, name = "StartTask"),
-            @JsonSubTypes.Type(value = StopTask.class, name = "StopTask")
+            @JsonSubTypes.Type(value = StopTask.class, name = "StopTask"),
+            @JsonSubTypes.Type(value = GetTime.class, name = "GetTime")
     })
     public static class Code {
 
+    }
+
+    public static class GetTime extends Code {
+        public enum TimeDetail {
+            @JsonProperty("HOUR12") HOUR12,
+            @JsonProperty("HOUR24") HOUR24,
+            @JsonProperty("MINUTE") MINUTE,
+            @JsonProperty("SECOND") SECOND,
+            @JsonProperty("FULL12") FULL12,
+            @JsonProperty("FULL24") FULL24
+        }
+        private TimeDetail detail;
+
+        public TimeDetail getDetail() {
+            return detail;
+        }
+
+        public void setDetail(TimeDetail detail) {
+            this.detail = detail;
+        }
     }
 
     public static class PerformAnim extends Code {

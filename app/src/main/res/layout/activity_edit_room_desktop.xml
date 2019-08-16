@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.EditRoomDesktopActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentInsetEnd="0dp"
+            app:contentInsetStart="0dp">
+
+            <ImageButton
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_back"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:textColor="#fff"
+                android:textSize="20sp"
+                android:text="Edit Room Desktop"/>
+
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp"
+        android:orientation="vertical"
+        android:background="@color/colorBlackBlue">
+
+        <studio.carbonylgroup.textfieldboxes.TextFieldBoxes
+            android:id="@+id/text_field_boxes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:labelText="Background URL"
+            app:primaryColor="@color/colorBlue"
+            app:errorColor="@android:color/holo_red_light"
+            app:secondaryColor="@color/colorBlue"
+            app:iconSignifier="@drawable/ic_photo"
+            app:counterColor="@color/colorBlue"
+            app:maxCharacters="128"
+            app:isResponsiveIconColor="true"
+            android:layout_marginTop="32dp"
+            android:layout_marginLeft="32dp"
+            android:layout_marginRight="32dp">
+
+            <studio.carbonylgroup.textfieldboxes.ExtendedEditText
+                android:id="@+id/editRoomDesktopBackgroundUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="1"
+                android:maxLines="1"
+                android:inputType="textEmailAddress"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:textColor="#fff"/>
+
+        </studio.carbonylgroup.textfieldboxes.TextFieldBoxes>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|bottom"
+        android:src="@drawable/ic_done"
+        android:tint="#fff"
+        android:layout_margin="16dp"
+        android:onClick="onSaveBtnClicked"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
