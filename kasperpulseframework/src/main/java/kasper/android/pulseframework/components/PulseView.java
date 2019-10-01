@@ -5,9 +5,11 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Pair;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,6 +47,26 @@ public class PulseView extends RelativeLayout {
     private UiUpdaterEngine uiUpdaterEngine;
     private UiAnimatorEngine uiAnimatorEngine;
     private EREngine erEngine;
+    private Controls.Control root;
+
+    public Controls.Control getRoot() {
+        return root;
+    }
+
+    private boolean childrenNotTouch = false;
+
+    public void enableChildrenTouch() {
+        this.childrenNotTouch = false;
+    }
+
+    public void disableChildrenTouch() {
+        this.childrenNotTouch = true;
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return childrenNotTouch;
+    }
 
     public PulseView(Context context) {
         super(context);
@@ -66,6 +88,8 @@ public class PulseView extends RelativeLayout {
         init();
     }
 
+    ProgressBar pb;
+
     private void init() {
         this.idTable = new CustomHashtable<>();
         GraphicsHelper.setup(getContext());
@@ -75,6 +99,11 @@ public class PulseView extends RelativeLayout {
     public void setup(AppCompatActivity activity, IClickNotifier controlClickNotifier) {
         JsonHelper.setup();
         Locks.setup(activity::runOnUiThread);
+        pb = new ProgressBar(this.getContext());
+        LayoutParams lp = new RelativeLayout.LayoutParams(GraphicsHelper.dpToPx(56), GraphicsHelper.dpToPx(56));
+        lp.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
+        pb.setLayoutParams(lp);
+        this.addView(pb);
         this.uiInitiatorEngine = new UiInitiatorEngine(
                 getContext(),
                 idTable,
@@ -279,18 +308,18 @@ public class PulseView extends RelativeLayout {
     }
 
     public void buildUi(Controls.Control control) {
-        this.removeAllViews();
         Tuple<View, List<Pair<Controls.Control, View>>
                 , CustomHashtable<String, Pair<Controls.Control, View>>> result =
                 uiInitiatorEngine.buildViewTree(Controls.PanelCtrl.LayoutType.RELATIVE, control);
         View view = result.getItem1();
         idTable = result.getItem3();
+        this.removeAllViews();
         this.addView(view);
     }
 
     public void buildUi(String json) {
         try {
-            Controls.Control root = initMapper().readValue(json, Controls.Control.class);
+            this.root = initMapper().readValue(json, Controls.Control.class);
             buildUi(root);
         } catch (Exception ex) {
             ex.printStackTrace();

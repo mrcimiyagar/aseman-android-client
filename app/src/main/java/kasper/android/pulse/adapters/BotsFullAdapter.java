@@ -140,6 +140,7 @@ public class BotsFullAdapter extends RecyclerView.Adapter<BotsFullAdapter.BotVH>
                 workership.setPosY(0);
                 workership.setWidth(150);
                 workership.setHeight(150);
+                workership.setAngle(0);
                 packet.setWorkership(workership);
                 RobotHandler robotHandler = NetworkHelper.getRetrofit().create(RobotHandler.class);
                 Call<Packet> call = robotHandler.addBotToRoom(packet);

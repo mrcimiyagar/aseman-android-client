@@ -1706,6 +1706,7 @@ public class Entities {
         private int posY;
         private int width;
         private int height;
+        private int angle;
 
         public long getWorkershipId() {
             return workershipId;
@@ -1769,6 +1770,14 @@ public class Entities {
 
         public void setHeight(int height) {
             this.height = height;
+        }
+
+        public int getAngle() {
+            return angle;
+        }
+
+        public void setAngle(int angle) {
+            this.angle = angle;
         }
     }
 

@@ -9,6 +9,24 @@ public class PulseHelper {
     private static long currentComplexId;
     private static long currentRoomId;
     private static Hashtable<Long, PulseView> pulseViewTable = new Hashtable<>();
+    private static Hashtable<Long, PulseView> pulseViewTablePreviews = new Hashtable<>();
+    private static boolean onPreviewMode = false;
+
+    public static void setOnPreviewMode(boolean onPreviewMode) {
+        PulseHelper.onPreviewMode = onPreviewMode;
+    }
+
+    public static boolean isOnPreviewMode() {
+        return onPreviewMode;
+    }
+
+    public static void setPulseViewTablePreviews(Hashtable<Long, PulseView> pulseViewTablePreviews) {
+        PulseHelper.pulseViewTablePreviews = pulseViewTablePreviews;
+    }
+
+    public static Hashtable<Long, PulseView> getPulseViewTablePreviews() {
+        return pulseViewTablePreviews;
+    }
 
     public static long getCurrentComplexId() {
         return currentComplexId;

@@ -22,7 +22,8 @@
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning,UnusedAttribute"
         tools:replace="android:allowBackup,android:supportsRtl">
-        <activity android:name=".activities.EditRoomDesktopActivity"></activity>
+        <activity android:name=".activities.BotPickerActivity"></activity>
+        <activity android:name=".activities.EditRoomDesktopActivity" />
         <activity android:name=".activities.ImageTagsActivity" />
         <activity android:name=".activities.PostActivity" />
         <activity android:name=".activities.ComplexMembersActivity" />

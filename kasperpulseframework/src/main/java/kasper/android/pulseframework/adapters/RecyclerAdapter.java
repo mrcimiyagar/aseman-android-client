@@ -82,6 +82,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
         Locks.runInQueue(() -> {

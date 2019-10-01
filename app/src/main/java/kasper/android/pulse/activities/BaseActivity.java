@@ -17,6 +17,7 @@ import android.widget.PopupMenu;
 import com.anadeainc.rxbus.Subscribe;
 import com.google.android.material.snackbar.Snackbar;
 import com.r0adkll.slidr.Slidr;
+import com.r0adkll.slidr.model.SlidrInterface;
 
 import androidx.annotation.MenuRes;
 import androidx.annotation.Nullable;
@@ -34,12 +35,17 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     private Snackbar statusSnackbar;
+    private SlidrInterface sliderInterface;
+
+    public SlidrInterface getSliderInterface() {
+        return sliderInterface;
+    }
 
     @Override
     protected void onStart() {
         super.onStart();
         if (!this.isHome)
-            Slidr.attach(this);
+            this.sliderInterface = Slidr.attach(this);
     }
 
     @Override

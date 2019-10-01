@@ -67,6 +67,7 @@ public class AddBotToRoomActivity extends BaseActivity {
                 existingBots[counter].setPosY(workerUpdated.getWorkership().getPosY());
                 existingBots[counter].setWidth(workerUpdated.getWorkership().getWidth());
                 existingBots[counter].setHeight(workerUpdated.getWorkership().getHeight());
+                existingBots[counter].setAngle(workerUpdated.getWorkership().getAngle());
                 break;
             }
         }

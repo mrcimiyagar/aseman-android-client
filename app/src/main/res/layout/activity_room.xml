@@ -1,207 +1,292 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/activity_room_container"
-    android:orientation="vertical"
+
+<com.ramotion.navigationtoolbar.NavigationToolBarLayout
+    android:id="@+id/bottomBar"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <RelativeLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/roomBackground"
+        <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/activity_room_container"
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitXY"
-            android:visibility="visible"/>
+            android:background="@color/colorBlackBlue">
 
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical">
 
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/roomBackground"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY"
+                    android:visibility="visible"/>
+
+                <kasper.android.pulse.components.LockableNestedScrollView
+                    android:id="@+id/scrollView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <RelativeLayout
+                            android:id="@+id/fragment_room_widget_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </kasper.android.pulse.components.LockableNestedScrollView>
+
                 <RelativeLayout
-                    android:id="@+id/fragment_room_widget_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/activity_room_fixed_container"/>
+
+            </RelativeLayout>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/dock"
+                android:layout_width="match_parent"
+                android:layout_height="144dp"
+                app:cardCornerRadius="48dp"
+                android:layout_alignParentBottom="true"
+                app:cardBackgroundColor="@color/colorBlackBlue3"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="-48dp"
+                app:cardElevation="6dp">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="150dp"
+                    android:layout_height="8dp"
+                    app:cardBackgroundColor="@color/colorBlackBlue5"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="4dp"
+                    android:layout_gravity="center_horizontal">
+
+                </androidx.cardview.widget.CardView>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:orientation="horizontal"
+                    android:paddingRight="16dp"
+                    android:layout_marginLeft="24dp"
+                    android:layout_marginTop="32dp">
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/roomAvatar"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/selfie"
+                        android:layout_gravity="center_vertical"/>
+
+                    <TextView
+                        android:id="@+id/roomTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:layout_marginLeft="8dp"
+                        android:text="Kasper Home"
+                        android:textColor="#fff"
+                        android:textSize="18sp"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="48dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_gravity="right"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/roomMessagesFAB"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/bot"
+                        android:tint="#fff"
+                        android:scaleType="fitXY"
+                        android:padding="12dp"
+                        android:background="@android:color/transparent"
+                        android:visibility="gone"/>
+
+                    <ImageButton
+                        android:id="@+id/roomFilesFAB"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/bot"
+                        android:tint="#fff"
+                        android:scaleType="fitXY"
+                        android:padding="12dp"
+                        android:background="@android:color/transparent"
+                        android:visibility="gone"/>
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        app:cardCornerRadius="24dp"
+                        app:cardBackgroundColor="@color/colorBlackBlue5"
+                        app:cardElevation="6dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginLeft="8dp">
+
+                        <ImageView
+                            android:id="@+id/roomBotsFAB"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/bot"
+                            android:tint="#fff"
+                            android:scaleType="fitXY"
+                            android:padding="12dp"
+                            android:onClick="onBotsBtnClicked"/>
+
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        app:cardCornerRadius="28dp"
+                        app:cardBackgroundColor="@color/colorBlackBlue5"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginRight="8dp"
+                        app:cardElevation="6dp">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/ic_modules"
+                            android:tint="#fff"
+                            android:scaleType="fitXY"
+                            android:padding="4dp"
+                            android:onClick="onMenuBtnClicked"/>
+
+                    </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/addBotFAB"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:fabSize="normal"
+                android:src="@drawable/ic_add"
+                android:tint="#fff"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="-96dp"
+                android:onClick="onPickBotBtnClicked"/>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/closeEditBtn"
+                android:layout_width="84dp"
+                android:layout_height="56dp"
+                app:cardCornerRadius="28dp"
+                android:layout_marginLeft="-96dp"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/colorBlackBlue3">
+
+                <ImageButton
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_close"
+                    android:tint="#fff"
+                    android:layout_marginLeft="28dp"
+                    android:onClick="onEditCloseBtnClicked"/>
+
+            </androidx.cardview.widget.CardView>
+
+            <FrameLayout
+                android:id="@+id/botPickerShadow"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#000"
+                android:elevation="8dp"
+                android:alpha="0"/>
+
+            <FrameLayout
+                android:id="@+id/dragPanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
+
+            <LinearLayout
+                android:id="@+id/botPicker"
+                android:layout_width="350dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:background="@color/colorBlackBlue3"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="-350dp"
+                android:elevation="8dp">
+
+                <com.google.android.material.appbar.AppBarLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp">
+
+                    <androidx.appcompat.widget.Toolbar
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:contentInsetStart="0dp"
+                        app:contentInsetEnd="0dp">
+
+                        <ImageButton
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:src="@drawable/ic_close"
+                            android:tint="#fff"
+                            android:background="@android:color/transparent"
+                            android:onClick="onCloseBotPickerBtnClicked"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:textColor="#fff"
+                            android:textSize="20sp"
+                            android:gravity="center_vertical"
+                            android:text="Bot Picker"/>
+
+                    </androidx.appcompat.widget.Toolbar>
+
+                </com.google.android.material.appbar.AppBarLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/botPickerRV"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"/>
 
             </LinearLayout>
 
-        </androidx.core.widget.NestedScrollView>
+        </RelativeLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/activity_room_fixed_container"/>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-    </RelativeLayout>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/dock"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="144dp"
-        app:cardCornerRadius="48dp"
-        android:layout_alignParentBottom="true"
-        app:cardBackgroundColor="@color/colorBlackBlue3"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="-48dp"
-        app:cardElevation="6dp">
+        android:layout_height="1000dp"
+        android:background="#fff">
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="150dp"
-            android:layout_height="8dp"
-            app:cardBackgroundColor="@color/colorBlackBlue5"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="4dp"
-            android:layout_gravity="center_horizontal">
+    </FrameLayout>
 
-        </androidx.cardview.widget.CardView>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:orientation="horizontal"
-            android:paddingRight="16dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginTop="32dp">
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/roomAvatar"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/selfie"
-                android:layout_gravity="center_vertical"/>
-
-            <TextView
-                android:id="@+id/roomTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:layout_marginLeft="8dp"
-                android:text="Kasper Home"
-                android:textColor="#fff"
-                android:textSize="18sp"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="48dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_gravity="right"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/roomMessagesFAB"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/bot"
-                android:tint="#fff"
-                android:scaleType="fitXY"
-                android:padding="12dp"
-                android:background="@android:color/transparent"
-                android:visibility="gone"/>
-
-            <ImageButton
-                android:id="@+id/roomFilesFAB"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/bot"
-                android:tint="#fff"
-                android:scaleType="fitXY"
-                android:padding="12dp"
-                android:background="@android:color/transparent"
-                android:visibility="gone"/>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                app:cardCornerRadius="24dp"
-                app:cardBackgroundColor="@color/colorBlackBlue5"
-                app:cardElevation="6dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginRight="8dp"
-                android:layout_marginLeft="8dp">
-
-                <ImageView
-                    android:id="@+id/roomBotsFAB"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/bot"
-                    android:tint="#fff"
-                    android:scaleType="fitXY"
-                    android:padding="12dp"
-                    android:onClick="onBotsBtnClicked"/>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                app:cardCornerRadius="28dp"
-                app:cardBackgroundColor="@color/colorBlackBlue5"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginRight="8dp"
-                app:cardElevation="6dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/ic_modules"
-                    android:tint="#fff"
-                    android:scaleType="fitXY"
-                    android:padding="4dp"
-                    android:onClick="onMenuBtnClicked"/>
-
-            </androidx.cardview.widget.CardView>
-
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/addBotFAB"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:fabSize="normal"
-        android:src="@drawable/ic_add"
-        android:tint="#fff"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="-96dp"/>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/closeEditBtn"
-        android:layout_width="84dp"
-        android:layout_height="56dp"
-        app:cardCornerRadius="28dp"
-        android:layout_marginLeft="-96dp"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/colorBlackBlue3">
-
-        <ImageButton
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_close"
-            android:tint="#fff"
-            android:layout_marginLeft="28dp"
-            android:onClick="onEditCloseBtnClicked"/>
-
-    </androidx.cardview.widget.CardView>
-
-</RelativeLayout>
+</com.ramotion.navigationtoolbar.NavigationToolBarLayout>

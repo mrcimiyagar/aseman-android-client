@@ -30,6 +30,8 @@ public class EditRoomDesktopActivity extends AppCompatActivity {
         room = DatabaseHelper.getRoomById(getIntent().getExtras().getLong("room-id"));
 
         backgroundUrlET = findViewById(R.id.editRoomDesktopBackgroundUrl);
+        if (room.getBackgroundUrl() != null)
+            backgroundUrlET.setText(room.getBackgroundUrl());
     }
 
     public void onSaveBtnClicked(View view) {

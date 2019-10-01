@@ -54,8 +54,8 @@ import static java.net.HttpURLConnection.HTTP_OK;
 
 public class NetworkHelper {
 
-    //public static String SERVER_IP = "http://10.0.2.2:8080/";
-    public static String SERVER_IP = "http://192.168.43.140:8080/";
+    public static String SERVER_IP = "http://10.0.2.2:8080/";
+    //public static String SERVER_IP = "http://192.168.43.140:8080/";
     //public static String SERVER_IP = "http://134.209.50.254:8080/";
     private static String API_PATH = SERVER_IP + "api/";
     private static Retrofit retrofit;

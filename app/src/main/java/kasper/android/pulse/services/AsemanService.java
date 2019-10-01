@@ -1478,12 +1478,20 @@ public class AsemanService extends IntentService {
 
     private void onBotSentBotView(final Notifications.BotSentBotViewNotification notif) {
         LogHelper.log("Aseman", "Received BotView Init notification");
-        if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
-                && PulseHelper.getCurrentRoomId() == notif.getRoomId())
+        if (PulseHelper.isOnPreviewMode() && notif.getComplexId() == 0 && notif.getRoomId() == 0) {
             Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
+                PulseView pulseView = PulseHelper.getPulseViewTablePreviews().get(notif.getBotId());
                 if (pulseView != null)
                     pulseView.buildUi(notif.getViewData());
+            }));
+        } else
+            Core.getInstance().bus().post(new UiThreadRequested(() -> {
+                if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
+                        && PulseHelper.getCurrentRoomId() == notif.getRoomId()) {
+                    PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
+                    if (pulseView != null)
+                        pulseView.buildUi(notif.getViewData());
+                }
             }));
 
         notifyServerNotifReceived(notif.getNotificationId());

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/pulseViewParentParent">
+
+    <LinearLayout
+        android:id="@+id/pulseViewParent"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="176dp">
+
+        <kasper.android.pulseframework.components.PulseView
+            android:id="@+id/botPickerPreview"
+            android:transitionName="pulseView"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_margin="13dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/botPickerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:textColor="#fff"
+                android:textSize="16.5sp"
+                android:lines="1"
+                android:ellipsize="end"
+                android:gravity="center_vertical"/>
+
+            <TextView
+                android:id="@+id/botPickerDesc"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textSize="16sp"
+                android:textColor="#fff"
+                android:paddingTop="8dp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorBlackBlue5"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"/>
+
+</LinearLayout>
