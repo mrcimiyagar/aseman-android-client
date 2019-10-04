@@ -3,13 +3,30 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <compositeConfiguration>
-          <compositeBuild compositeDefinitionSource="SCRIPT" />
-        </compositeConfiguration>
         <option name="distributionType" value="LOCAL" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="$PROJECT_DIR$/../../../AndroidStudioData/.gradle/wrapper/dists/gradle-5.2.1-all/bviwmvmbexq6idcscbicws5me/gradle-5.2.1" />
+        <option name="gradleHome" value="$USER_HOME$/AndroidStudioData/.gradle/wrapper/dists/gradle-5.2.1-all/bviwmvmbexq6idcscbicws5me/gradle-5.2.1" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/StackBlur" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/blurview" />
+            <option value="$PROJECT_DIR$/bottomdialog" />
+            <option value="$PROJECT_DIR$/bottomsheet" />
+            <option value="$PROJECT_DIR$/carouselview" />
+            <option value="$PROJECT_DIR$/jacksondatabind" />
+            <option value="$PROJECT_DIR$/kasperpulseframework" />
+            <option value="$PROJECT_DIR$/rxbus" />
+            <option value="$PROJECT_DIR$/signalr" />
+            <option value="$PROJECT_DIR$/slidingpanel" />
+            <option value="$PROJECT_DIR$/smoothAppBar" />
+            <option value="$PROJECT_DIR$/stackblur" />
+            <option value="$PROJECT_DIR$/textfieldboxes" />
+          </set>
+        </option>
         <option name="resolveModulePerSourceSet" value="false" />
+        <option name="testRunner" value="PLATFORM" />
       </GradleProjectSettings>
     </option>
   </component>

@@ -8,6 +8,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 public class MyDragShadowBuilder extends View.DragShadowBuilder {
 
@@ -15,13 +17,18 @@ public class MyDragShadowBuilder extends View.DragShadowBuilder {
     private static Drawable shadow;
 
         // Defines the constructor for myDragShadowBuilder
-        public MyDragShadowBuilder(View v) {
+        public MyDragShadowBuilder(View v, boolean showShadow) {
 
             // Stores the View parameter passed to myDragShadowBuilder.
             super(v);
 
-            // Creates a draggable image that will fill the Canvas provided by the system.
-            shadow = new BitmapDrawable(loadBitmapFromView(v, v.getMeasuredWidth(), v.getMeasuredHeight()));
+            if (showShadow)
+                shadow = new BitmapDrawable(loadBitmapFromView(v, v.getMeasuredWidth(), v.getMeasuredHeight()));
+            else {
+                FrameLayout fl = new FrameLayout(v.getContext());
+                fl.setLayoutParams(new ViewGroup.LayoutParams(v.getMeasuredWidth(), v.getMeasuredHeight()));
+                shadow = new BitmapDrawable(loadBitmapFromView(fl, v.getMeasuredWidth(), v.getMeasuredHeight()));
+            }
         }
 
         private static Bitmap loadBitmapFromView(View v, int width, int height) {

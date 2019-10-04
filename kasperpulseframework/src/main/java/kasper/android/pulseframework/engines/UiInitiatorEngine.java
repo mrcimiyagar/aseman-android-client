@@ -679,6 +679,8 @@ public class UiInitiatorEngine {
             outerCV.setCardBackgroundColor(Color.parseColor(el.getBorderColor()));
         else if (FieldValidator.isFieldEmpty(el.getCornerRadius()))
             outerCV.setCardBackgroundColor(Color.TRANSPARENT);
+        else if (!FieldValidator.isFieldEmpty(el.getBackColor()) && FieldValidator.isFieldEmpty(el.getCornerRadius()))
+            outerCV.setBackgroundColor(Color.parseColor(el.getBackColor()));
         //            outerCV.setBackgroundResource(R.drawable.empty_background);
         CardView innerCV = new CardView(context);
         CardView.LayoutParams innerCvParams = new CardView.LayoutParams(
@@ -695,7 +697,7 @@ public class UiInitiatorEngine {
         innerCV.addView(view);
         outerCV.addView(innerCV);
         view = outerCV;
-        ((CardView) view).setCardElevation(el.getElevation());
+        ((CardView) view).setCardElevation(GraphicsHelper.dpToPx(el.getElevation()));
 
         ViewGroup.LayoutParams mlp = null;
         if (parentLayoutType == Controls.PanelCtrl.LayoutType.RELATIVE) {

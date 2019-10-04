@@ -23,6 +23,7 @@ import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.rxbus.notifications.ContactCreated;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
+import kasper.android.pulse.rxbus.notifications.RoomSelected;
 import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 
 public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
@@ -97,7 +98,10 @@ public class RoomsAdapter extends RecyclerView.Adapter<RoomsAdapter.RoomVH> {
             @Override
             public void syncFailed() { }
         });
-        holder.itemView.setOnClickListener(view -> roomOpeningCallback.roomSelected(room));
+        holder.itemView.setOnClickListener(view -> {
+            Core.getInstance().bus().post(new RoomSelected(room));
+            roomOpeningCallback.roomSelected(room);
+        });
     }
 
     @Override

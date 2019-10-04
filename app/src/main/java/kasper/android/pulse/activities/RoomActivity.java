@@ -1,8 +1,7 @@
 package kasper.android.pulse.activities;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.app.Fragment;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Intent;
@@ -10,36 +9,34 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
+
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
-import android.os.SystemClock;
-import android.util.Log;
-import android.util.Pair;
 import android.view.DragEvent;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
+import com.bumptech.glide.request.transition.DrawableCrossFadeFactory;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.r0adkll.slidr.Slidr;
-import com.r0adkll.slidr.model.SlidrConfig;
-import com.ramotion.navigationtoolbar.HeaderLayout;
-import com.ramotion.navigationtoolbar.NavigationToolBarLayout;
 
-import org.jetbrains.annotations.NotNull;
 import org.michaelbel.bottomsheet.BottomSheet;
 
 import java.util.ArrayList;
@@ -50,30 +47,38 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
 import kasper.android.pulse.adapters.BotPickerAdapter;
+import kasper.android.pulse.adapters.RoomsAdapter;
 import kasper.android.pulse.callbacks.network.ServerCallback;
+import kasper.android.pulse.callbacks.ui.OnRoomIconClickListener;
 import kasper.android.pulse.components.LockableNestedScrollView;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.extras.MyDragShadowBuilder;
+import kasper.android.pulse.fragments.RoomsFragment;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
-import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
+import kasper.android.pulse.models.extras.RoomTypes;
 import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.BotPicked;
 import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
+import kasper.android.pulse.rxbus.notifications.RoomSelected;
 import kasper.android.pulse.rxbus.notifications.WorkerAdded;
 import kasper.android.pulse.rxbus.notifications.WorkerRemoved;
 import kasper.android.pulse.rxbus.notifications.WorkerUpdated;
 import kasper.android.pulseframework.components.PulseView;
-import kasper.android.pulseframework.models.Controls;
 import retrofit2.Call;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 
 public class RoomActivity extends BaseActivity {
 
@@ -96,6 +101,10 @@ public class RoomActivity extends BaseActivity {
     private LinearLayout botPicker;
     private RecyclerView botPickerRV;
     private LockableNestedScrollView scrollView;
+    private RelativeLayout roomContainer;
+    private RelativeLayout controlPage;
+    private RelativeLayout dockContainer;
+    private FrameLayout shadowBox;
 
     private FrameLayout dragPanel;
 
@@ -134,6 +143,49 @@ public class RoomActivity extends BaseActivity {
         }
     }
 
+    @Subscribe
+    public void onRoomSelected(RoomSelected roomSelected) {
+
+        closeControlPage();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                for (PulseView pv : pulseTable.values())
+                    pv.animate().alpha(0).scaleX(0.25f).scaleY(0.25f).setDuration(650).start();
+
+                workerships = new ArrayList<>();
+                bots = new ArrayList<>();
+                pulseTable = new Hashtable<>();
+
+                complexId = roomSelected.getRoom().getComplexId();
+                roomId = roomSelected.getRoom().getRoomId();
+                PulseHelper.setCurrentComplexId(complexId);
+                PulseHelper.setCurrentRoomId(roomId);
+
+                Entities.User me = DatabaseHelper.getMe();
+                if (me != null)
+                    myId = me.getBaseUserId();
+
+                memberAccess = DatabaseHelper.getMemberAccessByComplexAndUserId(complexId, myId);
+
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        load();
+                        initSettings();
+                    }
+                }, 650);
+            }
+        }, 450);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getSliderInterface().lock();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -164,33 +216,13 @@ public class RoomActivity extends BaseActivity {
         memberAccess = DatabaseHelper.getMemberAccessByComplexAndUserId(complexId, myId);
 
         load();
-
-        NavigationToolBarLayout t = findViewById(R.id.bottomBar);
-        t.setAdapter(new HeaderLayout.Adapter<HeaderLayout.ViewHolder>() {
-            @Override
-            public int getItemCount() {
-                return 2;
-            }
-
-            @NotNull
-            @Override
-            public HeaderLayout.ViewHolder onCreateViewHolder(@NotNull ViewGroup viewGroup) {
-                FrameLayout frameLayout = new FrameLayout(RoomActivity.this);
-                frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                frameLayout.setBackgroundColor(Color.WHITE);
-                return new HeaderLayout.ViewHolder(frameLayout);
-            }
-
-            @Override
-            public void onBindViewHolder(@NotNull HeaderLayout.ViewHolder viewHolder, int i) {
-
-            }
-        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (shadowBox != null && shadowBox.getAlpha() > 0)
+            shadowBox.animate().alpha(0).setDuration(350).start();
         initSettings();
         PulseHelper.setCurrentComplexId(complexId);
         PulseHelper.setCurrentRoomId(roomId);
@@ -253,115 +285,120 @@ public class RoomActivity extends BaseActivity {
 
     public void onBotsBtnClicked(View v) {
         if (memberAccess.isCanModifyWorkers()) {
-            botsFAB.setOnClickListener(view ->
-                    startActivityForResult(new Intent(RoomActivity.this, AddBotToRoomActivity.class)
-                                    .putExtra("complex_id", complexId)
-                                    .putExtra("room_id", roomId)
-                                    .putExtra("existing_bots", workerships
-                                            .toArray(new Entities.Workership[0]))
-                            , 1));
+            botsFAB.setOnClickListener(view -> {
+                    if (dock.getY() == dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100))
+                        startActivityForResult(new Intent(RoomActivity.this, AddBotToRoomActivity.class)
+                                        .putExtra("complex_id", complexId)
+                                        .putExtra("room_id", roomId)
+                                        .putExtra("existing_bots", workerships
+                                                .toArray(new Entities.Workership[0]))
+                            , 1);
+            });
         } else {
             botsFAB.setOnClickListener(view -> {});
         }
     }
 
     public void onMenuBtnClicked(View view) {
-        Drawable messageDrw = getResources().getDrawable(R.drawable.ic_message);
-        messageDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-        Drawable fileDrw = getResources().getDrawable(R.drawable.ic_folder);
-        fileDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-        Drawable settingsDrw = getResources().getDrawable(R.drawable.ic_settings);
-        settingsDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-        Drawable editDrw = getResources().getDrawable(R.drawable.ic_edit);
-        editDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        if (dock.getY() == dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100)) {
+            Drawable messageDrw = getResources().getDrawable(R.drawable.ic_message);
+            messageDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+            Drawable fileDrw = getResources().getDrawable(R.drawable.ic_folder);
+            fileDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+            Drawable settingsDrw = getResources().getDrawable(R.drawable.ic_settings);
+            settingsDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+            Drawable editDrw = getResources().getDrawable(R.drawable.ic_edit);
+            editDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
 
-        String[] itemTitles = new String[] {
-                "Messages", "Files", "Settings", "Edit Bots"
-        };
-        Drawable[] itemIcons = new Drawable[] {
-                messageDrw, fileDrw, settingsDrw, editDrw
-        };
+            String[] itemTitles = new String[]{
+                    "Messages", "Files", "Settings", "Edit Bots"
+            };
+            Drawable[] itemIcons = new Drawable[]{
+                    messageDrw, fileDrw, settingsDrw, editDrw
+            };
 
-        BottomSheet.Builder builder = new BottomSheet.Builder(this);
-        builder.setItems(itemTitles, itemIcons,
-                (dialogInterface, i) -> {
-            if (i == 0) {
-                startActivity(new Intent(RoomActivity.this, ChatActivity.class)
-                        .putExtra("complex_id", complexId)
-                        .putExtra("room_id", roomId)
-                        .putExtra("start_file_id", -1L)
-                        .putExtra("after_room", true));
-            } else if (i == 1) {
-                startActivity(new Intent(RoomActivity.this, DocsActivity.class)
-                        .putExtra("complex_id", complexId)
-                        .putExtra("room_id", roomId));
-            } else if (i == 2) {
-                startActivity(new Intent(RoomActivity.this, EditRoomDesktopActivity.class)
-                        .putExtra("room-id", roomId));
-            } else if (i == 3) {
-                ValueAnimator valAnim = ValueAnimator.ofInt(GraphicHelper.dpToPx(-48), GraphicHelper.dpToPx(-148));
-                valAnim.addUpdateListener(animation -> {
-                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) dock.getLayoutParams();
-                    lp.bottomMargin = (int)animation.getAnimatedValue();
-                    dock.setLayoutParams(lp);
-                });
-                valAnim.setDuration(300);
-                ValueAnimator valAnim2 = ValueAnimator.ofInt(GraphicHelper.dpToPx(-96), GraphicHelper.dpToPx(16));
-                valAnim2.addUpdateListener(animation -> {
-                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) addBotFAB.getLayoutParams();
-                    lp.bottomMargin = (int)animation.getAnimatedValue();
-                    addBotFAB.setLayoutParams(lp);
-                });
-                valAnim2.setDuration(550);
-                ValueAnimator valAnim3 = ValueAnimator.ofInt(GraphicHelper.dpToPx(-96), GraphicHelper.dpToPx(-28));
-                valAnim3.addUpdateListener(animation -> {
-                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) closeEditBtn.getLayoutParams();
-                    lp.leftMargin = (int)animation.getAnimatedValue();
-                    closeEditBtn.setLayoutParams(lp);
-                });
-                valAnim3.setDuration(425);
-                valAnim.start();
-                valAnim2.start();
-                valAnim3.start();
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        addBotFAB.show();
-                    }
-                }, 450);
-                for (Map.Entry<Long, PulseView> pair : pulseTable.entrySet()) {
-                    Long botId = pair.getKey();
-                    PulseView pulseView = pair.getValue();
-                    pulseView.setOnLongClickListener(new View.OnLongClickListener() {
-                        @Override
-                        public boolean onLongClick(View v) {
-                            Entities.Bot b = new Entities.Bot();
-                            b.setBaseUserId(botId);
-                            editedBot = b;
-                            pickedBot = null;
-                            ClipData.Item item = new ClipData.Item(pulseView.getTag().toString());
-                            ClipData dragData = new ClipData(
-                                    pulseView.getTag().toString(),
-                                    new String[]{ClipDescription.MIMETYPE_TEXT_PLAIN},
-                                    item);
-                            View.DragShadowBuilder myShadow = new MyDragShadowBuilder(pulseView);
-                            pulseView.startDrag(dragData,
-                                    myShadow,
-                                    pulseView,
-                                    0
-                            );
-                            return true;
+            BottomSheet.Builder builder = new BottomSheet.Builder(this);
+            builder.setItems(itemTitles, itemIcons,
+                    (dialogInterface, i) -> {
+                        if (i == 0) {
+                            shadowBox.animate().alpha(1).setDuration(350).start();
+                            startActivity(new Intent(RoomActivity.this, ChatActivity.class)
+                                    .putExtra("complex_id", complexId)
+                                    .putExtra("room_id", roomId)
+                                    .putExtra("start_file_id", -1L)
+                                    .putExtra("after_room", true));
+                        } else if (i == 1) {
+                            startActivity(new Intent(RoomActivity.this, DocsActivity.class)
+                                    .putExtra("complex_id", complexId)
+                                    .putExtra("room_id", roomId));
+                        } else if (i == 2) {
+                            startActivity(new Intent(RoomActivity.this, EditRoomDesktopActivity.class)
+                                    .putExtra("room-id", roomId));
+                        } else if (i == 3) {
+                            ValueAnimator valAnim = ValueAnimator.ofInt(GraphicHelper.dpToPx(0), GraphicHelper.dpToPx(115));
+                            valAnim.addUpdateListener(animation -> {
+                                RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) dock.getLayoutParams();
+                                lp.topMargin = (int) animation.getAnimatedValue();
+                                dock.setLayoutParams(lp);
+                            });
+                            valAnim.setDuration(300);
+                            ValueAnimator valAnim2 = ValueAnimator.ofInt(GraphicHelper.dpToPx(-96), GraphicHelper.dpToPx(16));
+                            valAnim2.addUpdateListener(animation -> {
+                                RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) addBotFAB.getLayoutParams();
+                                lp.bottomMargin = (int) animation.getAnimatedValue();
+                                addBotFAB.setLayoutParams(lp);
+                            });
+                            valAnim2.setDuration(550);
+                            ValueAnimator valAnim3 = ValueAnimator.ofInt(GraphicHelper.dpToPx(-96), GraphicHelper.dpToPx(-28));
+                            valAnim3.addUpdateListener(animation -> {
+                                RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) closeEditBtn.getLayoutParams();
+                                lp.leftMargin = (int) animation.getAnimatedValue();
+                                closeEditBtn.setLayoutParams(lp);
+                            });
+                            valAnim3.setDuration(425);
+                            valAnim.start();
+                            valAnim2.start();
+                            valAnim3.start();
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    addBotFAB.show();
+                                }
+                            }, 450);
+                            for (Map.Entry<Long, PulseView> pair : pulseTable.entrySet()) {
+                                Long botId = pair.getKey();
+                                PulseView pulseView = pair.getValue();
+                                pulseView.setOnLongClickListener(new View.OnLongClickListener() {
+                                    @Override
+                                    public boolean onLongClick(View v) {
+                                        Entities.Bot b = new Entities.Bot();
+                                        b.setBaseUserId(botId);
+                                        editedBot = b;
+                                        pickedBot = null;
+                                        ClipData.Item item = new ClipData.Item(pulseView.getTag().toString());
+                                        ClipData dragData = new ClipData(
+                                                pulseView.getTag().toString(),
+                                                new String[]{ClipDescription.MIMETYPE_TEXT_PLAIN},
+                                                item);
+                                        View.DragShadowBuilder myShadow = new MyDragShadowBuilder(pulseView, true);
+                                        pulseView.startDrag(dragData,
+                                                myShadow,
+                                                pulseView,
+                                                0
+                                        );
+                                        return true;
+                                    }
+                                });
+                            }
                         }
-                    });
-                }
-            }
-                }).setTitle("GoTo...")
-                .setDarkTheme(true)
-                .setTitleTextColor(Color.WHITE)
-                .setContentType(BottomSheet.LIST)
-                .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
-                .setItemTextColor(Color.WHITE)
-                .show();
+                    }).setTitle("GoTo...")
+                    .setDarkTheme(true)
+                    .setTitleTextColor(Color.WHITE)
+                    .setContentType(BottomSheet.LIST)
+                    .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                    .setItemTextColor(Color.WHITE)
+                    .show();
+        }
     }
 
     private void initViews() {
@@ -370,9 +407,6 @@ public class RoomActivity extends BaseActivity {
         roomAvatarIV = findViewById(R.id.roomAvatar);
         backgroundView = findViewById(R.id.roomBackground);
         widgetContainer = findViewById(R.id.fragment_room_widget_container);
-        msgFAB = findViewById(R.id.roomMessagesFAB);
-        docsFAB = findViewById(R.id.roomFilesFAB);
-        botsFAB = findViewById(R.id.roomBotsFAB);
         addBotFAB = findViewById(R.id.addBotFAB);
         closeEditBtn = findViewById(R.id.closeEditBtn);
         botPickerShadow = findViewById(R.id.botPickerShadow);
@@ -380,6 +414,11 @@ public class RoomActivity extends BaseActivity {
         botPickerRV = findViewById(R.id.botPickerRV);
         dragPanel = findViewById(R.id.dragPanel);
         scrollView = findViewById(R.id.scrollView);
+        botsFAB = findViewById(R.id.roomBotsFAB);
+        roomContainer = findViewById(R.id.activity_room_container);
+        controlPage = findViewById(R.id.controlPage);
+        dockContainer = findViewById(R.id.dockContainer);
+        shadowBox = findViewById(R.id.shadowBox);
     }
 
     private void initSettings() {
@@ -388,28 +427,83 @@ public class RoomActivity extends BaseActivity {
         Entities.BaseRoom room = DatabaseHelper.getRoomById(roomId);
         roomTitleTV.setText(room.getTitle());
         NetworkHelper.loadRoomAvatar(room.getAvatar(), roomAvatarIV);
-        GlideApp.with(this).load(room.getBackgroundUrl()).into(backgroundView);
+        DrawableCrossFadeFactory factory =
+                new DrawableCrossFadeFactory.Builder().setCrossFadeEnabled(true).build();
+        GlideApp.with(this).load(room.getBackgroundUrl()).transition(withCrossFade(factory)).centerCrop().into(backgroundView);
     }
 
     private void initListeners() {
-        if (!afterChat) {
-            msgFAB.setColorFilter(Color.WHITE);
-            msgFAB.setOnClickListener(v -> startActivity(new Intent(RoomActivity.this, ChatActivity.class)
-                    .putExtra("complex_id", complexId)
-                    .putExtra("room_id", roomId)
-                    .putExtra("start_file_id", -1L)
-                    .putExtra("after_room", true)));
-        } else {
-            msgFAB.setColorFilter(Color.GRAY);
-        }
-
-        docsFAB.setOnClickListener(v -> startActivity(new Intent(RoomActivity.this, DocsActivity.class)
-                .putExtra("complex_id", complexId)
-                .putExtra("room_id", roomId)));
-
-        scrollView.setScrollingEnabled(false);
 
         widgetContainer.setOnDragListener(dragListener);
+
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) dock.getLayoutParams();
+        if (GraphicHelper.pxToDp(GraphicHelper.getScreenWidth()) < 400) {
+            lp.width = MATCH_PARENT;
+        } else {
+            lp.width = GraphicHelper.dpToPx(400);
+        }
+        dock.setLayoutParams(lp);
+
+        dock.setTag("Dock");
+        dock.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                ClipData.Item item = new ClipData.Item(v.getTag().toString());
+                ClipData dragData = new ClipData(
+                        dock.getTag().toString(),
+                        new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN },
+                        item);
+                View.DragShadowBuilder myShadow = new MyDragShadowBuilder(dock, false);
+                dock.startDrag(dragData,
+                        myShadow,
+                        dock,
+                        0
+                );
+                return true;
+            }
+        });
+
+        dock.setY(GraphicHelper.getScreenHeight());
+
+        dockContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                dock.setX(dockContainer.getMeasuredWidth() / 2 - dock.getMeasuredWidth() / 2);
+                dock.setY(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100));
+
+                controlPage.setY(GraphicHelper.getScreenHeight());
+            }
+        });
+
+        BlurView controlPageBlur = findViewById(R.id.controlPageBlur);
+        float radius = 20f;
+        View decorView = getWindow().getDecorView();
+        ViewGroup rootView = (ViewGroup) decorView.findViewById(android.R.id.content);
+        Drawable windowBackground = decorView.getBackground();
+        controlPageBlur.setupWith(rootView)
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(this))
+                .setBlurRadius(radius)
+                .setBlurAutoUpdate(true)
+                .setHasFixedTransformationMatrix(false);
+
+        BlurView dockBlur = findViewById(R.id.dockBlur);
+        dockBlur.setupWith(rootView)
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(this))
+                .setBlurRadius(radius)
+                .setBlurAutoUpdate(true)
+                .setHasFixedTransformationMatrix(false);
+
+        List<Entities.BaseRoom> rooms = DatabaseHelper.getAllRooms();
+        RecyclerView roomsRV = findViewById(R.id.roomsRV);
+        roomsRV.setLayoutManager(new GridLayoutManager(this, 2, RecyclerView.VERTICAL, false));
+        roomsRV.setAdapter(new RoomsAdapter(this, complexId, rooms, new OnRoomIconClickListener() {
+            @Override
+            public void roomSelected(Entities.BaseRoom room) {
+
+            }
+        }));
 
         handleWorkerAccess();
     }
@@ -502,10 +596,10 @@ public class RoomActivity extends BaseActivity {
                     });
         });
         pulseView.setLayoutParams(new RelativeLayout.LayoutParams(ws.getWidth()
-                == 0 ? RelativeLayout.LayoutParams.MATCH_PARENT : ws
+                == 0 ? MATCH_PARENT : ws
                 .getWidth() == -1 ? RelativeLayout.LayoutParams.WRAP_CONTENT
                 : GraphicHelper.dpToPx(ws.getWidth()), ws.getHeight() == 0
-                ? RelativeLayout.LayoutParams.MATCH_PARENT : ws.getHeight()
+                ? MATCH_PARENT : ws.getHeight()
                 == -1 ? RelativeLayout.LayoutParams.WRAP_CONTENT : GraphicHelper
                 .dpToPx(ws.getHeight())));
         pulseView.setX(GraphicHelper.dpToPx(ws.getPosX()));
@@ -538,6 +632,34 @@ public class RoomActivity extends BaseActivity {
     }
 
     private WidgetLangingLocation downLocation = null;
+    private long dragStartTime = 0;
+    private float dragStartPoint = 0, dragEndPoint = 0;
+
+    private void closeControlPage() {
+        dock.animate()
+                .y(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100))
+                .setDuration(450)
+                .setInterpolator(new OvershootInterpolator())
+                .start();
+        controlPage.animate().
+                y(dockContainer.getMeasuredHeight())
+                .setDuration(450)
+                .setInterpolator(new OvershootInterpolator())
+                .start();
+    }
+
+    private void openControlPage() {
+        dock.animate()
+                .y(GraphicHelper.dpToPx(32))
+                .setDuration(450)
+                .setInterpolator(new OvershootInterpolator())
+                .start();
+        controlPage.animate()
+                .y(GraphicHelper.dpToPx(32 + 100))
+                .setDuration(450)
+                .setInterpolator(new OvershootInterpolator())
+                .start();
+    }
 
     final View.OnDragListener dragListener = (v, event) -> {
         if (event.getAction() == DragEvent.ACTION_DRAG_ENDED ||
@@ -546,25 +668,89 @@ public class RoomActivity extends BaseActivity {
             return true;
         }
         else if (event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+            dragStartTime = System.currentTimeMillis();
             return true;
         } else if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
+            if (pickedBot == null && editedBot == null) {
+                float value = event.getY() - dock.getMeasuredHeight() / 2f;
+                if (value > dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100))
+                    value = dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100);
+                dock.setY(value);
+                controlPage.setY(event.getY() + dock.getMeasuredHeight() / 2f - GraphicHelper.dpToPx(48));
+            }
             return true;
         } else if (event.getAction() == DragEvent.ACTION_DROP) {
-            Entities.Workership w = new Entities.Workership();
-            w.setWidth(150);
-            w.setHeight(150);
-            w.setPosX((int)(GraphicHelper.pxToDp(event.getX() - GraphicHelper.dpToPx(75))));
-            w.setPosY((int)(GraphicHelper.pxToDp(event.getY() - GraphicHelper.dpToPx(75))));
-            w.setRoomId(roomId);
+            if (editedBot == null && pickedBot == null) {
+                long dragEndTime = System.currentTimeMillis();
+                if (dragEndPoint - dragStartPoint > GraphicHelper.dpToPx(12) &&
+                        dragEndTime - dragStartTime > 0 && (
+                        (dragEndPoint - dragStartPoint) / (dragEndTime - dragStartTime) > 1 ||
+                        dragEndPoint - dragStartTime > GraphicHelper.dpToPx(100))) {
+                    float direction = dragEndPoint - dragStartPoint;
+                    if (direction > 0) {
+                        closeControlPage();
+                    } else {
+                        openControlPage();
+                    }
+                } else {
+                    if (event.getY() >= dockContainer.getMeasuredHeight() / 2f) {
+                        closeControlPage();
+                    } else {
+                        openControlPage();
+                    }
+                }
+                return true;
+            }
+            View tvState = (View) event.getLocalState();
             if (editedBot != null) {
-                w.setBotId(editedBot.getBaseUserId());
-                editedWorkerships.add(w);
+                Entities.Workership w = null;
+                for (Entities.Workership worker : workerships) {
+                    if (worker.getBotId() == editedBot.getBaseUserId()) {
+                        w = worker;
+                        break;
+                    }
+                }
+                if (w == null) {
+                    for (Entities.Workership worker : addedWorkerships) {
+                        if (worker.getBotId() == editedBot.getBaseUserId()) {
+                            w = worker;
+                            break;
+                        }
+                    }
+                    if (w == null) {
+                        for (Entities.Workership worker : editedWorkerships) {
+                            if (worker.getBotId() == editedBot.getBaseUserId()) {
+                                w = worker;
+                                break;
+                            }
+                        }
+                        if (w != null) {
+                            w.setPosX((int) (GraphicHelper.pxToDp(event.getX() - tvState.getMeasuredWidth() / 2f)));
+                            w.setPosY((int) (GraphicHelper.pxToDp(event.getY() - tvState.getMeasuredHeight() / 2f)));
+                        }
+                    } else {
+                        w.setPosX((int) (GraphicHelper.pxToDp(event.getX() - tvState.getMeasuredWidth() / 2f)));
+                        w.setPosY((int) (GraphicHelper.pxToDp(event.getY() - tvState.getMeasuredHeight() / 2f)));
+                    }
+                }
+                else {
+                    w.setBotId(editedBot.getBaseUserId());
+                    w.setPosX((int) (GraphicHelper.pxToDp(event.getX() - tvState.getMeasuredWidth() / 2f)));
+                    w.setPosY((int) (GraphicHelper.pxToDp(event.getY() - tvState.getMeasuredHeight() / 2f)));
+                    w.setRoomId(roomId);
+                    editedWorkerships.add(w);
+                }
             } else if (pickedBot != null) {
+                Entities.Workership w = new Entities.Workership();
                 w.setBotId(pickedBot.getBaseUserId());
+                w.setPosX((int)(GraphicHelper.pxToDp(event.getX() - tvState.getMeasuredWidth() / 2f)));
+                w.setPosY((int)(GraphicHelper.pxToDp(event.getY() - tvState.getMeasuredHeight() / 2f)));
+                w.setRoomId(roomId);
+                w.setWidth(150);
+                w.setHeight(150);
                 addedWorkerships.add(w);
             }
             try {
-                View tvState = (View) event.getLocalState();
                 ViewGroup tvParent = (ViewGroup) tvState.getParent();
                 tvParent.removeView(tvState);
                 ViewGroup container = (ViewGroup) v;
@@ -582,7 +768,7 @@ public class RoomActivity extends BaseActivity {
                                 tvState.getTag().toString(),
                                 new String[]{ClipDescription.MIMETYPE_TEXT_PLAIN},
                                 item);
-                        View.DragShadowBuilder myShadow = new MyDragShadowBuilder(tvState);
+                        View.DragShadowBuilder myShadow = new MyDragShadowBuilder(tvState, true);
                         tvState.startDrag(dragData,
                                 myShadow,
                                 tvState,
@@ -615,14 +801,14 @@ public class RoomActivity extends BaseActivity {
                 pulseView.setY(GraphicHelper.dpToPx(workership.getPosY()));
                 int lpWidth = 0, lpHeight = 0;
                 if (workership.getWidth() == 0) {
-                    lpWidth = RelativeLayout.LayoutParams.MATCH_PARENT;
+                    lpWidth = MATCH_PARENT;
                 } else if (workership.getWidth() == -1) {
                     lpWidth = RelativeLayout.LayoutParams.WRAP_CONTENT;
                 } else if (workership.getWidth() > 0) {
                     lpWidth = GraphicHelper.dpToPx(workership.getWidth());
                 }
                 if (workership.getHeight() == 0) {
-                    lpHeight = RelativeLayout.LayoutParams.MATCH_PARENT;
+                    lpHeight = MATCH_PARENT;
                 } else if (workership.getHeight() == -1) {
                     lpHeight = RelativeLayout.LayoutParams.WRAP_CONTENT;
                 } else if (workership.getHeight() > 0) {
@@ -674,10 +860,10 @@ public class RoomActivity extends BaseActivity {
         for (PulseView pulseView : pulseTable.values()) {
             pulseView.setOnLongClickListener(null);
         }
-        ValueAnimator valAnim = ValueAnimator.ofInt(GraphicHelper.dpToPx(-148), GraphicHelper.dpToPx(-48));
+        ValueAnimator valAnim = ValueAnimator.ofInt(GraphicHelper.dpToPx(115), GraphicHelper.dpToPx(0));
         valAnim.addUpdateListener(animation -> {
             RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) dock.getLayoutParams();
-            lp.bottomMargin = (int) animation.getAnimatedValue();
+            lp.topMargin = (int)animation.getAnimatedValue();
             dock.setLayoutParams(lp);
         });
         valAnim.setDuration(300);

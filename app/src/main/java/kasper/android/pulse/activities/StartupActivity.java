@@ -7,6 +7,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Database;
 
 import com.anadeainc.rxbus.Subscribe;
 
@@ -31,6 +32,7 @@ import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.ShowToast;
 import kasper.android.pulse.services.AsemanService;
 import kasper.android.pulse.services.MusicsService;
+import kasper.android.pulse.services.Startup;
 import lombok.Synchronized;
 import retrofit2.Call;
 
@@ -86,10 +88,25 @@ public class StartupActivity extends AppCompatActivity {
         }
     }
 
+    private void startServices() {
+        new Thread(() -> {
+            Intent intent = new Intent(StartupActivity.this, AsemanService.class);
+            startService(intent);
+        }).start();
+        new Thread(() -> {
+            Intent intent = new Intent(StartupActivity.this, MusicsService.class);
+            startService(intent);
+        }).start();
+    }
+
     private void loadNextPage() {
         Entities.Session session = DatabaseHelper.getSingleSession();
         if (session != null && session.getToken().length() > 0) {
-            startActivity(new Intent(StartupActivity.this, HomeActivity.class));
+            startServices();
+            startActivity(new Intent(StartupActivity.this, RoomActivity.class)
+                    .putExtra("room_id", DatabaseHelper.getComplexById(DatabaseHelper.getMe()
+                            .getUserSecret().getHomeId()).getAllRooms().get(0).getRoomId())
+                    .putExtra("complex_id", DatabaseHelper.getMe().getUserSecret().getHomeId()));
             finish();
         } else {
             startActivity(new Intent(StartupActivity.this, RegisterActivity.class));

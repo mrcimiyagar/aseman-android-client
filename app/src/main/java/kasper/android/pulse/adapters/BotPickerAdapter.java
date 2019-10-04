@@ -156,7 +156,7 @@ public class BotPickerAdapter extends RecyclerView.Adapter<BotPickerAdapter.BpVh
                         holder.preview.getTag().toString(),
                         new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN },
                         item);
-                View.DragShadowBuilder myShadow = new MyDragShadowBuilder(holder.preview);
+                View.DragShadowBuilder myShadow = new MyDragShadowBuilder(holder.preview, true);
                 holder.preview.startDrag(dragData,
                         myShadow,
                         holder.preview,

@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Database;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +73,8 @@ public class RoomsFragment extends BaseFragment {
             rooms = DatabaseHelper.getComplexSingleRooms(complexId);
         } else if (roomType == RoomTypes.Group) {
             rooms = DatabaseHelper.getComplexNonSingleRooms(complexId);
+        } else if (roomType == RoomTypes.All) {
+            rooms = DatabaseHelper.getAllRooms();
         }
         roomsRV.setAdapter(new HomeAdapter((AppCompatActivity) getActivity(), rooms));
         return contentView;

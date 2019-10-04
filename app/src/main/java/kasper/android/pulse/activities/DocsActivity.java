@@ -11,7 +11,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.karumi.dexter.Dexter;
@@ -33,6 +36,8 @@ import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.models.extras.Downloading;
 import kasper.android.pulse.services.AsemanService;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+
 public class DocsActivity extends BaseActivity {
 
     private long complexId;
@@ -49,6 +54,16 @@ public class DocsActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_docs);
+
+        FrameLayout rootView = findViewById(R.id.rootView);
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) rootView.getLayoutParams();
+        if (GraphicHelper.pxToDp(GraphicHelper.getScreenWidth()) < 500) {
+            lp.width = MATCH_PARENT;
+        } else {
+            lp.width = GraphicHelper.dpToPx(500);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        }
+        rootView.setLayoutParams(lp);
 
         if (getIntent().getExtras() != null) {
             complexId = getIntent().getExtras().getLong("complex_id");

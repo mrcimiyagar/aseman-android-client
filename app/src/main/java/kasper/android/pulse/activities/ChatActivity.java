@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -66,6 +67,8 @@ import kasper.android.pulse.rxbus.notifications.MessageReceived;
 import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.services.AsemanService;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 public class ChatActivity extends BaseActivity {
 
@@ -143,6 +146,16 @@ public class ChatActivity extends BaseActivity {
                     @Override
                     public void onPermissionsChecked(MultiplePermissionsReport report) {
                         initViews();
+
+                        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) rootView.getLayoutParams();
+                        if (GraphicHelper.pxToDp(GraphicHelper.getScreenWidth()) < 500) {
+                            lp.width = MATCH_PARENT;
+                        } else {
+                            lp.width = GraphicHelper.dpToPx(500);
+                            lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                        }
+                        rootView.setLayoutParams(lp);
+
                         initDecorations();
                         initMessages();
                         initListeners();

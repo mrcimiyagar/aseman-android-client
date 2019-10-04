@@ -44,10 +44,10 @@ public class UiAnimatorEngine {
                         , ((Anims.ControlAnimX) anim).getFinalValue());
             } else {
                 valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getX())
-                        , (float)fetchVarValue.fetchVarValue(var.getName()));
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
             }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
-                float value = (float) valueAnimator1.getAnimatedValue();
+                int value = Float.valueOf((float)valueAnimator1.getAnimatedValue()).intValue();
                 handleValueAnimator.handleValueAnimation(control.getId(), "x", value);
             });
         } else if (anim instanceof Anims.ControlAnimY) {
@@ -56,10 +56,10 @@ public class UiAnimatorEngine {
                         , ((Anims.ControlAnimY) anim).getFinalValue());
             } else {
                 valueAnimator = ValueAnimator.ofFloat(GraphicsHelper.pxToDp(view.getY())
-                        , (float)fetchVarValue.fetchVarValue(var.getName()));
+                        , (int)fetchVarValue.fetchVarValue(var.getName()));
             }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
-                float value = (float) valueAnimator1.getAnimatedValue();
+                int value = Float.valueOf((float)valueAnimator1.getAnimatedValue()).intValue();
                 handleValueAnimator.handleValueAnimation(control.getId(), "y", value);
             });
         } else if (anim instanceof Anims.ControlAnimWidth) {
@@ -71,7 +71,7 @@ public class UiAnimatorEngine {
                         , (int)fetchVarValue.fetchVarValue(var.getName()));
             }
             valueAnimator.addUpdateListener(valueAnimator1 -> {
-                int value = (int) valueAnimator1.getAnimatedValue();
+                int value = Float.valueOf((float)valueAnimator1.getAnimatedValue()).intValue();
                 handleValueAnimator.handleValueAnimation(control.getId(), "width", value);
             });
         } else if (anim instanceof Anims.ControlAnimHeight) {
@@ -229,7 +229,8 @@ public class UiAnimatorEngine {
             if (pair != null) {
                 Controls.Control control = pair.first;
                 View view = pair.second;
-                mainThreadRunner.runOnMainThread(() -> animateUiAsync(control, view, anim));
+                if (control != null && view != null)
+                    mainThreadRunner.runOnMainThread(() -> animateUiAsync(control, view, anim));
             }
         });
     }

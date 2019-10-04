@@ -129,171 +129,173 @@ public class PulseView extends RelativeLayout {
                     if (pair != null) {
                         View view = pair.second;
                         Controls.Control control = pair.first;
-                        switch (property) {
-                            case "x": {
-                                control.setX((int)value);
-                                if ((int)value != Controls.Control.CENTER)
-                                    view.setX(GraphicsHelper.dpToPx((int)value));
-                                else
-                                    view.setX((int)value);
-                                break;
-                            }
-                            case "y": {
-                                control.setY((int)value);
-                                if ((int)value != Controls.Control.CENTER)
-                                    view.setY(GraphicsHelper.dpToPx((int)value));
-                                else
-                                    view.setY((int)value);
-                                break;
-                            }
-                            case "width": {
-                                control.setWidth((int)value);
-                                ViewGroup.LayoutParams params = view.getLayoutParams();
-                                if ((int)value != Controls.Control.MATCH_PARENT
-                                        && (int)value != Controls.Control.WRAP_CONTENT)
-                                    params.width = GraphicsHelper.dpToPx((int)value);
-                                else
-                                    params.width = (int)value;
-                                view.setLayoutParams(params);
-                                break;
-                            }
-                            case "height": {
-                                control.setHeight((int)value);
-                                ViewGroup.LayoutParams params = view.getLayoutParams();
-                                if ((int)value != Controls.Control.MATCH_PARENT
-                                        && (int)value != Controls.Control.WRAP_CONTENT)
-                                    params.height = GraphicsHelper.dpToPx((int)value);
-                                else
-                                    params.height = (int)value;
-                                view.setLayoutParams(params);
-                                break;
-                            }
-                            case "marginLeft": {
-                                control.setMarginLeft((int)value);
-                                ViewGroup.LayoutParams params = view.getLayoutParams();
-                                if (params instanceof RelativeLayout.LayoutParams) {
-                                    ((RelativeLayout.LayoutParams) params).setMargins(
-                                            GraphicsHelper.dpToPx((int)value),
-                                            ((RelativeLayout.LayoutParams) params).topMargin,
-                                            ((RelativeLayout.LayoutParams) params).rightMargin,
-                                            ((RelativeLayout.LayoutParams) params).bottomMargin);
-                                } else if (params instanceof LinearLayout.LayoutParams) {
-                                    ((LinearLayout.LayoutParams) params).setMargins(
-                                            GraphicsHelper.dpToPx((int)value),
-                                            ((LinearLayout.LayoutParams) params).topMargin,
-                                            ((LinearLayout.LayoutParams) params).rightMargin,
-                                            ((LinearLayout.LayoutParams) params).bottomMargin);
+                        if (control != null && view != null) {
+                            switch (property) {
+                                case "x": {
+                                    control.setX((int) value);
+                                    if ((int) value != Controls.Control.CENTER)
+                                        view.setX(GraphicsHelper.dpToPx((int) value));
+                                    else
+                                        view.setX((int) value);
+                                    break;
                                 }
-                                view.setLayoutParams(params);
-                                break;
-                            }
-                            case "marginTop": {
-                                control.setMarginLeft((int)value);
-                                ViewGroup.LayoutParams params = view.getLayoutParams();
-                                if (params instanceof RelativeLayout.LayoutParams) {
-                                    ((RelativeLayout.LayoutParams) params).setMargins(
-                                            ((RelativeLayout.LayoutParams) params).leftMargin,
-                                            GraphicsHelper.dpToPx((int)value),
-                                            ((RelativeLayout.LayoutParams) params).rightMargin,
-                                            ((RelativeLayout.LayoutParams) params).bottomMargin);
-                                } else if (params instanceof LinearLayout.LayoutParams) {
-                                    ((LinearLayout.LayoutParams) params).setMargins(
-                                            ((LinearLayout.LayoutParams) params).leftMargin,
-                                            GraphicsHelper.dpToPx((int)value),
-                                            ((LinearLayout.LayoutParams) params).rightMargin,
-                                            ((LinearLayout.LayoutParams) params).bottomMargin);
+                                case "y": {
+                                    control.setY((int) value);
+                                    if ((int) value != Controls.Control.CENTER)
+                                        view.setY(GraphicsHelper.dpToPx((int) value));
+                                    else
+                                        view.setY((int) value);
+                                    break;
                                 }
-                                view.setLayoutParams(params);
-                                break;
-                            }
-                            case "marginRight": {
-                                control.setMarginLeft((int)value);
-                                ViewGroup.LayoutParams params = view.getLayoutParams();
-                                if (params instanceof RelativeLayout.LayoutParams) {
-                                    ((RelativeLayout.LayoutParams) params).setMargins(
-                                            ((RelativeLayout.LayoutParams) params).leftMargin,
-                                            ((RelativeLayout.LayoutParams) params).topMargin,
-                                            GraphicsHelper.dpToPx((int)value),
-                                            ((RelativeLayout.LayoutParams) params).bottomMargin);
-                                } else if (params instanceof LinearLayout.LayoutParams) {
-                                    ((LinearLayout.LayoutParams) params).setMargins(
-                                            ((LinearLayout.LayoutParams) params).leftMargin,
-                                            ((LinearLayout.LayoutParams) params).topMargin,
-                                            GraphicsHelper.dpToPx((int)value),
-                                            ((LinearLayout.LayoutParams) params).bottomMargin);
+                                case "width": {
+                                    control.setWidth((int) value);
+                                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                                    if ((int) value != Controls.Control.MATCH_PARENT
+                                            && (int) value != Controls.Control.WRAP_CONTENT)
+                                        params.width = GraphicsHelper.dpToPx((int) value);
+                                    else
+                                        params.width = (int) value;
+                                    view.setLayoutParams(params);
+                                    break;
                                 }
-                                view.setLayoutParams(params);
-                                break;
-                            }
-                            case "marginBottom": {
-                                control.setMarginLeft((int)value);
-                                ViewGroup.LayoutParams params = view.getLayoutParams();
-                                if (params instanceof RelativeLayout.LayoutParams) {
-                                    ((RelativeLayout.LayoutParams) params).setMargins(
-                                            ((RelativeLayout.LayoutParams) params).leftMargin,
-                                            ((RelativeLayout.LayoutParams) params).topMargin,
-                                            ((RelativeLayout.LayoutParams) params).rightMargin,
-                                            GraphicsHelper.dpToPx((int)value));
-                                } else if (params instanceof LinearLayout.LayoutParams) {
-                                    ((LinearLayout.LayoutParams) params).setMargins(
-                                            ((LinearLayout.LayoutParams) params).leftMargin,
-                                            ((LinearLayout.LayoutParams) params).topMargin,
-                                            ((LinearLayout.LayoutParams) params).rightMargin,
-                                            GraphicsHelper.dpToPx((int)value));
+                                case "height": {
+                                    control.setHeight((int) value);
+                                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                                    if ((int) value != Controls.Control.MATCH_PARENT
+                                            && (int) value != Controls.Control.WRAP_CONTENT)
+                                        params.height = GraphicsHelper.dpToPx((int) value);
+                                    else
+                                        params.height = (int) value;
+                                    view.setLayoutParams(params);
+                                    break;
                                 }
-                                view.setLayoutParams(params);
-                                break;
-                            }
-                            case "paddingLeft": {
-                                control.setPaddingLeft((int)value);
-                                view.setPadding(
-                                        GraphicsHelper.dpToPx((int)value),
-                                        view.getPaddingTop(),
-                                        view.getPaddingRight(),
-                                        view.getPaddingBottom());
-                                break;
-                            }
-                            case "paddingTop": {
-                                control.setPaddingTop((int)value);
-                                view.setPadding(
-                                        view.getPaddingLeft(),
-                                        GraphicsHelper.dpToPx((int)value),
-                                        view.getPaddingRight(),
-                                        view.getPaddingBottom());
-                                break;
-                            }
-                            case "paddingRight": {
-                                control.setPaddingRight((int)value);
-                                view.setPadding(
-                                        view.getPaddingLeft(),
-                                        view.getPaddingTop(),
-                                        GraphicsHelper.dpToPx((int)value),
-                                        view.getPaddingBottom());
-                                break;
-                            }
-                            case "paddingBottom": {
-                                control.setPaddingBottom((int)value);
-                                view.setPadding(
-                                        view.getPaddingLeft(),
-                                        view.getPaddingTop(),
-                                        view.getPaddingRight(),
-                                        GraphicsHelper.dpToPx((int)value));
-                                break;
-                            }
-                            case "rotationX": {
-                                control.setRotationX((int)value);
-                                view.setRotationX((int)value);
-                                break;
-                            }
-                            case "rotationY": {
-                                control.setRotationY((int)value);
-                                view.setRotationY((int)value);
-                                break;
-                            }
-                            case "rotation": {
-                                control.setRotation((int)value);
-                                view.setRotation((int)value);
-                                break;
+                                case "marginLeft": {
+                                    control.setMarginLeft((int) value);
+                                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                                    if (params instanceof RelativeLayout.LayoutParams) {
+                                        ((RelativeLayout.LayoutParams) params).setMargins(
+                                                GraphicsHelper.dpToPx((int) value),
+                                                ((RelativeLayout.LayoutParams) params).topMargin,
+                                                ((RelativeLayout.LayoutParams) params).rightMargin,
+                                                ((RelativeLayout.LayoutParams) params).bottomMargin);
+                                    } else if (params instanceof LinearLayout.LayoutParams) {
+                                        ((LinearLayout.LayoutParams) params).setMargins(
+                                                GraphicsHelper.dpToPx((int) value),
+                                                ((LinearLayout.LayoutParams) params).topMargin,
+                                                ((LinearLayout.LayoutParams) params).rightMargin,
+                                                ((LinearLayout.LayoutParams) params).bottomMargin);
+                                    }
+                                    view.setLayoutParams(params);
+                                    break;
+                                }
+                                case "marginTop": {
+                                    control.setMarginLeft((int) value);
+                                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                                    if (params instanceof RelativeLayout.LayoutParams) {
+                                        ((RelativeLayout.LayoutParams) params).setMargins(
+                                                ((RelativeLayout.LayoutParams) params).leftMargin,
+                                                GraphicsHelper.dpToPx((int) value),
+                                                ((RelativeLayout.LayoutParams) params).rightMargin,
+                                                ((RelativeLayout.LayoutParams) params).bottomMargin);
+                                    } else if (params instanceof LinearLayout.LayoutParams) {
+                                        ((LinearLayout.LayoutParams) params).setMargins(
+                                                ((LinearLayout.LayoutParams) params).leftMargin,
+                                                GraphicsHelper.dpToPx((int) value),
+                                                ((LinearLayout.LayoutParams) params).rightMargin,
+                                                ((LinearLayout.LayoutParams) params).bottomMargin);
+                                    }
+                                    view.setLayoutParams(params);
+                                    break;
+                                }
+                                case "marginRight": {
+                                    control.setMarginLeft((int) value);
+                                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                                    if (params instanceof RelativeLayout.LayoutParams) {
+                                        ((RelativeLayout.LayoutParams) params).setMargins(
+                                                ((RelativeLayout.LayoutParams) params).leftMargin,
+                                                ((RelativeLayout.LayoutParams) params).topMargin,
+                                                GraphicsHelper.dpToPx((int) value),
+                                                ((RelativeLayout.LayoutParams) params).bottomMargin);
+                                    } else if (params instanceof LinearLayout.LayoutParams) {
+                                        ((LinearLayout.LayoutParams) params).setMargins(
+                                                ((LinearLayout.LayoutParams) params).leftMargin,
+                                                ((LinearLayout.LayoutParams) params).topMargin,
+                                                GraphicsHelper.dpToPx((int) value),
+                                                ((LinearLayout.LayoutParams) params).bottomMargin);
+                                    }
+                                    view.setLayoutParams(params);
+                                    break;
+                                }
+                                case "marginBottom": {
+                                    control.setMarginLeft((int) value);
+                                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                                    if (params instanceof RelativeLayout.LayoutParams) {
+                                        ((RelativeLayout.LayoutParams) params).setMargins(
+                                                ((RelativeLayout.LayoutParams) params).leftMargin,
+                                                ((RelativeLayout.LayoutParams) params).topMargin,
+                                                ((RelativeLayout.LayoutParams) params).rightMargin,
+                                                GraphicsHelper.dpToPx((int) value));
+                                    } else if (params instanceof LinearLayout.LayoutParams) {
+                                        ((LinearLayout.LayoutParams) params).setMargins(
+                                                ((LinearLayout.LayoutParams) params).leftMargin,
+                                                ((LinearLayout.LayoutParams) params).topMargin,
+                                                ((LinearLayout.LayoutParams) params).rightMargin,
+                                                GraphicsHelper.dpToPx((int) value));
+                                    }
+                                    view.setLayoutParams(params);
+                                    break;
+                                }
+                                case "paddingLeft": {
+                                    control.setPaddingLeft((int) value);
+                                    view.setPadding(
+                                            GraphicsHelper.dpToPx((int) value),
+                                            view.getPaddingTop(),
+                                            view.getPaddingRight(),
+                                            view.getPaddingBottom());
+                                    break;
+                                }
+                                case "paddingTop": {
+                                    control.setPaddingTop((int) value);
+                                    view.setPadding(
+                                            view.getPaddingLeft(),
+                                            GraphicsHelper.dpToPx((int) value),
+                                            view.getPaddingRight(),
+                                            view.getPaddingBottom());
+                                    break;
+                                }
+                                case "paddingRight": {
+                                    control.setPaddingRight((int) value);
+                                    view.setPadding(
+                                            view.getPaddingLeft(),
+                                            view.getPaddingTop(),
+                                            GraphicsHelper.dpToPx((int) value),
+                                            view.getPaddingBottom());
+                                    break;
+                                }
+                                case "paddingBottom": {
+                                    control.setPaddingBottom((int) value);
+                                    view.setPadding(
+                                            view.getPaddingLeft(),
+                                            view.getPaddingTop(),
+                                            view.getPaddingRight(),
+                                            GraphicsHelper.dpToPx((int) value));
+                                    break;
+                                }
+                                case "rotationX": {
+                                    control.setRotationX((int) value);
+                                    view.setRotationX((int) value);
+                                    break;
+                                }
+                                case "rotationY": {
+                                    control.setRotationY((int) value);
+                                    view.setRotationY((int) value);
+                                    break;
+                                }
+                                case "rotation": {
+                                    control.setRotation((int) value);
+                                    view.setRotation((int) value);
+                                    break;
+                                }
                             }
                         }
                     }
