@@ -1,317 +1,592 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout android:id="@+id/activity_room_container"
+<androidx.drawerlayout.widget.DrawerLayout
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/roomBackground"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="fitXY"
-        android:visibility="visible"/>
+        android:layout_height="match_parent">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_marginBottom="-72dp">
-
-        <kasper.android.pulse.components.LockableNestedScrollView
-            android:id="@+id/scrollView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <RelativeLayout
-                    android:id="@+id/fragment_room_widget_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-
-            </LinearLayout>
-
-        </kasper.android.pulse.components.LockableNestedScrollView>
-
-        <RelativeLayout
+        <RelativeLayout android:id="@+id/activity_room_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/activity_room_fixed_container"/>
+            android:background="@color/colorBlackBlue">
 
-    </RelativeLayout>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/addBotFAB"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:fabSize="normal"
-        android:src="@drawable/ic_add"
-        android:tint="#fff"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="-96dp"
-        android:onClick="onPickBotBtnClicked"/>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/closeEditBtn"
-        android:layout_width="84dp"
-        android:layout_height="56dp"
-        app:cardCornerRadius="28dp"
-        android:layout_marginLeft="-96dp"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/colorBlackBlue3">
-
-        <ImageButton
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_close"
-            android:tint="#fff"
-            android:layout_marginLeft="28dp"
-            android:onClick="onEditCloseBtnClicked"/>
-
-    </androidx.cardview.widget.CardView>
-
-    <FrameLayout
-        android:id="@+id/botPickerShadow"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#000"
-        android:elevation="8dp"
-        android:alpha="0"/>
-
-    <FrameLayout
-        android:id="@+id/dragPanel"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
-
-    <LinearLayout
-        android:id="@+id/botPicker"
-        android:layout_width="350dp"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="@color/colorBlackBlue3"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="-350dp"
-        android:elevation="8dp">
-
-        <com.google.android.material.appbar.AppBarLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp">
-
-            <androidx.appcompat.widget.Toolbar
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/roomBackground"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:contentInsetStart="0dp"
-                app:contentInsetEnd="0dp">
+                android:scaleType="fitXY"
+                android:visibility="visible"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_marginBottom="-72dp">
+
+                <kasper.android.pulse.components.LockableNestedScrollView
+                    android:id="@+id/scrollView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <RelativeLayout
+                            android:id="@+id/fragment_room_widget_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </kasper.android.pulse.components.LockableNestedScrollView>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/activity_room_fixed_container"/>
+
+            </RelativeLayout>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/addBotFAB"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:fabSize="normal"
+                android:src="@drawable/ic_add"
+                android:tint="#fff"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="-96dp"
+                android:onClick="onPickBotBtnClicked"/>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/closeEditBtn"
+                android:layout_width="84dp"
+                android:layout_height="56dp"
+                app:cardCornerRadius="28dp"
+                android:layout_marginLeft="-96dp"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/colorBlackBlue3">
 
                 <ImageButton
                     android:layout_width="56dp"
                     android:layout_height="56dp"
+                    android:background="@android:color/transparent"
                     android:src="@drawable/ic_close"
                     android:tint="#fff"
-                    android:background="@android:color/transparent"
-                    android:onClick="onCloseBotPickerBtnClicked"/>
+                    android:layout_marginLeft="28dp"
+                    android:onClick="onEditCloseBtnClicked"/>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:textColor="#fff"
-                    android:textSize="20sp"
-                    android:gravity="center_vertical"
-                    android:text="Bot Picker"/>
+            </androidx.cardview.widget.CardView>
 
-            </androidx.appcompat.widget.Toolbar>
-
-        </com.google.android.material.appbar.AppBarLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/botPickerRV"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-    </LinearLayout>
-
-    <RelativeLayout
-        android:id="@+id/dockContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/dock"
-            android:layout_width="match_parent"
-            android:layout_height="144dp"
-            app:cardBackgroundColor="#00000000"
-            app:cardCornerRadius="48dp"
-            app:cardElevation="6dp">
-
-            <eightbitlab.com.blurview.BlurView
-                android:id="@+id/dockBlur"
+            <FrameLayout
+                android:id="@+id/botPickerShadow"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:background="#000"
+                android:elevation="8dp"
+                android:alpha="0"/>
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginLeft="24dp"
-                    android:layout_marginTop="32dp"
-                    android:orientation="horizontal"
-                    android:paddingRight="16dp">
+            <FrameLayout
+                android:id="@+id/dragPanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
 
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/roomAvatar"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_gravity="center_vertical"
-                        android:src="@drawable/selfie" />
+            <LinearLayout
+                android:id="@+id/botPicker"
+                android:layout_width="350dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:background="@color/colorBlackBlue3"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="-350dp"
+                android:elevation="8dp">
 
-                    <TextView
-                        android:id="@+id/roomTitle"
-                        android:layout_width="wrap_content"
+                <com.google.android.material.appbar.AppBarLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp">
+
+                    <androidx.appcompat.widget.Toolbar
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_marginLeft="8dp"
-                        android:gravity="center"
-                        android:text="Kasper Home"
-                        android:textColor="#fff"
-                        android:textSize="18sp" />
+                        app:contentInsetStart="0dp"
+                        app:contentInsetEnd="0dp">
 
-                </LinearLayout>
+                        <ImageButton
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:src="@drawable/ic_close"
+                            android:tint="#fff"
+                            android:background="@android:color/transparent"
+                            android:onClick="onCloseBotPickerBtnClicked"/>
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="48dp"
-                    android:orientation="horizontal">
-
-                    <ImageButton
-                        android:id="@+id/roomMessagesFAB"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:background="@android:color/transparent"
-                        android:padding="12dp"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/bot"
-                        android:tint="#fff"
-                        android:visibility="gone" />
-
-                    <ImageButton
-                        android:id="@+id/roomFilesFAB"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:background="@android:color/transparent"
-                        android:padding="12dp"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/bot"
-                        android:tint="#fff"
-                        android:visibility="gone" />
-
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginRight="8dp"
-                        app:cardBackgroundColor="@color/colorBlackBlue5"
-                        app:cardCornerRadius="24dp"
-                        app:cardElevation="6dp">
-
-                        <ImageView
-                            android:id="@+id/roomBotsFAB"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:onClick="onBotsBtnClicked"
+                            android:textColor="#fff"
+                            android:textSize="20sp"
+                            android:gravity="center_vertical"
+                            android:text="Bot Picker"/>
+
+                    </androidx.appcompat.widget.Toolbar>
+
+                </com.google.android.material.appbar.AppBarLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/botPickerRV"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/shadowBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#bb000000"
+                android:clickable="false"
+                android:alpha="0"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/dockContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/dock"
+                android:layout_width="match_parent"
+                android:layout_height="144dp"
+                app:cardBackgroundColor="#151E27"
+                app:cardCornerRadius="48dp"
+                app:cardElevation="6dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginLeft="24dp"
+                        android:layout_marginTop="32dp"
+                        android:orientation="horizontal"
+                        android:paddingRight="16dp">
+
+                        <de.hdodenhof.circleimageview.CircleImageView
+                            android:id="@+id/roomAvatar"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/selfie" />
+
+                        <TextView
+                            android:id="@+id/roomTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="8dp"
+                            android:gravity="center"
+                            android:text="Kasper Home"
+                            android:textColor="#fff"
+                            android:textSize="18sp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginBottom="48dp"
+                        android:orientation="horizontal"
+                        android:id="@+id/dockFirstStage">
+
+                        <ImageButton
+                            android:id="@+id/roomMessagesFAB"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@android:color/transparent"
                             android:padding="12dp"
                             android:scaleType="fitXY"
                             android:src="@drawable/bot"
-                            android:tint="#fff" />
+                            android:tint="#fff"
+                            android:visibility="gone" />
 
-                    </androidx.cardview.widget.CardView>
+                        <ImageButton
+                            android:id="@+id/roomFilesFAB"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@android:color/transparent"
+                            android:padding="12dp"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/bot"
+                            android:tint="#fff"
+                            android:visibility="gone" />
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginLeft="8dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginRight="8dp"
+                            app:cardBackgroundColor="@color/colorBlackBlue5"
+                            app:cardCornerRadius="24dp"
+                            app:cardElevation="6dp">
+
+                            <ImageView
+                                android:id="@+id/roomBotsFAB"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:onClick="onBotsBtnClicked"
+                                android:padding="12dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/bot"
+                                android:tint="#fff" />
+
+                        </androidx.cardview.widget.CardView>
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginRight="8dp"
+                            android:layout_marginBottom="8dp"
+                            app:cardBackgroundColor="@color/colorBlackBlue5"
+                            app:cardCornerRadius="28dp"
+                            app:cardElevation="6dp">
+
+                            <ImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:onClick="onMenuBtnClicked"
+                                android:padding="4dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/ic_modules"
+                                android:tint="#fff" />
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginBottom="48dp"
+                        android:orientation="horizontal"
+                        android:id="@+id/dockSecondStage">
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginLeft="8dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginRight="8dp"
+                            app:cardBackgroundColor="@color/colorBlackBlue5"
+                            app:cardCornerRadius="24dp"
+                            app:cardElevation="6dp">
+
+                            <ImageView
+                                android:id="@+id/marketFAB"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:onClick="onBotsBtnClicked"
+                                android:padding="12dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/bot"
+                                android:tint="#fff" />
+
+                        </androidx.cardview.widget.CardView>
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginRight="8dp"
+                            android:layout_marginBottom="8dp"
+                            app:cardBackgroundColor="@color/colorBlackBlue5"
+                            app:cardCornerRadius="28dp"
+                            app:cardElevation="6dp">
+
+                            <ImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:onClick="onMenuBtnClicked"
+                                android:padding="4dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/ic_store"
+                                android:tint="#fff" />
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
 
                     <androidx.cardview.widget.CardView
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginRight="8dp"
-                        android:layout_marginBottom="8dp"
+                        android:layout_width="150dp"
+                        android:layout_height="8dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="12dp"
                         app:cardBackgroundColor="@color/colorBlackBlue5"
-                        app:cardCornerRadius="28dp"
-                        app:cardElevation="6dp">
-
-                        <ImageView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:onClick="onMenuBtnClicked"
-                            android:padding="4dp"
-                            android:scaleType="fitXY"
-                            android:src="@drawable/ic_modules"
-                            android:tint="#fff" />
+                        app:cardCornerRadius="4dp">
 
                     </androidx.cardview.widget.CardView>
 
-                </LinearLayout>
+                </FrameLayout>
 
-                <androidx.cardview.widget.CardView
-                    android:layout_width="150dp"
-                    android:layout_height="8dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="12dp"
-                    app:cardBackgroundColor="@color/colorBlackBlue5"
-                    app:cardCornerRadius="4dp">
+            </androidx.cardview.widget.CardView>
 
-                </androidx.cardview.widget.CardView>
-
-            </eightbitlab.com.blurview.BlurView>
-
-        </androidx.cardview.widget.CardView>
-
-        <RelativeLayout
-            android:id="@+id/controlPage"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:elevation="6dp"
-            android:background="#01000000">
-
-            <eightbitlab.com.blurview.BlurView
-                android:id="@+id/controlPageBlur"
+            <RelativeLayout
+                android:id="@+id/controlPage"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:elevation="6dp"
+                android:background="#151E27">
+
+                <androidx.appcompat.widget.Toolbar
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_gravity="bottom"
+                    app:layout_collapseMode="pin"
+                    app:contentInsetEnd="0dp"
+                    app:contentInsetStart="0dp"
+                    android:clickable="false">
+
+                    <com.ogaclejapan.smarttablayout.SmartTabLayout
+                        android:id="@+id/homeTB"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        app:stl_indicatorAlwaysInCenter="true"
+                        app:stl_indicatorWithoutPadding="false"
+                        app:stl_indicatorInFront="false"
+                        app:stl_indicatorInterpolation="smart"
+                        app:stl_indicatorGravity="center"
+                        app:stl_indicatorColor="@color/colorBlue"
+                        app:stl_indicatorThickness="40dp"
+                        app:stl_indicatorWidth="auto"
+                        app:stl_indicatorCornerRadius="24dp"
+                        app:stl_defaultTabTextAllCaps="false"
+                        app:stl_defaultTabTextHorizontalPadding="16dp"
+                        app:stl_clickable="true"
+                        app:stl_drawDecorationAfterTab="false" />
+
+                </androidx.appcompat.widget.Toolbar>
 
                 <RelativeLayout
                     android:id="@+id/roomsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginTop="56dp">
+                    android:layout_marginTop="48dp">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/roomsRV"
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
+                        android:layout_height="match_parent">
+
+                        <androidx.viewpager.widget.ViewPager
+                            android:id="@+id/homeVP"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/colorBlackBlue"/>
+
+                    </FrameLayout>
 
                 </RelativeLayout>
 
-            </eightbitlab.com.blurview.BlurView>
+            </RelativeLayout>
 
         </RelativeLayout>
 
-    </RelativeLayout>
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/appBar"
+            android:layout_width="match_parent"
+            android:layout_height="168dp"
+            app:elevation="0dp"
+            android:background="#00000000">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#00000000"
+                app:layout_scrollFlags="scroll|enterAlways|snap">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="300dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="16dp"
+                    app:cardCornerRadius="4dp">
+
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:background="@android:color/transparent"
+                        android:hint="Search Aseman World"
+                        android:textColorHint="#888"
+                        android:textColor="#000"
+                        android:textSize="17sp"
+                        android:gravity="center"/>
+
+                    <ImageButton
+                        android:layout_width="48dp"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_menu"
+                        android:tint="#000"
+                        android:onClick="onMenuDrawerBtnClicked"
+                        android:background="@android:color/transparent"/>
+
+                    <ImageButton
+                        android:layout_width="48dp"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_search"
+                        android:tint="#000"
+                        android:layout_gravity="right"
+                        android:background="@android:color/transparent"/>
+
+                </androidx.cardview.widget.CardView>
+
+            </androidx.appcompat.widget.Toolbar>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <FrameLayout
-        android:id="@+id/shadowBox"
-        android:layout_width="match_parent"
+        android:layout_width="270dp"
         android:layout_height="match_parent"
-        android:background="#bb000000"
-        android:clickable="false"
-        android:alpha="0"/>
+        android:fitsSystemWindows="true"
+        android:layout_gravity="start">
 
-</RelativeLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="bottom">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="64dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorBlackBlue">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/menuComplexesRV"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="48dp"/>
+
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:layout_marginTop="48dp">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@color/colorBlackBlue2"
+                        android:elevation="4dp">
+
+                        <TextView
+                            android:id="@+id/homeComplexNameTV"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="Test Complex"
+                            android:gravity="center_vertical"
+                            android:paddingLeft="16dp"
+                            android:paddingRight="16dp"
+                            android:textColor="#fff"
+                            android:textSize="16sp"/>
+
+                        <ImageButton
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@android:color/transparent"
+                            android:layout_gravity="right"
+                            android:layout_marginTop="4dp"
+                            android:src="@drawable/ic_more"
+                            android:tint="#fff"
+                            android:onClick="onMenuMoreMenuBtnClicked"/>
+
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/colorBlackBlue2">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/menuRoomsRV"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"/>
+
+                    </FrameLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@color/colorBlackBlue3"
+                android:elevation="4dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/homeMyAvatarIV"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/selfie"/>
+
+                <TextView
+                    android:id="@+id/homeMyTitleTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:textColor="#fff"
+                    android:textSize="16sp"
+                    android:layout_marginLeft="48dp"
+                    android:text="Title"/>
+
+                <ImageButton
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_settings"
+                    android:tint="#fff"
+                    android:background="@android:color/transparent"
+                    android:layout_alignParentRight="true"
+                    android:onClick="onSettingsBtnClicked"/>
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>

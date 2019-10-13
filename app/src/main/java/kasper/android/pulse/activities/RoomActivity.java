@@ -1,25 +1,35 @@
 package kasper.android.pulse.activities;
 
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
+import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
 import android.os.Handler;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.DragEvent;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,10 +42,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.bumptech.glide.request.transition.DrawableCrossFadeFactory;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.ogaclejapan.smarttablayout.SmartTabLayout;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
@@ -50,26 +63,36 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
 import kasper.android.pulse.R;
+import kasper.android.pulse.adapters.ActiveNowAdapter;
 import kasper.android.pulse.adapters.BotPickerAdapter;
+import kasper.android.pulse.adapters.ComplexesAdapter;
+import kasper.android.pulse.adapters.FragmentsAdapter;
 import kasper.android.pulse.adapters.RoomsAdapter;
+import kasper.android.pulse.callbacks.middleware.OnRoomsSyncListener;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.callbacks.ui.OnRoomIconClickListener;
 import kasper.android.pulse.components.LockableNestedScrollView;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.extras.MyDragShadowBuilder;
+import kasper.android.pulse.fragments.BaseFragment;
+import kasper.android.pulse.fragments.FeedFragment;
 import kasper.android.pulse.fragments.RoomsFragment;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
+import kasper.android.pulse.middleware.DataSyncer;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.GlideApp;
 import kasper.android.pulse.models.extras.RoomTypes;
 import kasper.android.pulse.models.network.Packet;
+import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.BotPicked;
+import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
 import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
+import kasper.android.pulse.rxbus.notifications.RoomRemoved;
 import kasper.android.pulse.rxbus.notifications.RoomSelected;
 import kasper.android.pulse.rxbus.notifications.WorkerAdded;
 import kasper.android.pulse.rxbus.notifications.WorkerRemoved;
@@ -89,6 +112,13 @@ public class RoomActivity extends BaseActivity {
 
     private CardView dock;
     private TextView roomTitleTV;
+
+    RecyclerView menuComplexesRV;
+    RecyclerView menuRoomsRV;
+    TextView complexNameTV;
+    CircleImageView myAvatarIV;
+    TextView myTitleTV;
+
     private CircleImageView roomAvatarIV;
     private ImageView backgroundView;
     private RelativeLayout widgetContainer;
@@ -105,6 +135,15 @@ public class RoomActivity extends BaseActivity {
     private RelativeLayout controlPage;
     private RelativeLayout dockContainer;
     private FrameLayout shadowBox;
+    private DrawerLayout drawerLayout;
+    ViewPager homeVP;
+    SmartTabLayout homeTB;
+    LinearLayout dockFirstStage;
+    LinearLayout dockSecondStage;
+    AppBarLayout appbar;
+    Toolbar toolbar;
+
+    private long chosenComplexId;
 
     private FrameLayout dragPanel;
 
@@ -178,6 +217,169 @@ public class RoomActivity extends BaseActivity {
                 }, 650);
             }
         }, 450);
+    }
+
+    TextView[] tabs = new TextView[3];
+    String[] tabTitles = new String[3];
+    private int chosenTab = 0;
+    SmartTabLayout.TabProvider tabProvider = new SmartTabLayout.TabProvider() {
+        @Override
+        public View createTabView(ViewGroup container, int position, PagerAdapter adapter) {
+            Log.d("KasperLogger", "tab " + position);
+            TextView textView = new TextView(RoomActivity.this);
+            LinearLayout.LayoutParams paranms = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT);
+            textView.setLayoutParams(paranms);
+            textView.setText(tabTitles[position]);
+            if (position == homeVP.getCurrentItem()) {
+                textView.setTextColor(getResources().getColor(R.color.colorBlackBlue));
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+            } else {
+                textView.setTextColor(Color.WHITE);
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            }
+            textView.setTypeface(null, Typeface.BOLD);
+            textView.setPadding(GraphicHelper.dpToPx(16), 0, GraphicHelper.dpToPx(16), 0);
+            textView.setGravity(Gravity.CENTER);
+            tabs[position] = textView;
+            return textView;
+        }
+    };
+
+    private void initUiData() {
+        List<BaseFragment> pages = new ArrayList<>();
+        pages.add(FeedFragment.instantiate(chosenComplexId));
+        pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Private));
+        pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Contact));
+        homeVP.setOffscreenPageLimit(3);
+        homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
+        chosenTab = 0;
+        tabs = new TextView[3];
+        tabTitles = new String[] {
+                "What's going on", "Home Rooms", "Contact Rooms"
+        };
+        homeTB.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+            @Override
+            public void onPageSelected(int position) {
+                tabs[chosenTab].setTextColor(Color.WHITE);
+                tabs[chosenTab].setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                chosenTab = position;
+                tabs[chosenTab].setTextColor(getResources().getColor(R.color.colorBlackBlue));
+                tabs[chosenTab].setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+            }
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+        homeTB.setCustomTabView(tabProvider);
+        homeTB.setViewPager(homeVP);
+
+        menuComplexesRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        menuRoomsRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+
+        List<Entities.Complex> dbComplexes = DatabaseHelper.getComplexes();
+        if (dbComplexes.size() > 0) {
+            @SuppressLint("RtlHardcoded")
+            ComplexesAdapter complexesAdapter = new ComplexesAdapter(RoomActivity.this
+                    , dbComplexes, RoomActivity.this::notifyComplexChosen, () -> {
+                drawerLayout.closeDrawer(Gravity.LEFT);
+                startActivity(new Intent(RoomActivity.this, CreateComplexActivity.class));
+            });
+            menuComplexesRV.setAdapter(complexesAdapter);
+            notifyComplexChosen(dbComplexes.get(0));
+        }
+
+        Entities.User user = DatabaseHelper.getMe();
+        if (user != null) {
+            NetworkHelper.loadUserAvatar(user.getAvatar(), myAvatarIV);
+            myTitleTV.setText(user.getTitle());
+        }
+    }
+
+    private void notifyComplexChosen(final Entities.Complex complex) {
+        chosenComplexId = complex.getComplexId();
+        if (complex.getTitle() != null &&  complex.getTitle().length() > 0) {
+            complexNameTV.setText(complex.getTitle());
+        } else {
+            Entities.User user = DatabaseHelper.getHumanById(DatabaseHelper
+                    .getContactByComplexId(complex.getComplexId()).getPeerId());
+            complexNameTV.setText(user.getTitle());
+        }
+        initRoomsAdapter(complex, DatabaseHelper.getRooms(complex.getComplexId()));
+        DataSyncer.syncRoomsWithServer(complex.getComplexId(), new OnRoomsSyncListener() {
+            @Override
+            public void roomsSynced(List<Entities.BaseRoom> rooms) {
+                if (complex.getComplexId() == chosenComplexId)
+                    initRoomsAdapter(complex, rooms);
+            }
+            @Override
+            public void syncFailed() { }
+        });
+        List<BaseFragment> pages = new ArrayList<>();
+        if (chosenComplexId == DatabaseHelper.getMe().getUserSecret().getHomeId()) {
+            pages.add(FeedFragment.instantiate(chosenComplexId));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Private));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Contact));
+            homeVP.setOffscreenPageLimit(3);
+            homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
+            chosenTab = 0;
+            tabs = new TextView[3];
+            tabTitles = new String[] {
+                    "What's going on", "Home Rooms", "Contac Rooms"
+            };
+            homeTB.setViewPager(homeVP);
+        } else {
+            pages.add(FeedFragment.instantiate(chosenComplexId));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Group));
+            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Single));
+            homeVP.setOffscreenPageLimit(3);
+            homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
+            chosenTab = 0;
+            tabs = new TextView[3];
+            tabTitles = new String[] {
+                    "What's going on", "Complex Groups", "Complex Privateds"
+            };
+            homeTB.setViewPager(homeVP);
+        }
+    }
+
+
+    private void deleteComplex(long complexId) {
+        Packet packet = new Packet();
+        Entities.Complex complex = DatabaseHelper.getComplexById(complexId);
+        packet.setComplex(complex);
+        final ComplexHandler complexHandler = NetworkHelper.getRetrofit().create(ComplexHandler.class);
+        Call<Packet> call = complexHandler.deleteComplex(packet);
+        NetworkHelper.requestServer(call, new ServerCallback() {
+            @Override
+            public void onRequestSuccess(Packet packet) {
+                DatabaseHelper.notifyComplexRemoved(complexId);
+                Core.getInstance().bus().post(new ComplexRemoved(complexId));
+                for (Entities.BaseRoom room : complex.getAllRooms()) {
+                    Core.getInstance().bus().post(new RoomRemoved(room));
+                }
+                Entities.User user = DatabaseHelper.getMe();
+                if (user != null)
+                    notifyComplexChosen(DatabaseHelper.getComplexById(
+                            user.getUserSecret().getHomeId()));
+            }
+
+            @Override
+            public void onServerFailure() {
+                Toast.makeText(RoomActivity.this, "Complex delete failure", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onConnectionFailure() {
+                Toast.makeText(RoomActivity.this, "Complex delete failure", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -419,6 +621,19 @@ public class RoomActivity extends BaseActivity {
         controlPage = findViewById(R.id.controlPage);
         dockContainer = findViewById(R.id.dockContainer);
         shadowBox = findViewById(R.id.shadowBox);
+        drawerLayout = findViewById(R.id.drawerLayout);
+        menuComplexesRV = findViewById(R.id.menuComplexesRV);
+        menuRoomsRV = findViewById(R.id.menuRoomsRV);
+        complexNameTV = findViewById(R.id.homeComplexNameTV);
+        myAvatarIV = findViewById(R.id.homeMyAvatarIV);
+        myTitleTV = findViewById(R.id.homeMyTitleTV);
+        homeVP = findViewById(R.id.homeVP);
+        homeTB = findViewById(R.id.homeTB);
+        dockFirstStage = findViewById(R.id.dockFirstStage);
+        dockSecondStage = findViewById(R.id.dockSecondStage);
+        appbar = findViewById(R.id.appBar);
+        toolbar = findViewById(R.id.toolbar);
+
     }
 
     private void initSettings() {
@@ -430,6 +645,28 @@ public class RoomActivity extends BaseActivity {
         DrawableCrossFadeFactory factory =
                 new DrawableCrossFadeFactory.Builder().setCrossFadeEnabled(true).build();
         GlideApp.with(this).load(room.getBackgroundUrl()).transition(withCrossFade(factory)).centerCrop().into(backgroundView);
+    }
+
+    private void initRoomsAdapter(Entities.Complex complex, List<Entities.BaseRoom> rooms) {
+        if (menuRoomsRV.getAdapter() != null)
+            ((RoomsAdapter) menuRoomsRV.getAdapter()).dispose();
+        @SuppressLint("RtlHardcoded")
+        RoomsAdapter roomsAdapter = new RoomsAdapter(RoomActivity.this
+                , complex.getComplexId()
+                , rooms
+                , room -> {
+            drawerLayout.closeDrawer(Gravity.LEFT);
+            startActivity(new Intent(RoomActivity.this
+                    , RoomActivity.class)
+                    .putExtra("complex_id", complex.getComplexId())
+                    .putExtra("room_id", room.getRoomId()));
+        });
+        menuRoomsRV.setAdapter(roomsAdapter);
+    }
+
+    @SuppressLint("RtlHardcoded")
+    public void onMenuDrawerBtnClicked(View view) {
+        drawerLayout.openDrawer(Gravity.LEFT);
     }
 
     private void initListeners() {
@@ -471,41 +708,28 @@ public class RoomActivity extends BaseActivity {
                 dock.setX(dockContainer.getMeasuredWidth() / 2 - dock.getMeasuredWidth() / 2);
                 dock.setY(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100));
 
-                controlPage.setY(GraphicHelper.getScreenHeight());
+                controlPage.setY(GraphicHelper.getScreenHeight() - GraphicHelper.dpToPx(0));
             }
         });
 
-        BlurView controlPageBlur = findViewById(R.id.controlPageBlur);
-        float radius = 20f;
-        View decorView = getWindow().getDecorView();
-        ViewGroup rootView = (ViewGroup) decorView.findViewById(android.R.id.content);
-        Drawable windowBackground = decorView.getBackground();
-        controlPageBlur.setupWith(rootView)
-                .setFrameClearDrawable(windowBackground)
-                .setBlurAlgorithm(new RenderScriptBlur(this))
-                .setBlurRadius(radius)
-                .setBlurAutoUpdate(true)
-                .setHasFixedTransformationMatrix(false);
+        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
 
-        BlurView dockBlur = findViewById(R.id.dockBlur);
-        dockBlur.setupWith(rootView)
-                .setFrameClearDrawable(windowBackground)
-                .setBlurAlgorithm(new RenderScriptBlur(this))
-                .setBlurRadius(radius)
-                .setBlurAutoUpdate(true)
-                .setHasFixedTransformationMatrix(false);
-
-        List<Entities.BaseRoom> rooms = DatabaseHelper.getAllRooms();
-        RecyclerView roomsRV = findViewById(R.id.roomsRV);
-        roomsRV.setLayoutManager(new GridLayoutManager(this, 2, RecyclerView.VERTICAL, false));
-        roomsRV.setAdapter(new RoomsAdapter(this, complexId, rooms, new OnRoomIconClickListener() {
             @Override
-            public void roomSelected(Entities.BaseRoom room) {
-
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (toolbar.getHeight() + verticalOffset < 2 * toolbar.getMeasuredHeight()) {
+                    // Now fully expanded again so remove the listener
+                    appbar.removeOnOffsetChangedListener(this);
+                } else {
+                    // Fully collapsed so set the flags to lock the toolbar
+                    AppBarLayout.LayoutParams lp = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+                    lp.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED);
+                }
             }
-        }));
+        });
+        appbar.setExpanded(false, true);
 
         handleWorkerAccess();
+        initUiData();
     }
 
     MotionEvent mEvent = null;
@@ -636,29 +860,65 @@ public class RoomActivity extends BaseActivity {
     private float dragStartPoint = 0, dragEndPoint = 0;
 
     private void closeControlPage() {
+        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (toolbar.getHeight() + verticalOffset < 2 * toolbar.getMeasuredHeight()) {
+                    // Now fully expanded again so remove the listener
+                    appbar.removeOnOffsetChangedListener(this);
+                } else {
+                    // Fully collapsed so set the flags to lock the toolbar
+                    AppBarLayout.LayoutParams lp = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+                    lp.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED);
+                }
+            }
+        });
+        appbar.setExpanded(false, true);
         dock.animate()
                 .y(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100))
                 .setDuration(450)
                 .setInterpolator(new OvershootInterpolator())
                 .start();
         controlPage.animate().
-                y(dockContainer.getMeasuredHeight())
+                y(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(0))
                 .setDuration(450)
                 .setInterpolator(new OvershootInterpolator())
                 .start();
+        dockSecondStage.animate().alpha(0).setDuration(250).start();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dockSecondStage.setVisibility(View.GONE);
+                dockFirstStage.setVisibility(View.VISIBLE);
+                dockFirstStage.animate().alpha(1).setDuration(250).start();
+            }
+        }, 250);
     }
 
     private void openControlPage() {
+        AppBarLayout.LayoutParams lp = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+        lp.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
+        appbar.setExpanded(true, true);
         dock.animate()
-                .y(GraphicHelper.dpToPx(32))
+                .y(GraphicHelper.dpToPx(12))
                 .setDuration(450)
                 .setInterpolator(new OvershootInterpolator())
                 .start();
         controlPage.animate()
-                .y(GraphicHelper.dpToPx(32 + 100))
+                .y(GraphicHelper.dpToPx(12 + 100))
                 .setDuration(450)
                 .setInterpolator(new OvershootInterpolator())
                 .start();
+        dockFirstStage.animate().alpha(0).setDuration(250).start();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dockFirstStage.setVisibility(View.GONE);
+                dockSecondStage.setVisibility(View.VISIBLE);
+                dockSecondStage.animate().alpha(1).setDuration(250).start();
+            }
+        }, 250);
     }
 
     final View.OnDragListener dragListener = (v, event) -> {
