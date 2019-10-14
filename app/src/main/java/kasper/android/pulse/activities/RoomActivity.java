@@ -46,7 +46,6 @@ import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.bumptech.glide.request.transition.DrawableCrossFadeFactory;
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.ogaclejapan.smarttablayout.SmartTabLayout;
 
@@ -140,8 +139,6 @@ public class RoomActivity extends BaseActivity {
     SmartTabLayout homeTB;
     LinearLayout dockFirstStage;
     LinearLayout dockSecondStage;
-    AppBarLayout appbar;
-    Toolbar toolbar;
 
     private long chosenComplexId;
 
@@ -631,9 +628,10 @@ public class RoomActivity extends BaseActivity {
         homeTB = findViewById(R.id.homeTB);
         dockFirstStage = findViewById(R.id.dockFirstStage);
         dockSecondStage = findViewById(R.id.dockSecondStage);
-        appbar = findViewById(R.id.appBar);
-        toolbar = findViewById(R.id.toolbar);
+    }
 
+    public void onStoreBtnClicked(View view) {
+        startActivity(new Intent(this, BotStoreActivity.class));
     }
 
     private void initSettings() {
@@ -712,21 +710,10 @@ public class RoomActivity extends BaseActivity {
             }
         });
 
-        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if (toolbar.getHeight() + verticalOffset < 2 * toolbar.getMeasuredHeight()) {
-                    // Now fully expanded again so remove the listener
-                    appbar.removeOnOffsetChangedListener(this);
-                } else {
-                    // Fully collapsed so set the flags to lock the toolbar
-                    AppBarLayout.LayoutParams lp = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
-                    lp.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED);
-                }
-            }
-        });
-        appbar.setExpanded(false, true);
+        CardView searchBar = findViewById(R.id.searchBar);
+        searchBar.setY(GraphicHelper.getScreenHeight() / 2  + GraphicHelper.dpToPx(100));
+        CardView searchCloseContainer = findViewById(R.id.searchCloseContainer);
+        searchCloseContainer.setX(GraphicHelper.dpToPx(-90));
 
         handleWorkerAccess();
         initUiData();
@@ -776,7 +763,7 @@ public class RoomActivity extends BaseActivity {
                     }
                 }
                 LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) widgetContainer.getLayoutParams();
-                params.height = Math.max(GraphicHelper.dpToPx(maxHeight + 88), GraphicHelper.getScreenHeight());
+                params.height = Math.max(GraphicHelper.dpToPx(maxHeight + 200), GraphicHelper.getScreenHeight());
                 widgetContainer.setLayoutParams(params);
                 for (final Entities.Workership ws : workerships) {
                     insertNewPulseView(ws);
@@ -860,21 +847,7 @@ public class RoomActivity extends BaseActivity {
     private float dragStartPoint = 0, dragEndPoint = 0;
 
     private void closeControlPage() {
-        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
 
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if (toolbar.getHeight() + verticalOffset < 2 * toolbar.getMeasuredHeight()) {
-                    // Now fully expanded again so remove the listener
-                    appbar.removeOnOffsetChangedListener(this);
-                } else {
-                    // Fully collapsed so set the flags to lock the toolbar
-                    AppBarLayout.LayoutParams lp = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
-                    lp.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED);
-                }
-            }
-        });
-        appbar.setExpanded(false, true);
         dock.animate()
                 .y(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100))
                 .setDuration(450)
@@ -896,10 +869,77 @@ public class RoomActivity extends BaseActivity {
         }, 250);
     }
 
+    public void onSearchBtnClicked(View view) {
+        for (PulseView pulseView : pulseTable.values()) {
+            pulseView.animate()
+                    .alpha(0)
+                    .scaleY(0.1f)
+                    .scaleX(0.1f)
+                    .setDuration(500)
+                    .setInterpolator(new OvershootInterpolator())
+                    .start();
+        }
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                CardView searchBar = findViewById(R.id.searchBar);
+                searchBar.setVisibility(View.VISIBLE);
+                searchBar.animate()
+                        .alpha(1)
+                        .y(GraphicHelper.getScreenHeight() / 2 - GraphicHelper.dpToPx(100))
+                        .setDuration(350)
+                        .setInterpolator(new OvershootInterpolator())
+                        .start();
+                dockContainer.animate()
+                        .y(GraphicHelper.getScreenHeight())
+                        .setDuration(350)
+                        .start();
+                CardView searchCloseContainer = findViewById(R.id.searchCloseContainer);
+                searchCloseContainer.animate()
+                        .x(-GraphicHelper.dpToPx(28))
+                        .setDuration(350)
+                        .setInterpolator(new OvershootInterpolator())
+                        .start();
+            }
+        }, 500);
+    }
+
+    public void onSearchCloseBtnClicked(View view) {
+        CardView searchBar = findViewById(R.id.searchBar);
+        searchBar.animate()
+                .alpha(0)
+                .y(GraphicHelper.getScreenHeight() / 2  + GraphicHelper.dpToPx(100))
+                .setDuration(350)
+                .setInterpolator(new OvershootInterpolator())
+                .start();
+        dockContainer.animate()
+                .y(0)
+                .setDuration(350)
+                .start();
+        CardView searchCloseContainer = findViewById(R.id.searchCloseContainer);
+        searchCloseContainer.animate()
+                .x(GraphicHelper.dpToPx(-90))
+                .setDuration(350)
+                .setInterpolator(new OvershootInterpolator())
+                .start();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                searchBar.setVisibility(View.GONE);
+                for (PulseView pulseView : pulseTable.values()) {
+                    pulseView.animate()
+                            .alpha(1)
+                            .scaleY(1)
+                            .scaleX(1)
+                            .setDuration(500)
+                            .setInterpolator(new OvershootInterpolator())
+                            .start();
+                }
+            }
+        }, 350);
+    }
+
     private void openControlPage() {
-        AppBarLayout.LayoutParams lp = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
-        lp.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
-        appbar.setExpanded(true, true);
         dock.animate()
                 .y(GraphicHelper.dpToPx(12))
                 .setDuration(450)
@@ -945,7 +985,7 @@ public class RoomActivity extends BaseActivity {
                 if (dragEndPoint - dragStartPoint > GraphicHelper.dpToPx(12) &&
                         dragEndTime - dragStartTime > 0 && (
                         (dragEndPoint - dragStartPoint) / (dragEndTime - dragStartTime) > 1 ||
-                        dragEndPoint - dragStartTime > GraphicHelper.dpToPx(100))) {
+                        dragEndPoint - dragStartPoint > GraphicHelper.dpToPx(10))) {
                     float direction = dragEndPoint - dragStartPoint;
                     if (direction > 0) {
                         closeControlPage();

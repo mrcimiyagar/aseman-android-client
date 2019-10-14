@@ -6,14 +6,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <RelativeLayout android:id="@+id/activity_room_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/colorBlackBlue">
+            android:layout_height="match_parent">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/roomBackground"
@@ -25,7 +24,6 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical"
                 android:layout_marginBottom="-72dp">
 
                 <kasper.android.pulse.components.LockableNestedScrollView
@@ -252,10 +250,10 @@
                                 android:id="@+id/roomBotsFAB"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:onClick="onBotsBtnClicked"
+                                android:onClick="onSearchBtnClicked"
                                 android:padding="12dp"
                                 android:scaleType="fitXY"
-                                android:src="@drawable/bot"
+                                android:src="@drawable/ic_search"
                                 android:tint="#fff" />
 
                         </androidx.cardview.widget.CardView>
@@ -308,10 +306,10 @@
                                 android:id="@+id/marketFAB"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:onClick="onBotsBtnClicked"
+                                android:onClick="onSearchBtnClicked"
                                 android:padding="12dp"
                                 android:scaleType="fitXY"
-                                android:src="@drawable/bot"
+                                android:src="@drawable/ic_search"
                                 android:tint="#fff" />
 
                         </androidx.cardview.widget.CardView>
@@ -329,8 +327,8 @@
                             <ImageView
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:onClick="onMenuBtnClicked"
-                                android:padding="4dp"
+                                android:onClick="onStoreBtnClicked"
+                                android:padding="16dp"
                                 android:scaleType="fitXY"
                                 android:src="@drawable/ic_store"
                                 android:tint="#fff" />
@@ -413,61 +411,65 @@
 
         </RelativeLayout>
 
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/appBar"
-            android:layout_width="match_parent"
-            android:layout_height="168dp"
-            app:elevation="0dp"
-            android:background="#00000000">
+        <androidx.cardview.widget.CardView
+            android:id="@+id/searchCloseContainer"
+            android:layout_width="84dp"
+            android:layout_height="56dp"
+            app:cardCornerRadius="28dp"
+            app:cardBackgroundColor="@color/colorBlackBlue3">
 
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
+            <ImageButton
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="right"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_close"
+                android:tint="#fff"
+                android:onClick="onSearchCloseBtnClicked"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_centerHorizontal="true"
+            android:id="@+id/searchBar"
+            android:layout_width="300dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:alpha="0"
+            android:visibility="gone"
+            app:cardCornerRadius="4dp">
+
+            <EditText
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#00000000"
-                app:layout_scrollFlags="scroll|enterAlways|snap">
+                android:layout_gravity="center"
+                android:background="@android:color/transparent"
+                android:hint="Search Aseman World"
+                android:textColorHint="#888"
+                android:textColor="#000"
+                android:textSize="17sp"
+                android:gravity="center"/>
 
-                <androidx.cardview.widget.CardView
-                    android:layout_width="300dp"
-                    android:layout_height="48dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="16dp"
-                    app:cardCornerRadius="4dp">
+            <ImageButton
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_menu"
+                android:tint="#000"
+                android:onClick="onMenuDrawerBtnClicked"
+                android:background="@android:color/transparent"/>
 
-                    <EditText
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center"
-                        android:background="@android:color/transparent"
-                        android:hint="Search Aseman World"
-                        android:textColorHint="#888"
-                        android:textColor="#000"
-                        android:textSize="17sp"
-                        android:gravity="center"/>
+            <ImageButton
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_search"
+                android:tint="#000"
+                android:layout_gravity="right"
+                android:background="@android:color/transparent"/>
 
-                    <ImageButton
-                        android:layout_width="48dp"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/ic_menu"
-                        android:tint="#000"
-                        android:onClick="onMenuDrawerBtnClicked"
-                        android:background="@android:color/transparent"/>
+        </androidx.cardview.widget.CardView>
 
-                    <ImageButton
-                        android:layout_width="48dp"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/ic_search"
-                        android:tint="#000"
-                        android:layout_gravity="right"
-                        android:background="@android:color/transparent"/>
-
-                </androidx.cardview.widget.CardView>
-
-            </androidx.appcompat.widget.Toolbar>
-
-        </com.google.android.material.appbar.AppBarLayout>
-
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </RelativeLayout>
 
     <FrameLayout
         android:layout_width="270dp"
