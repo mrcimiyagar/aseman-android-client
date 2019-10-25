@@ -51,12 +51,14 @@ import com.ogaclejapan.smarttablayout.SmartTabLayout;
 
 import org.michaelbel.bottomsheet.BottomSheet;
 
+import java.security.cert.PolicyNode;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TransferQueue;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import eightbitlab.com.blurview.BlurView;
@@ -89,6 +91,7 @@ import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.BotPicked;
+import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
 import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
@@ -100,6 +103,7 @@ import kasper.android.pulseframework.components.PulseView;
 import retrofit2.Call;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 
 public class RoomActivity extends BaseActivity {
@@ -131,7 +135,7 @@ public class RoomActivity extends BaseActivity {
     private RecyclerView botPickerRV;
     private LockableNestedScrollView scrollView;
     private RelativeLayout roomContainer;
-    private RelativeLayout controlPage;
+    private CardView controlPage;
     private RelativeLayout dockContainer;
     private FrameLayout shadowBox;
     private DrawerLayout drawerLayout;
@@ -139,6 +143,7 @@ public class RoomActivity extends BaseActivity {
     SmartTabLayout homeTB;
     LinearLayout dockFirstStage;
     LinearLayout dockSecondStage;
+    CardView searchCloseContainer;
 
     private long chosenComplexId;
 
@@ -216,80 +221,78 @@ public class RoomActivity extends BaseActivity {
         }, 450);
     }
 
-    TextView[] tabs = new TextView[3];
-    String[] tabTitles = new String[3];
+    List<Entities.Complex> complexes;
+    List<LinearLayout> tabs;
     private int chosenTab = 0;
-    SmartTabLayout.TabProvider tabProvider = new SmartTabLayout.TabProvider() {
-        @Override
-        public View createTabView(ViewGroup container, int position, PagerAdapter adapter) {
-            Log.d("KasperLogger", "tab " + position);
-            TextView textView = new TextView(RoomActivity.this);
-            LinearLayout.LayoutParams paranms = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT);
-            textView.setLayoutParams(paranms);
-            textView.setText(tabTitles[position]);
-            if (position == homeVP.getCurrentItem()) {
-                textView.setTextColor(getResources().getColor(R.color.colorBlackBlue));
-                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
-            } else {
-                textView.setTextColor(Color.WHITE);
-                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-            }
-            textView.setTypeface(null, Typeface.BOLD);
-            textView.setPadding(GraphicHelper.dpToPx(16), 0, GraphicHelper.dpToPx(16), 0);
-            textView.setGravity(Gravity.CENTER);
-            tabs[position] = textView;
-            return textView;
-        }
-    };
+    SmartTabLayout.TabProvider tabProvider;
+
+    @Subscribe
+    public void onComplexCreated(ComplexCreated complexCreated) {
+        complexes.add(complexCreated.getComplex());
+        notifyComplexChosen(complexCreated.getComplex());
+    }
 
     private void initUiData() {
-        List<BaseFragment> pages = new ArrayList<>();
-        pages.add(FeedFragment.instantiate(chosenComplexId));
-        pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Private));
-        pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Contact));
-        homeVP.setOffscreenPageLimit(3);
-        homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
-        chosenTab = 0;
-        tabs = new TextView[3];
-        tabTitles = new String[] {
-                "What's going on", "Home Rooms", "Contact Rooms"
-        };
-        homeTB.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-            @Override
-            public void onPageSelected(int position) {
-                tabs[chosenTab].setTextColor(Color.WHITE);
-                tabs[chosenTab].setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-                chosenTab = position;
-                tabs[chosenTab].setTextColor(getResources().getColor(R.color.colorBlackBlue));
-                tabs[chosenTab].setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
-            }
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
-        homeTB.setCustomTabView(tabProvider);
-        homeTB.setViewPager(homeVP);
 
         menuComplexesRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         menuRoomsRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
 
-        List<Entities.Complex> dbComplexes = DatabaseHelper.getComplexes();
-        if (dbComplexes.size() > 0) {
+        complexes = DatabaseHelper.getComplexes();
+        if (complexes.size() > 0) {
+            List<BaseFragment> pages = new ArrayList<>();
+            for (int counter = 0; counter < complexes.size(); counter++)
+                pages.add(RoomsFragment.instantiate(complexes.get(counter).getComplexId(), RoomTypes.All));
+            homeVP.setOffscreenPageLimit(3);
+            homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
+            chosenTab = 0;
+            tabs = new ArrayList<>(complexes.size());
+            tabProvider = (container, position, adapter) -> {
+                LinearLayout layout = new LinearLayout(RoomActivity.this);
+                layout.setLayoutParams(new ViewGroup.LayoutParams(GraphicHelper.dpToPx(112), GraphicHelper.dpToPx(64)));
+                layout.setOrientation(LinearLayout.VERTICAL);
+                layout.setGravity(Gravity.CENTER);
+                CircleImageView imageView = new CircleImageView(RoomActivity.this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        GraphicHelper.dpToPx(32),
+                        GraphicHelper.dpToPx(32));
+                imageView.setLayoutParams(params);
+                NetworkHelper.loadComplexAvatar(complexes.get(position).getAvatar(), imageView);
+                layout.addView(imageView);
+                TextView textView = new TextView(RoomActivity.this);
+                textView.setText(complexes.get(position).getTitle());
+                textView.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+                textView.setGravity(Gravity.CENTER);
+                textView.setTextColor(Color.WHITE);
+                layout.addView(textView);
+                tabs.add(layout);
+                return layout;
+            };
+
+            homeTB.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                @Override
+                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                }
+                @Override
+                public void onPageSelected(int position) {
+                    chosenTab = position;
+                }
+                @Override
+                public void onPageScrollStateChanged(int state) {
+
+                }
+            });
+            homeTB.setCustomTabView(tabProvider);
+            homeTB.setViewPager(homeVP);
+
             @SuppressLint("RtlHardcoded")
             ComplexesAdapter complexesAdapter = new ComplexesAdapter(RoomActivity.this
-                    , dbComplexes, RoomActivity.this::notifyComplexChosen, () -> {
+                    , complexes, RoomActivity.this::notifyComplexChosen, () -> {
                 drawerLayout.closeDrawer(Gravity.LEFT);
                 startActivity(new Intent(RoomActivity.this, CreateComplexActivity.class));
             });
             menuComplexesRV.setAdapter(complexesAdapter);
-            notifyComplexChosen(dbComplexes.get(0));
+            notifyComplexChosen(complexes.get(0));
         }
 
         Entities.User user = DatabaseHelper.getMe();
@@ -320,28 +323,18 @@ public class RoomActivity extends BaseActivity {
         });
         List<BaseFragment> pages = new ArrayList<>();
         if (chosenComplexId == DatabaseHelper.getMe().getUserSecret().getHomeId()) {
-            pages.add(FeedFragment.instantiate(chosenComplexId));
-            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Private));
-            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Contact));
+            for (int counter = 0; counter < complexes.size(); counter++)
+                pages.add(RoomsFragment.instantiate(complexes.get(counter).getComplexId(), RoomTypes.All));
             homeVP.setOffscreenPageLimit(3);
             homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
             chosenTab = 0;
-            tabs = new TextView[3];
-            tabTitles = new String[] {
-                    "What's going on", "Home Rooms", "Contac Rooms"
-            };
             homeTB.setViewPager(homeVP);
         } else {
-            pages.add(FeedFragment.instantiate(chosenComplexId));
-            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Group));
-            pages.add(RoomsFragment.instantiate(chosenComplexId, RoomTypes.Single));
+            for (int counter = 0; counter < complexes.size(); counter++)
+                pages.add(RoomsFragment.instantiate(complexes.get(counter).getComplexId(), RoomTypes.All));
             homeVP.setOffscreenPageLimit(3);
             homeVP.setAdapter(new FragmentsAdapter(getSupportFragmentManager(), pages));
             chosenTab = 0;
-            tabs = new TextView[3];
-            tabTitles = new String[] {
-                    "What's going on", "Complex Groups", "Complex Privateds"
-            };
             homeTB.setViewPager(homeVP);
         }
     }
@@ -445,6 +438,19 @@ public class RoomActivity extends BaseActivity {
 
     private void load() {
         initViews();
+
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) controlPage.getLayoutParams();
+        if (GraphicHelper.getScreenWidth() > GraphicHelper.dpToPx(700)) {
+            params.width = GraphicHelper.dpToPx(700);
+            params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            controlPage.setLayoutParams(params);
+            controlPage.setRadius(GraphicHelper.dpToPx(32));
+        } else {
+            params.width = MATCH_PARENT;
+            controlPage.setLayoutParams(params);
+            controlPage.setRadius(0);
+        }
+
         widgetContainer.removeAllViews();
         backgroundView.setImageResource(0);
         initListeners();
@@ -498,6 +504,7 @@ public class RoomActivity extends BaseActivity {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     public void onMenuBtnClicked(View view) {
         if (dock.getY() == dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100)) {
             Drawable messageDrw = getResources().getDrawable(R.drawable.ic_message);
@@ -567,6 +574,7 @@ public class RoomActivity extends BaseActivity {
                             for (Map.Entry<Long, PulseView> pair : pulseTable.entrySet()) {
                                 Long botId = pair.getKey();
                                 PulseView pulseView = pair.getValue();
+                                pulseView.disableChildrenTouch();
                                 pulseView.setOnLongClickListener(new View.OnLongClickListener() {
                                     @Override
                                     public boolean onLongClick(View v) {
@@ -588,6 +596,47 @@ public class RoomActivity extends BaseActivity {
                                         return true;
                                     }
                                 });
+
+                                scrollView.setScrollingEnabled(false);
+
+                                pulseView.setOnTouchListener(new View.OnTouchListener() {
+
+                                    @Override
+                                    public boolean onTouch(View v, MotionEvent event) {
+
+                                        if (event.getPointerCount() == 2) {
+                                            MotionEvent.PointerCoords coords1 = new MotionEvent.PointerCoords();
+                                            event.getPointerCoords(0, coords1);
+                                            MotionEvent.PointerCoords coords2 = new MotionEvent.PointerCoords();
+                                            event.getPointerCoords(1, coords2);
+
+                                            double dx = Math.abs(coords1.x - coords2.x);
+                                            double dy = Math.abs(coords1.y - coords2.y);
+
+                                            if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_POINTER_DOWN) {
+                                                resizeStartDx = dx;
+                                                resizeStartDy = dy;
+                                                resizeStartWidth = v.getMeasuredWidth();
+                                                resizeStartHeight = v.getMeasuredHeight();
+                                            } else if (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_MASK) {
+                                                double sizeX = v.getMeasuredWidth() + (dx - resizeStartDx);
+                                                double sizeY = v.getMeasuredHeight() + (dy + resizeStartDy);
+                                                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) v.getLayoutParams();
+                                                if (sizeX > GraphicHelper.dpToPx(56))
+                                                    params.width = (int)sizeX;
+                                                if (sizeY > GraphicHelper.dpToPx(56))
+                                                    params.height = (int)sizeY;
+
+                                                Toast.makeText(RoomActivity.this, params.width + " " + params.height, Toast.LENGTH_SHORT).show();
+
+                                                v.setLayoutParams(params);
+                                                v.requestLayout();
+                                            }
+                                        }
+
+                                        return true;
+                                    }
+                                });
                             }
                         }
                     }).setTitle("GoTo...")
@@ -599,6 +648,9 @@ public class RoomActivity extends BaseActivity {
                     .show();
         }
     }
+
+    private int resizeStartWidth = 0, resizeStartHeight = 0;
+    private double resizeStartDx = 0, resizeStartDy = 0;
 
     private void initViews() {
         dock = findViewById(R.id.dock);
@@ -628,6 +680,7 @@ public class RoomActivity extends BaseActivity {
         homeTB = findViewById(R.id.homeTB);
         dockFirstStage = findViewById(R.id.dockFirstStage);
         dockSecondStage = findViewById(R.id.dockSecondStage);
+        searchCloseContainer = findViewById(R.id.searchCloseContainer);
     }
 
     public void onStoreBtnClicked(View view) {
@@ -667,6 +720,8 @@ public class RoomActivity extends BaseActivity {
         drawerLayout.openDrawer(Gravity.LEFT);
     }
 
+    boolean draggingDock = false;
+
     private void initListeners() {
 
         widgetContainer.setOnDragListener(dragListener);
@@ -683,17 +738,20 @@ public class RoomActivity extends BaseActivity {
         dock.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                ClipData.Item item = new ClipData.Item(v.getTag().toString());
-                ClipData dragData = new ClipData(
-                        dock.getTag().toString(),
-                        new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN },
-                        item);
-                View.DragShadowBuilder myShadow = new MyDragShadowBuilder(dock, false);
-                dock.startDrag(dragData,
-                        myShadow,
-                        dock,
-                        0
-                );
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    draggingDock = true;
+                    ClipData.Item item = new ClipData.Item(v.getTag().toString());
+                    ClipData dragData = new ClipData(
+                            dock.getTag().toString(),
+                            new String[]{ClipDescription.MIMETYPE_TEXT_PLAIN},
+                            item);
+                    View.DragShadowBuilder myShadow = new MyDragShadowBuilder(dock, false);
+                    dock.startDrag(dragData,
+                            myShadow,
+                            dock,
+                            0
+                    );
+                }
                 return true;
             }
         });
@@ -869,74 +927,126 @@ public class RoomActivity extends BaseActivity {
         }, 250);
     }
 
+    public void onAddBtnClicked(View view) {
+        Drawable messageDrw = getResources().getDrawable(R.drawable.ic_message);
+        messageDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable fileDrw = getResources().getDrawable(R.drawable.ic_folder);
+        fileDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable settingsDrw = getResources().getDrawable(R.drawable.ic_settings);
+        settingsDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        Drawable editDrw = getResources().getDrawable(R.drawable.ic_edit);
+        editDrw.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+
+        String[] itemTitles = new String[]{
+                "Add room to this group", "Add new group"
+        };
+        Drawable[] itemIcons = new Drawable[]{
+                messageDrw, fileDrw, settingsDrw, editDrw
+        };
+
+        BottomSheet.Builder builder = new BottomSheet.Builder(this);
+        builder.setItems(itemTitles, itemIcons,
+                (dialogInterface, i) -> {
+                    if (i == 0) {
+                        shadowBox.animate().alpha(1).setDuration(350).start();
+                        startActivity(new Intent(RoomActivity.this, CreateRoomActivity.class)
+                                .putExtra("complex_id", chosenComplexId));
+                    } else if (i == 1) {
+                        startActivity(new Intent(RoomActivity.this, CreateComplexActivity.class));
+                    }
+                }).setTitle("Add...")
+                .setDarkTheme(true)
+                .setTitleTextColor(Color.WHITE)
+                .setContentType(BottomSheet.LIST)
+                .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                .setItemTextColor(Color.WHITE)
+                .show();
+    }
+
     public void onSearchBtnClicked(View view) {
-        for (PulseView pulseView : pulseTable.values()) {
-            pulseView.animate()
-                    .alpha(0)
-                    .scaleY(0.1f)
-                    .scaleX(0.1f)
-                    .setDuration(500)
-                    .setInterpolator(new OvershootInterpolator())
-                    .start();
-        }
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                CardView searchBar = findViewById(R.id.searchBar);
-                searchBar.setVisibility(View.VISIBLE);
-                searchBar.animate()
-                        .alpha(1)
-                        .y(GraphicHelper.getScreenHeight() / 2 - GraphicHelper.dpToPx(100))
-                        .setDuration(350)
-                        .setInterpolator(new OvershootInterpolator())
-                        .start();
-                dockContainer.animate()
-                        .y(GraphicHelper.getScreenHeight())
-                        .setDuration(350)
-                        .start();
-                CardView searchCloseContainer = findViewById(R.id.searchCloseContainer);
-                searchCloseContainer.animate()
-                        .x(-GraphicHelper.dpToPx(28))
-                        .setDuration(350)
+        if (dock.getY() == dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100)) {
+            for (PulseView pulseView : pulseTable.values()) {
+                pulseView.animate()
+                        .alpha(0)
+                        .scaleY(0.1f)
+                        .scaleX(0.1f)
+                        .setDuration(500)
                         .setInterpolator(new OvershootInterpolator())
                         .start();
             }
-        }, 500);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    dock.animate()
+                            .y(GraphicHelper.getScreenHeight())
+                            .setDuration(500)
+                            .start();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            CardView searchBar = findViewById(R.id.searchBar);
+                            searchBar.setVisibility(View.VISIBLE);
+                            searchBar.animate()
+                                    .alpha(1)
+                                    .y(GraphicHelper.getScreenHeight() / 2 - GraphicHelper.dpToPx(100))
+                                    .setDuration(500)
+                                    .setInterpolator(new OvershootInterpolator())
+                                    .start();
+                            CardView searchCloseContainer = findViewById(R.id.searchCloseContainer);
+                            searchCloseContainer.animate()
+                                    .x(-GraphicHelper.dpToPx(28))
+                                    .setDuration(500)
+                                    .setInterpolator(new OvershootInterpolator())
+                                    .start();
+                        }
+                    }, 400);
+                }
+            }, 400);
+        }
     }
 
     public void onSearchCloseBtnClicked(View view) {
+        closeSearchPage();
+    }
+
+    private void closeSearchPage() {
         CardView searchBar = findViewById(R.id.searchBar);
         searchBar.animate()
                 .alpha(0)
                 .y(GraphicHelper.getScreenHeight() / 2  + GraphicHelper.dpToPx(100))
-                .setDuration(350)
+                .setDuration(500)
                 .setInterpolator(new OvershootInterpolator())
                 .start();
-        dockContainer.animate()
-                .y(0)
-                .setDuration(350)
-                .start();
-        CardView searchCloseContainer = findViewById(R.id.searchCloseContainer);
         searchCloseContainer.animate()
                 .x(GraphicHelper.dpToPx(-90))
-                .setDuration(350)
+                .setDuration(500)
                 .setInterpolator(new OvershootInterpolator())
                 .start();
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                searchBar.setVisibility(View.GONE);
-                for (PulseView pulseView : pulseTable.values()) {
-                    pulseView.animate()
-                            .alpha(1)
-                            .scaleY(1)
-                            .scaleX(1)
-                            .setDuration(500)
-                            .setInterpolator(new OvershootInterpolator())
-                            .start();
-                }
+                dock.animate()
+                        .y(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100))
+                        .setDuration(500)
+                        .setInterpolator(new OvershootInterpolator())
+                        .start();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        searchBar.setVisibility(View.GONE);
+                        for (PulseView pulseView : pulseTable.values()) {
+                            pulseView.animate()
+                                    .alpha(1)
+                                    .scaleY(1)
+                                    .scaleX(1)
+                                    .setDuration(500)
+                                    .setInterpolator(new OvershootInterpolator())
+                                    .start();
+                        }
+                    }
+                }, 400);
             }
-        }, 350);
+        }, 400);
     }
 
     private void openControlPage() {
@@ -971,12 +1081,12 @@ public class RoomActivity extends BaseActivity {
             dragStartTime = System.currentTimeMillis();
             return true;
         } else if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
-            if (pickedBot == null && editedBot == null) {
+            if (draggingDock) {
                 float value = event.getY() - dock.getMeasuredHeight() / 2f;
                 if (value > dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100))
                     value = dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100);
-                dock.setY(value);
-                controlPage.setY(event.getY() + dock.getMeasuredHeight() / 2f - GraphicHelper.dpToPx(48));
+                dock.animate().y(value).setDuration(5).start();
+                controlPage.animate().y(event.getY() + dock.getMeasuredHeight() / 2f - GraphicHelper.dpToPx(48)).setDuration(5).start();
             }
             return true;
         } else if (event.getAction() == DragEvent.ACTION_DROP) {
@@ -999,6 +1109,7 @@ public class RoomActivity extends BaseActivity {
                         openControlPage();
                     }
                 }
+                draggingDock = false;
                 return true;
             }
             View tvState = (View) event.getLocalState();
@@ -1159,6 +1270,7 @@ public class RoomActivity extends BaseActivity {
     private void closeEditMode() {
         for (PulseView pulseView : pulseTable.values()) {
             pulseView.setOnLongClickListener(null);
+            pulseView.setOnTouchListener(null);
         }
         ValueAnimator valAnim = ValueAnimator.ofInt(GraphicHelper.dpToPx(115), GraphicHelper.dpToPx(0));
         valAnim.addUpdateListener(animation -> {
@@ -1189,7 +1301,13 @@ public class RoomActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (((RelativeLayout.LayoutParams)botPicker.getLayoutParams()).rightMargin > GraphicHelper.dpToPx(-340)) {
+        if (searchCloseContainer.getX() > GraphicHelper.dpToPx(-80)) {
+            closeSearchPage();
+        }
+        else if (dock.getY() < dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100)) {
+            closeControlPage();
+        }
+        else if (((RelativeLayout.LayoutParams)botPicker.getLayoutParams()).rightMargin > GraphicHelper.dpToPx(-340)) {
             closeBotPicker();
             dragPanel.setVisibility(View.GONE);
             dragMode = false;
@@ -1301,5 +1419,7 @@ public class RoomActivity extends BaseActivity {
             });
         }
         editedWorkerships.clear();
+        pickedBot = null;
+        editedBot = null;
     }
 }

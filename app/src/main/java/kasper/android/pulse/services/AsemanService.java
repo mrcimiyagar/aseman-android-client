@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.Pair;
@@ -1481,16 +1482,39 @@ public class AsemanService extends IntentService {
         if (PulseHelper.isOnPreviewMode() && notif.getComplexId() == 0 && notif.getRoomId() == 0) {
             Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 PulseView pulseView = PulseHelper.getPulseViewTablePreviews().get(notif.getBotId());
-                if (pulseView != null)
+                if (pulseView != null) {
                     pulseView.buildUi(notif.getViewData());
+                }
             }));
         } else
             Core.getInstance().bus().post(new UiThreadRequested(() -> {
                 if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
                         && PulseHelper.getCurrentRoomId() == notif.getRoomId()) {
                     PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                    if (pulseView != null)
+                    if (pulseView != null) {
                         pulseView.buildUi(notif.getViewData());
+                        new Handler().postDelayed(() -> {
+                            Packet p = new Packet();
+                            Entities.Complex c = new Entities.Complex();
+                            c.setComplexId(notif.getComplexId());
+                            p.setComplex(c);
+                            Entities.BaseRoom room = new Entities.BaseRoom();
+                            room.setRoomId(notif.getRoomId());
+                            p.setBaseRoom(room);
+                            Entities.Bot bot = new Entities.Bot();
+                            bot.setBaseUserId(notif.getBotId());
+                            p.setBot(bot);
+                            NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(RobotHandler.class).notifyBotLoaded(p),
+                                    new ServerCallback() {
+                                        @Override
+                                        public void onRequestSuccess(Packet packet) { }
+                                        @Override
+                                        public void onServerFailure() { }
+                                        @Override
+                                        public void onConnectionFailure() { }
+                                    });
+                        }, 2000);
+                    }
                 }
             }));
 

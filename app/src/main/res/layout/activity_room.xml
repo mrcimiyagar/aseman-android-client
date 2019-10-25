@@ -214,28 +214,6 @@
                         android:orientation="horizontal"
                         android:id="@+id/dockFirstStage">
 
-                        <ImageButton
-                            android:id="@+id/roomMessagesFAB"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:background="@android:color/transparent"
-                            android:padding="12dp"
-                            android:scaleType="fitXY"
-                            android:src="@drawable/bot"
-                            android:tint="#fff"
-                            android:visibility="gone" />
-
-                        <ImageButton
-                            android:id="@+id/roomFilesFAB"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:background="@android:color/transparent"
-                            android:padding="12dp"
-                            android:scaleType="fitXY"
-                            android:src="@drawable/bot"
-                            android:tint="#fff"
-                            android:visibility="gone" />
-
                         <androidx.cardview.widget.CardView
                             android:layout_width="48dp"
                             android:layout_height="48dp"
@@ -306,10 +284,10 @@
                                 android:id="@+id/marketFAB"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:onClick="onSearchBtnClicked"
+                                android:onClick="onAddBtnClicked"
                                 android:padding="12dp"
                                 android:scaleType="fitXY"
-                                android:src="@drawable/ic_search"
+                                android:src="@drawable/ic_add"
                                 android:tint="#fff" />
 
                         </androidx.cardview.widget.CardView>
@@ -351,63 +329,70 @@
 
             </androidx.cardview.widget.CardView>
 
-            <RelativeLayout
+            <androidx.cardview.widget.CardView
                 android:id="@+id/controlPage"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:elevation="6dp"
-                android:background="#151E27">
-
-                <androidx.appcompat.widget.Toolbar
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_gravity="bottom"
-                    app:layout_collapseMode="pin"
-                    app:contentInsetEnd="0dp"
-                    app:contentInsetStart="0dp"
-                    android:clickable="false">
-
-                    <com.ogaclejapan.smarttablayout.SmartTabLayout
-                        android:id="@+id/homeTB"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        app:stl_indicatorAlwaysInCenter="true"
-                        app:stl_indicatorWithoutPadding="false"
-                        app:stl_indicatorInFront="false"
-                        app:stl_indicatorInterpolation="smart"
-                        app:stl_indicatorGravity="center"
-                        app:stl_indicatorColor="@color/colorBlue"
-                        app:stl_indicatorThickness="40dp"
-                        app:stl_indicatorWidth="auto"
-                        app:stl_indicatorCornerRadius="24dp"
-                        app:stl_defaultTabTextAllCaps="false"
-                        app:stl_defaultTabTextHorizontalPadding="16dp"
-                        app:stl_clickable="true"
-                        app:stl_drawDecorationAfterTab="false" />
-
-                </androidx.appcompat.widget.Toolbar>
+                app:cardElevation="6dp"
+                app:cardBackgroundColor="#151E27"
+                app:cardCornerRadius="32dp">
 
                 <RelativeLayout
-                    android:id="@+id/roomsContainer"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="48dp">
+                    android:layout_height="match_parent">
 
-                    <FrameLayout
+                    <androidx.appcompat.widget.Toolbar
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+                        android:layout_height="72dp"
+                        android:layout_gravity="bottom"
+                        app:layout_collapseMode="pin"
+                        app:contentInsetEnd="0dp"
+                        app:contentInsetStart="0dp"
+                        android:clickable="false">
 
-                        <androidx.viewpager.widget.ViewPager
-                            android:id="@+id/homeVP"
+                        <com.ogaclejapan.smarttablayout.SmartTabLayout
+                            android:id="@+id/homeTB"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@color/colorBlackBlue"/>
+                            android:layout_height="72dp"
+                            app:stl_indicatorAlwaysInCenter="true"
+                            app:stl_indicatorWithoutPadding="false"
+                            app:stl_indicatorInFront="false"
+                            app:stl_indicatorInterpolation="smart"
+                            app:stl_indicatorGravity="center"
+                            app:stl_indicatorColor="@color/colorBlackBlue3"
+                            app:stl_indicatorThickness="64dp"
+                            app:stl_indicatorWidth="96dp"
+                            app:stl_indicatorCornerRadius="32dp"
+                            app:stl_defaultTabTextAllCaps="false"
+                            app:stl_defaultTabTextHorizontalPadding="16dp"
+                            app:stl_clickable="true"
+                            app:stl_drawDecorationAfterTab="false" />
 
-                    </FrameLayout>
+                    </androidx.appcompat.widget.Toolbar>
+
+                    <RelativeLayout
+                        android:id="@+id/roomsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="72dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <androidx.viewpager.widget.ViewPager
+                                android:id="@+id/homeVP"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@color/colorBlackBlue"/>
+
+                        </FrameLayout>
+
+                    </RelativeLayout>
 
                 </RelativeLayout>
 
-            </RelativeLayout>
+            </androidx.cardview.widget.CardView>
 
         </RelativeLayout>
 

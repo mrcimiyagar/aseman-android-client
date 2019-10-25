@@ -34,4 +34,6 @@ public interface RobotHandler {
     Call<Packet> updateBotProfile(@Body Packet packet);
     @POST("robot/search_bots")
     Call<Packet> searchBots(@Body Packet packet);
+    @POST("robot/notify_bot_loaded")
+    Call<Packet> notifyBotLoaded(@Body Packet packet);
 }

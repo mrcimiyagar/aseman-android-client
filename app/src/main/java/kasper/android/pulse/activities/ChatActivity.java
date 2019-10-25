@@ -86,7 +86,7 @@ public class ChatActivity extends BaseActivity {
 
     private boolean searchMode = false;
 
-    CoordinatorLayout rootView;
+    CardView rootView;
 
     RelativeLayout mainToolbarContent;
     RelativeLayout searchToolbarContent;
@@ -148,11 +148,14 @@ public class ChatActivity extends BaseActivity {
                         initViews();
 
                         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) rootView.getLayoutParams();
-                        if (GraphicHelper.pxToDp(GraphicHelper.getScreenWidth()) < 500) {
+                        if (GraphicHelper.pxToDp(GraphicHelper.getScreenWidth()) < 700) {
                             lp.width = MATCH_PARENT;
+                            lp.height = MATCH_PARENT;
                         } else {
-                            lp.width = GraphicHelper.dpToPx(500);
-                            lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                            lp.width = GraphicHelper.dpToPx(700);
+                            lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                            lp.height = GraphicHelper.dpToPx(600);
+                            lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
                         }
                         rootView.setLayoutParams(lp);
 

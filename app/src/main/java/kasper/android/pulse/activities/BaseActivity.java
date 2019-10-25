@@ -6,6 +6,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
 import android.util.Log;
@@ -17,7 +18,9 @@ import android.widget.PopupMenu;
 import com.anadeainc.rxbus.Subscribe;
 import com.google.android.material.snackbar.Snackbar;
 import com.r0adkll.slidr.Slidr;
+import com.r0adkll.slidr.model.SlidrConfig;
 import com.r0adkll.slidr.model.SlidrInterface;
+import com.r0adkll.slidr.model.SlidrPosition;
 
 import androidx.annotation.MenuRes;
 import androidx.annotation.Nullable;
@@ -42,16 +45,27 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
-        if (!this.isHome)
-            this.sliderInterface = Slidr.attach(this);
+        if (!this.isHome) {
+            SlidrConfig config = new SlidrConfig.Builder()
+                    .position(SlidrPosition.TOP)
+                    .edge(true)
+                    .build();
+            this.sliderInterface = Slidr.attach(this, config);
+        }
     }
 
     @Override
     public void onBackPressed() {
-        hideSnack();
         super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 
     public void showSnack(String message) {

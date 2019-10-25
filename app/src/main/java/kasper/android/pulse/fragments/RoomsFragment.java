@@ -15,6 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Database;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import kasper.android.pulse.R;
@@ -74,7 +77,15 @@ public class RoomsFragment extends BaseFragment {
         } else if (roomType == RoomTypes.Group) {
             rooms = DatabaseHelper.getComplexNonSingleRooms(complexId);
         } else if (roomType == RoomTypes.All) {
-            rooms = DatabaseHelper.getAllRooms();
+            rooms = DatabaseHelper.getComplexSingleRooms(complexId);
+            rooms.addAll(DatabaseHelper.getComplexNonSingleRooms(complexId));
+            Collections.sort(rooms, new Comparator<Entities.BaseRoom>() {
+                @Override
+                public int compare(Entities.BaseRoom o1, Entities.BaseRoom o2) {
+                    long raw = o1.getComplexId() - o2.getComplexId();
+                    return raw < 0 ? -1 : raw > 0 ? 1 : 0;
+                }
+            });
         }
         roomsRV.setAdapter(new HomeAdapter((AppCompatActivity) getActivity(), rooms));
         return contentView;

@@ -8,7 +8,6 @@
         <item name="colorAccent">@color/colorBlue</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowAnimationStyle">@style/CustomActivityAnimation</item>
         <item name="android:windowContentTransitions">true</item>
         <item name="android:windowAllowEnterTransitionOverlap">true</item>
         <item name="android:windowAllowReturnTransitionOverlap">true</item>
@@ -23,7 +22,6 @@
         <item name="colorAccent">@color/colorBlue</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowAnimationStyle">@style/CustomActivityAnimation</item>
         <item name="android:homeAsUpIndicator">@drawable/ic_back</item>
         <item name="popupMenuStyle">@style/PopupMenu</item>
         <item name="android:windowActionBarOverlay">true</item>

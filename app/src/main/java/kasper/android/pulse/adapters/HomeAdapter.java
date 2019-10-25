@@ -38,6 +38,7 @@ import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
+import kasper.android.pulse.rxbus.notifications.RoomSelected;
 import kasper.android.pulse.rxbus.notifications.RoomUnreadChanged;
 import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 
@@ -410,10 +411,7 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 vh.lastActionTV.setText("");
             }
             vh.itemView.setOnClickListener(view ->
-                    activity.startActivity(new Intent(activity, ChatActivity.class)
-                            .putExtra("complex_id", room.getComplex().getComplexId())
-                            .putExtra("room_id", room.getRoomId())
-                            .putExtra("start_file_id", -1L)));
+                    Core.getInstance().bus().post(new RoomSelected(room)));
         }
     }
 
