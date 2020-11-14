@@ -8,8 +8,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.callbacks.middleware.OnBaseUserSyncListener;
@@ -33,7 +36,6 @@ public class ProfileActivity extends BaseActivity {
 
     private ImageView avatarIV;
     private TextView titleTV;
-    private ImageButton connectBTN;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +44,6 @@ public class ProfileActivity extends BaseActivity {
 
         this.avatarIV = findViewById(R.id.activity_profile_avatar_image_view);
         this.titleTV = findViewById(R.id.activity_profile_title_text_view);
-        this.connectBTN = findViewById(R.id.connectFAB);
 
         if (getIntent().getExtras() != null)
             this.humanId = getIntent().getExtras().getLong("user-id");
@@ -54,19 +55,6 @@ public class ProfileActivity extends BaseActivity {
             syncData();
         } else {
             syncData();
-        }
-
-        Entities.User me = DatabaseHelper.getMe();
-        if (me != null) {
-            if (humanId == me.getBaseUserId()) {
-                connectBTN.setImageResource(R.drawable.ic_home);
-            } else {
-                if (DatabaseHelper.isContactInDatabase(humanId)) {
-                    connectBTN.setImageResource(R.drawable.ic_message);
-                } else {
-                    connectBTN.setImageResource(R.drawable.ic_connection);
-                }
-            }
         }
     }
 
@@ -163,7 +151,6 @@ public class ProfileActivity extends BaseActivity {
                             messageLocal.setMessageId(packet.getServiceMessage().getMessageId());
                             messageLocal.setSent(true);
                             Core.getInstance().bus().post(new MessageReceived(true, message, messageLocal));
-                            connectBTN.setImageResource(R.drawable.ic_message);
                             ProfileActivity.this.startActivity(new Intent(ProfileActivity
                                     .this, RoomActivity.class)
                                     .putExtra("complex_id", packet.getContact()

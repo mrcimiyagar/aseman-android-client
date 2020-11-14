@@ -1701,7 +1701,7 @@ public class Entities {
         private long botId;
         private long roomId;
         @Ignore
-        private Room room;
+        private BaseRoom room;
         private int posX;
         private int posY;
         private int width;
@@ -1732,11 +1732,11 @@ public class Entities {
             this.roomId = roomId;
         }
 
-        public Room getRoom() {
+        public BaseRoom getRoom() {
             return room;
         }
 
-        public void setRoom(Room room) {
+        public void setRoom(BaseRoom room) {
             this.room = room;
         }
 

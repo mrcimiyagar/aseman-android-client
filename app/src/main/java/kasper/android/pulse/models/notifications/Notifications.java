@@ -36,7 +36,8 @@ public class Notifications {
             @JsonSubTypes.Type(value = BotAnimatedBotViewNotification.class, name = "BotAnimatedBotViewNotification"),
             @JsonSubTypes.Type(value = BotRanCommandsOnBotViewNotification.class, name = "BotRanCommandsOnBotViewNotification"),
             @JsonSubTypes.Type(value = RoomCreationNotification.class, name = "RoomCreationNotification"),
-            @JsonSubTypes.Type(value = ImageAnalyzedNotification.class, name = "ImageAnalyzedNotification")
+            @JsonSubTypes.Type(value = ImageAnalyzedNotification.class, name = "ImageAnalyzedNotification"),
+            @JsonSubTypes.Type(value = BotAdditionToRoomNotification.class, name = "BotAdditionToRoomNotification")
     })
     public static class Notification {
         private String notificationId;
@@ -134,7 +135,7 @@ public class Notifications {
         }
     }
 
-    public static class BotAddedToRoomNotification extends Notification {
+    public static class BotAdditionToRoomNotification extends Notification {
         private Entities.Workership workership;
         private Entities.Bot bot;
 
@@ -282,6 +283,7 @@ public class Notifications {
         private long roomId;
         private long botId;
         private String viewData;
+        private boolean botWindowMode;
 
         public long getComplexId() {
             return complexId;
@@ -314,6 +316,14 @@ public class Notifications {
         public void setViewData(String viewData) {
             this.viewData = viewData;
         }
+
+        public boolean isBotWindowMode() {
+            return botWindowMode;
+        }
+
+        public void setBotWindowMode(boolean botWindowMode) {
+            this.botWindowMode = botWindowMode;
+        }
     }
 
     public static class BotUpdatedBotViewNotification extends Notification {
@@ -322,6 +332,7 @@ public class Notifications {
         private long botId;
         private String updateData;
         private boolean batchData;
+        private boolean botWindowMode;
 
         public long getComplexId() {
             return complexId;
@@ -362,6 +373,14 @@ public class Notifications {
         public void setBatchData(boolean batchData) {
             this.batchData = batchData;
         }
+
+        public boolean isBotWindowMode() {
+            return botWindowMode;
+        }
+
+        public void setBotWindowMode(boolean botWindowMode) {
+            this.botWindowMode = botWindowMode;
+        }
     }
 
     public static class BotAnimatedBotViewNotification extends Notification {
@@ -370,6 +389,7 @@ public class Notifications {
         private long botId;
         private String animData;
         private boolean batchData;
+        private boolean botWindowMode;
 
         public long getComplexId() {
             return complexId;
@@ -410,6 +430,14 @@ public class Notifications {
         public void setBatchData(boolean batchData) {
             this.batchData = batchData;
         }
+
+        public boolean isBotWindowMode() {
+            return botWindowMode;
+        }
+
+        public void setBotWindowMode(boolean botWindowMode) {
+            this.botWindowMode = botWindowMode;
+        }
     }
 
     public static class BotRanCommandsOnBotViewNotification extends Notification {
@@ -418,6 +446,7 @@ public class Notifications {
         private long botId;
         private String commandsData;
         private boolean batchData;
+        private boolean botWindowMode;
 
         public long getComplexId() {
             return complexId;
@@ -457,6 +486,14 @@ public class Notifications {
 
         public void setBatchData(boolean batchData) {
             this.batchData = batchData;
+        }
+
+        public boolean isBotWindowMode() {
+            return botWindowMode;
+        }
+
+        public void setBotWindowMode(boolean botWindowMode) {
+            this.botWindowMode = botWindowMode;
         }
     }
 

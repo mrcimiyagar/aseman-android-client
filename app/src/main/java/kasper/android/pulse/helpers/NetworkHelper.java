@@ -54,7 +54,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 
 public class NetworkHelper {
 
-    public static String SERVER_IP = "http://192.168.43.140:8080/";
+    public static String SERVER_IP = "http://95.216.62.129:8082/";
     //public static String SERVER_IP = "http://134.209.50.254:8080/";
     private static String API_PATH = SERVER_IP + "api/";
     private static Retrofit retrofit;
@@ -117,7 +117,7 @@ public class NetworkHelper {
                     log += "\n" + ("--> END " + request.method());
                 } else if (bodyHasUnknownEncoding(request.headers())) {
                     log += "\n" + ("--> END " + request.method() + " (encoded body omitted)");
-                } else if (requestBody.contentLength() < 512) {
+                } else if (requestBody.contentLength() < 2048) {
                     Buffer buffer = new Buffer();
                     requestBody.writeTo(buffer);
 
@@ -136,7 +136,7 @@ public class NetworkHelper {
                         log += "\n" + ("--> END " + request.method() + " (binary "
                                 + requestBody.contentLength() + "-byte body omitted)");
                     }
-                } else if (requestBody.contentLength() > 512) {
+                } else if (requestBody.contentLength() > 2048) {
                     log += "\n" + ("--> END " + request.method()
                             + " (" + requestBody.contentLength() + "-byte body)");
                 }
@@ -180,7 +180,7 @@ public class NetworkHelper {
             } else {
                 BufferedSource source;
                 if (responseBody != null) {
-                    if (responseBody.contentLength() < 512) {
+                    if (responseBody.contentLength() < 2048) {
                         source = responseBody.source();
                         source.request(Long.MAX_VALUE); // Buffer the entire body.
                         Buffer buffer = source.buffer();

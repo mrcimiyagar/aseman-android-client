@@ -22,7 +22,9 @@
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning,UnusedAttribute"
         tools:replace="android:allowBackup,android:supportsRtl">
-        <activity android:name=".activities.BotPickerActivity"></activity>
+        <activity android:name=".activities.BotWindowActivity"></activity>
+        <activity android:name=".activities.MainActivity" />
+        <activity android:name=".activities.BotPickerActivity" />
         <activity android:name=".activities.EditRoomDesktopActivity" />
         <activity android:name=".activities.ImageTagsActivity" />
         <activity android:name=".activities.PostActivity" />
@@ -40,6 +42,7 @@
             android:theme="@style/AppTheme.TransparentStatus">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -130,6 +133,9 @@
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="150771ddf9d9dff9613be1ba467da98fae3e364d" />
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
     </application>
 
 </manifest>

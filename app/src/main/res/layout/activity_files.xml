@@ -11,7 +11,7 @@
         android:id="@+id/rootView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/colorBlackBlue">
+        android:background="@color/darkNil">
 
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/fragment_docs_fragment_container"
@@ -21,7 +21,8 @@
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp">
+            android:layout_height="56dp"
+            android:background="@color/nil">
 
             <FrameLayout
                 android:layout_width="match_parent"
@@ -53,7 +54,7 @@
             android:layout_width="192dp"
             android:layout_height="56dp"
             android:layout_gravity="center_horizontal|bottom"
-            app:cardBackgroundColor="@color/colorBlackBlue3"
+            app:cardBackgroundColor="@color/nil"
             app:cardCornerRadius="14dp"
             android:layout_marginBottom="16dp">
 

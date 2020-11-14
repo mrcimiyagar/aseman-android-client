@@ -5,12 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue"
+    android:background="@color/darkNil"
     tools:context=".activities.ModifyMemberAccessActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp">
+        android:layout_height="56dp"
+        android:background="@color/nil">
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
@@ -24,7 +25,7 @@
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_back"
                 android:tint="#fff"
-                android:onClick="onEditCloseBtnClicked"/>
+                android:onClick="onBackBtnClicked"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -66,10 +67,10 @@
                     android:id="@+id/canCreateMessageSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:thumbTint="@color/colorBlackBlue3"
+                    android:thumbTint="@color/colorBlue"
+                    android:trackTint="@color/nil"
                     android:layout_gravity="right"
-                    android:trackTint="@color/colorBlue"
-                    android:layout_marginRight="16dp"/>
+                    android:layout_marginRight="16dp" />
 
             </FrameLayout>
 
@@ -91,9 +92,9 @@
                     android:id="@+id/canSendInviteSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:thumbTint="@color/colorBlackBlue3"
                     android:layout_gravity="right"
-                    android:trackTint="@color/colorBlue"
+                    android:thumbTint="@color/colorBlue"
+                    android:trackTint="@color/nil"
                     android:layout_marginRight="16dp"/>
 
             </FrameLayout>
@@ -116,9 +117,9 @@
                     android:id="@+id/canModifyWorkersSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:thumbTint="@color/colorBlackBlue3"
                     android:layout_gravity="right"
-                    android:trackTint="@color/colorBlue"
+                    android:thumbTint="@color/colorBlue"
+                    android:trackTint="@color/nil"
                     android:layout_marginRight="16dp"/>
 
             </FrameLayout>
@@ -141,9 +142,9 @@
                     android:id="@+id/canUpdateProfilesSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:thumbTint="@color/colorBlackBlue3"
                     android:layout_gravity="right"
-                    android:trackTint="@color/colorBlue"
+                    android:thumbTint="@color/colorBlue"
+                    android:trackTint="@color/nil"
                     android:layout_marginRight="16dp"/>
 
             </FrameLayout>
@@ -167,9 +168,9 @@
                     android:id="@+id/canModifyAccessSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:thumbTint="@color/colorBlackBlue3"
                     android:layout_gravity="right"
-                    android:trackTint="@color/colorBlue"
+                    android:thumbTint="@color/colorBlue"
+                    android:trackTint="@color/nil"
                     android:layout_marginRight="16dp"/>
 
             </FrameLayout>

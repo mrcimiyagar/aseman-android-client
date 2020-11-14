@@ -5,11 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activities.BotStoreActivity"
-    android:background="@color/colorBlackBlue">
+    android:background="@color/darkNil">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp">
+        android:layout_height="56dp"
+        android:background="@color/nil">
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
@@ -36,7 +37,7 @@
                     android:background="@android:color/transparent"
                     android:src="@drawable/ic_back"
                     android:tint="#fff"
-                    android:onClick="onEditCloseBtnClicked"/>
+                    android:onClick="onBackBtnClicked"/>
 
             </FrameLayout>
 

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activities.BotsActivity"
-    android:background="@color/colorBlackBlue">
+    android:background="@color/darkNil">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/botsRV"
@@ -18,7 +18,7 @@
         android:layout_marginLeft="-28dp"
         android:layout_marginTop="16dp"
         app:cardCornerRadius="28dp"
-        app:cardBackgroundColor="@color/colorBlackBlue3">
+        app:cardBackgroundColor="@color/nil">
 
         <ImageButton
             android:layout_width="56dp"
@@ -27,7 +27,7 @@
             android:background="@android:color/transparent"
             android:src="@drawable/ic_back"
             android:tint="#fff"
-            android:onClick="onEditCloseBtnClicked"/>
+            android:onClick="onBackBtnClicked"/>
 
     </androidx.cardview.widget.CardView>
     
@@ -37,13 +37,13 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
         app:cardCornerRadius="12dp"
-        app:cardBackgroundColor="@color/colorBlue">
+        app:cardBackgroundColor="@color/nil">
 
         <androidx.cardview.widget.CardView
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="@color/colorBlackBlue3"
+            app:cardBackgroundColor="@color/nil"
             android:layout_margin="1dp">
 
             <LinearLayout
@@ -78,7 +78,7 @@
                     android:gravity="center"
                     android:textColor="#fff"
                     android:textSize="18sp"
-                    android:background="@color/colorBlackBlue3"/>
+                    android:background="@color/nil"/>
 
             </LinearLayout>
 

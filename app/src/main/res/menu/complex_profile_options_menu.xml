@@ -3,4 +3,8 @@
     <item android:id="@+id/invites"
         android:title="Invites"
         android:icon="@drawable/ic_invite" />
+
+    <item android:id="@+id/members"
+        android:title="Members"
+        android:icon="@drawable/ic_members"/>
 </menu>

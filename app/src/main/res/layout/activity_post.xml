@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activities.PostActivity"
-    android:background="@color/colorBlackBlue">
+    android:background="@color/darkNil">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/sectionsRV"

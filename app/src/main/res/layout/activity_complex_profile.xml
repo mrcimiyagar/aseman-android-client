@@ -5,13 +5,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue"
+    android:background="@color/darkNil"
     tools:context="kasper.android.pulse.activities.ComplexProfileActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/complexProfileAppBar"
         android:layout_width="match_parent"
-        android:layout_height="144dp">
+        android:layout_height="144dp"
+        android:background="@color/nil">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
@@ -67,7 +68,7 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:scaleType="centerCrop"
-                    android:src="@color/colorBlackBlue"
+                    android:src="@color/darkNil"
                     android:onClick="onAvatarImageClicked"
                     android:layout_gravity="center_vertical"/>
 

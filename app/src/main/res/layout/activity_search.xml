@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue"
+    android:background="@color/darkNil"
     tools:context="kasper.android.pulse.activities.SearchActivity">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -34,7 +34,7 @@
                     android:layout_height="match_parent"
                     android:layout_margin="16dp"
                     app:cardCornerRadius="8dp"
-                    app:cardBackgroundColor="@color/colorBlackBlue3">
+                    app:cardBackgroundColor="@color/nil">
 
                     <EditText
                         android:id="@+id/activity_search_edit_text"

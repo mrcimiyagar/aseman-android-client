@@ -31,7 +31,8 @@ public class Controls {
             @JsonSubTypes.Type(value = OptionCtrl.class, name = "OptionCtrl"),
             @JsonSubTypes.Type(value = DropDownCtrl.class, name = "DropDownCtrl"),
             @JsonSubTypes.Type(value = RecyclerCtrl.class, name = "RecyclerCtrl"),
-            @JsonSubTypes.Type(value = SeekBarCtrl.class, name = "SeekBarCtrl")
+            @JsonSubTypes.Type(value = SeekBarCtrl.class, name = "SeekBarCtrl"),
+            @JsonSubTypes.Type(value = SwitchCtrl.class, name = "SwitchCtrl")
     })
     public static class Control {
 
@@ -994,6 +995,10 @@ public class Controls {
         public void setSelectedPos(int selectedPos) {
             this.selectedPos = selectedPos;
         }
+    }
+
+    public static class SwitchCtrl extends CheckCtrl {
+
     }
 
     public static class RecyclerCtrl extends Control {

@@ -1,5 +1,6 @@
 package kasper.android.pulse.activities;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import kasper.android.pulse.R;
 import kasper.android.pulse.helpers.DatabaseHelper;
 import kasper.android.pulse.models.entities.Entities;
+import kasper.android.pulse.services.MusicsService;
 
 public class MusicPlayerActivity extends BaseActivity {
 
@@ -28,8 +30,6 @@ public class MusicPlayerActivity extends BaseActivity {
 
     long roomId;
     Entities.Audio audio;
-
-    MediaPlayer mediaPlayer;
 
     final Object lockObject = new Object();
     Handler handler = new Handler();
@@ -74,29 +74,9 @@ public class MusicPlayerActivity extends BaseActivity {
         captionTV.setText(audio.getTitle());
         try {
             playBTN.setImageResource(R.drawable.ic_pause);
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(DatabaseHelper.getFilePath(audio.getFileId()));
-            mediaPlayer.setOnCompletionListener(mp -> playBTN.setImageResource(R.drawable.ic_play));
-            progressSB.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                    synchronized (lockObject) {
-                        mediaPlayer.seekTo(mediaPlayer.getDuration() * seekBar.getProgress() / 100);
-                    }
-                }
-            });
-            mediaPlayer.prepare();
-            mediaPlayer.start();
+            startService(new Intent(this, MusicsService.class)
+                            .putExtra("command", "play")
+                            .putExtra("path", DatabaseHelper.getFilePath(audio.getFileId())));
             updateProgressBar();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -107,7 +87,6 @@ public class MusicPlayerActivity extends BaseActivity {
         synchronized (lockObject) {
             runnable = () -> {
                 synchronized (lockObject) {
-                    progressSB.setProgress(mediaPlayer.getCurrentPosition() * 100 / mediaPlayer.getDuration());
                     updateProgressBar();
                 }
             };
@@ -130,13 +109,7 @@ public class MusicPlayerActivity extends BaseActivity {
     }
 
     public void onPlayBtnClicked(View view) {
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-            playBTN.setImageResource(R.drawable.ic_play);
-        } else {
-            mediaPlayer.start();
-            playBTN.setImageResource(R.drawable.ic_pause);
-        }
+
     }
 
     public void onForwardBtnClicked(View view) {
@@ -144,13 +117,7 @@ public class MusicPlayerActivity extends BaseActivity {
     }
 
     public void onReplayBtnClicked(View view) {
-        if (mediaPlayer.isLooping()) {
-            mediaPlayer.setLooping(false);
-            replayBTN.setColorFilter(Color.WHITE);
-        } else {
-            mediaPlayer.setLooping(true);
-            replayBTN.setColorFilter(Color.YELLOW);
-        }
+
 
     }
 }

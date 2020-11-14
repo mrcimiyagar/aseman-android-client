@@ -1,0 +1,3 @@
+/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/armeabi-v7a/CMakeFiles/edit_cache.dir
+/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/armeabi-v7a/CMakeFiles/EogenVirtualMachine.dir

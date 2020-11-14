@@ -29,7 +29,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginBottom="56dp"
-                android:background="@color/colorBlackBlue"
+                android:background="@color/darkNil"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -46,7 +46,8 @@
 
             <com.google.android.material.appbar.AppBarLayout
                 android:layout_width="match_parent"
-                android:layout_height="56dp">
+                android:layout_height="56dp"
+                android:background="@color/nil">
 
                 <androidx.appcompat.widget.Toolbar
                     android:id="@+id/toolbar"
@@ -74,7 +75,6 @@
                             android:id="@+id/mainContent"
                             android:layout_width="match_parent"
                             android:layout_height="56dp"
-                            android:background="@color/colorBlackBlue2"
                             android:elevation="4dp"
                             app1:targetApi="lollipop">
 
@@ -162,7 +162,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
                 app:cardCornerRadius="0dp"
-                app:cardBackgroundColor="@color/colorBlackBlue3"
+                app:cardBackgroundColor="@color/nil"
                 app:cardElevation="6dp">
 
                 <RelativeLayout

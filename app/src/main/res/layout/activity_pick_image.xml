@@ -4,12 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/colorBlackBlue"
+    android:background="@color/darkNil"
     tools:context=".activities.PickImageActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp">
+        android:layout_height="56dp"
+        android:background="@color/nil">
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"

@@ -103,7 +103,7 @@ public class StartupActivity extends AppCompatActivity {
         Entities.Session session = DatabaseHelper.getSingleSession();
         if (session != null && session.getToken().length() > 0) {
             startServices();
-            startActivity(new Intent(StartupActivity.this, RoomActivity.class)
+            startActivity(new Intent(StartupActivity.this, MainActivity.class)
                     .putExtra("room_id", DatabaseHelper.getComplexById(DatabaseHelper.getMe()
                             .getUserSecret().getHomeId()).getAllRooms().get(0).getRoomId())
                     .putExtra("complex_id", DatabaseHelper.getMe().getUserSecret().getHomeId()));

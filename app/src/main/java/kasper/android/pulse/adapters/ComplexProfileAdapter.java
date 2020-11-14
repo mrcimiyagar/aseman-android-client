@@ -32,6 +32,7 @@ import kasper.android.pulse.rxbus.notifications.MessageSending;
 import kasper.android.pulse.rxbus.notifications.MessageSent;
 import kasper.android.pulse.rxbus.notifications.RoomCreated;
 import kasper.android.pulse.rxbus.notifications.RoomRemoved;
+import kasper.android.pulse.rxbus.notifications.RoomSelected;
 import kasper.android.pulse.rxbus.notifications.RoomsCreated;
 
 public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -40,12 +41,14 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private long myId;
     private final List<Entities.BaseRoom> rooms;
     private Hashtable<Long, Entities.Message> sendingMessages;
+    private boolean openRoom = false;
 
-    public ComplexProfileAdapter(AppCompatActivity activity, long myId, List<Entities.BaseRoom> rooms) {
+    public ComplexProfileAdapter(boolean openRoom, AppCompatActivity activity, long myId, List<Entities.BaseRoom> rooms) {
         this.activity = activity;
         this.myId = myId;
         this.rooms = rooms;
         this.sendingMessages = new Hashtable<>();
+        this.openRoom = openRoom;
         Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
     }
@@ -96,18 +99,20 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         long localMessageId = messageSent.getLocalMessageId();
         long onlineMessageId = messageSent.getOnlineMessageId();
         Entities.Message message = sendingMessages.remove(localMessageId);
-        message.setMessageId(onlineMessageId);
-        int counter = 0;
-        for (Entities.BaseRoom room : rooms) {
-            if (message.getRoom().getRoomId() == room.getRoomId()) {
-                room.setLastAction(message);
-                notifyItemChanged(counter);
-                rooms.add(0, room);
-                rooms.remove(counter);
-                notifyItemMoved(counter, 0);
-                break;
+        if (message != null) {
+            message.setMessageId(onlineMessageId);
+            int counter = 0;
+            for (Entities.BaseRoom room : rooms) {
+                if (message.getRoom().getRoomId() == room.getRoomId()) {
+                    room.setLastAction(message);
+                    notifyItemChanged(counter);
+                    rooms.add(0, room);
+                    rooms.remove(counter);
+                    notifyItemMoved(counter, 0);
+                    break;
+                }
+                counter++;
             }
-            counter++;
         }
     }
 
@@ -268,11 +273,15 @@ public class ComplexProfileAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         } else {
             vh.lastActionTV.setText("");
         }
-        vh.itemView.setOnClickListener(view ->
+        vh.itemView.setOnClickListener(view -> {
+            if (openRoom)
+                Core.getInstance().bus().post(new RoomSelected(room));
+            else
                 activity.startActivity(new Intent(activity, ChatActivity.class)
-                        .putExtra("complex_id", room.getComplex().getComplexId())
-                        .putExtra("room_id", room.getRoomId())
-                        .putExtra("start_file_id", -1L)));
+                    .putExtra("complex_id", room.getComplex().getComplexId())
+                    .putExtra("room_id", room.getRoomId())
+                    .putExtra("start_file_id", -1L));
+        });
     }
 
     @Override

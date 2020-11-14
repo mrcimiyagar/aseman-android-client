@@ -11,4 +11,6 @@
     <color name="colorBlackBlue5">#3b4959</color>
     <color name="colorBlue">#50a882</color>
     <color name="colorGreen">#00E676</color>
+    <color name="nil">#291A6D</color>
+    <color name="darkNil">#100339</color>
 </resources>

@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +44,7 @@ import kasper.android.pulse.models.network.Packet;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.BotPicked;
+import kasper.android.pulse.rxbus.notifications.BotViewDelivered;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
@@ -52,67 +54,34 @@ import kasper.android.pulseframework.utils.GraphicsHelper;
 
 public class BotPickerAdapter extends RecyclerView.Adapter<BotPickerAdapter.BpVh> {
 
-    private RoomActivity activity;
+    private AppCompatActivity activity;
     private View.OnDragListener dragListener;
     private long complexId;
     private long roomId;
-    private PreviewPulseListener pulseListener;
     private List<Entities.Bot> bots;
     private Hashtable<Long, PulseView> pulseViews;
 
-    public BotPickerAdapter(RoomActivity activity, View.OnDragListener dragListener, long complexId, long roomId, List<Entities.Bot> bots) {
+    public BotPickerAdapter(AppCompatActivity activity, View.OnDragListener dragListener, long complexId, long roomId, List<Entities.Bot> bots) {
         this.activity = activity;
         this.dragListener = dragListener;
         this.bots = bots;
         this.complexId = complexId;
         this.roomId = roomId;
         this.pulseViews = new Hashtable<>();
-        PulseHelper.setPulseViewTablePreviews(pulseViews);
-        PulseHelper.setOnPreviewMode(true);
-        this.pulseListener = new PreviewPulseListener() {
-            @Override
-            public void buildUi(long botId, String rawJson) {
-                PulseView pulseView = pulseViews.get(botId);
-                if (pulseView != null) pulseView.buildUi(rawJson);
-            }
-
-            @Override
-            public void updateUi(long botId, String rawJson, boolean batch) {
-                PulseView pulseView = pulseViews.get(botId);
-                if (pulseView != null) {
-                    if (batch) pulseView.updateBatchUi(rawJson);
-                    else pulseView.updateUi(rawJson);
-                }
-            }
-
-            @Override
-            public void animateUi(long botId, String rawJson, boolean batch) {
-                PulseView pulseView = pulseViews.get(botId);
-                if (pulseView != null) {
-                    if (batch) pulseView.animateBatchUi(rawJson);
-                    else pulseView.animateUi(rawJson);
-                }
-            }
-
-            @Override
-            public void runCodeUi(long botId, String rawJson, boolean batch) {
-                PulseView pulseView = pulseViews.get(botId);
-                if (pulseView != null) {
-                    if (batch) pulseView.runCommands(rawJson);
-                    else pulseView.runCommand(rawJson);
-                }
-            }
-        };
         Core.getInstance().bus().register(this);
         this.notifyDataSetChanged();
     }
 
-    public PreviewPulseListener getPulseListener() {
-        return this.pulseListener;
-    }
-
     public void dispose() {
         Core.getInstance().bus().unregister(this);
+    }
+
+    @Subscribe
+    public void onBotViewDelivered(BotViewDelivered botViewDelivered) {
+        if (botViewDelivered.getComplexId() == 0 && botViewDelivered.getRoomId() == 0) {
+            PulseView pulseView = pulseViews.get(botViewDelivered.getBotId());
+            if (pulseView != null) pulseView.buildUi(botViewDelivered.getData());
+        }
     }
 
     @NonNull
@@ -148,69 +117,21 @@ public class BotPickerAdapter extends RecyclerView.Adapter<BotPickerAdapter.BpVh
         holder.preview.setup(activity, (controlId) -> {});
         this.pulseViews.put(bot.getBaseUserId(), holder.preview);
         holder.preview.setTag("PulseView" + bot.getBaseUserId());
-        holder.preview.setOnDragListener(dragListener);
-        holder.preview.setOnLongClickListener(new View.OnLongClickListener() {
-            public boolean onLongClick(View v) {
-                ClipData.Item item = new ClipData.Item(holder.preview.getTag().toString());
-                ClipData dragData = new ClipData(
-                        holder.preview.getTag().toString(),
-                        new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN },
-                        item);
-                View.DragShadowBuilder myShadow = new MyDragShadowBuilder(holder.preview, true);
-                holder.preview.startDrag(dragData,
-                        myShadow,
-                        holder.preview,
-                        0
-                );
-                Core.getInstance().bus().post(new BotPicked(bot, holder.preview.getRoot(), 0, 0, 0, 0));
-                return true;
-            }
-        });
-
-        final GestureDetector detector = new GestureDetector(activity, new GestureDetector.OnGestureListener() {
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return false;
-            }
-
-            @Override
-            public void onShowPress(MotionEvent e) {
-
-            }
-
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                return false;
-            }
-
-            @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                return false;
-            }
-
-            @Override
-            public void onLongPress(MotionEvent e) {
-                if (e.getAction() == MotionEvent.ACTION_DOWN) {
-                    int[] location = new int[2];
-                    holder.preview.getLocationOnScreen(location);
-                    float x = location[0];
-                    float y = location[1];
-                    //((ViewGroup)holder.preview.getParent()).removeView(holder.preview);
-                    //activity.transferWidget(x, y, e.getX(), bot, e.getY(), holder.preview);
-                    //Core.getInstance().bus().post(new BotPicked(bot, holder.preview.getRoot(), x, y, e.getRawX(), e.getRawY()));
-                }
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                return false;
-            }
-        });
-        holder.preview.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return detector.onTouchEvent(event);
-            }
+        holder.preview.setOnLongClickListener(v -> {
+            Toast.makeText(activity, "hello", Toast.LENGTH_SHORT).show();
+            ClipData.Item item = new ClipData.Item(holder.preview.getTag().toString());
+            ClipData dragData = new ClipData(
+                    holder.preview.getTag().toString(),
+                    new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN },
+                    item);
+            View.DragShadowBuilder myShadow = new MyDragShadowBuilder(holder.preview, true);
+            holder.preview.startDrag(dragData,
+                    myShadow,
+                    holder.preview,
+                    0
+            );
+            Core.getInstance().bus().post(new BotPicked(bot, holder.preview.getRoot(), 0, 0, 0, 0));
+            return true;
         });
         NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(PulseHandler.class).requestBotPreview(packet), new ServerCallback() {
             @Override

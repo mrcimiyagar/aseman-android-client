@@ -1,0 +1,19 @@
+{
+  "buildFiles": [
+    "/usr/lib/android-sdk/ndk/20.0.5594570/build/cmake/platforms.cmake",
+    "/usr/lib/android-sdk/ndk/20.0.5594570/build/cmake/android.toolchain.cmake",
+    "/home/keyhan/projects/c++/EogenVirtualMachine/CMakeLists.txt"
+  ],
+  "cleanCommands": [
+    "/usr/lib/android-sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64\" clean"
+  ],
+  "buildTargetsCommand": "/usr/lib/android-sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64\" {LIST_OF_TARGETS_TO_BUILD}",
+  "libraries": {
+    "EogenVirtualMachine-Debug-x86_64": {
+      "artifactName": "EogenVirtualMachine",
+      "buildCommand": "/usr/lib/android-sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64\" EogenVirtualMachine",
+      "abi": "x86_64",
+      "output": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64/EogenVirtualMachine"
+    }
+  }
+}

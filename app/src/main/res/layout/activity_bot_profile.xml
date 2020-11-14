@@ -18,7 +18,7 @@
         android:layout_width="84dp"
         android:layout_height="56dp"
         app:cardCornerRadius="28dp"
-        app:cardBackgroundColor="@color/colorBlackBlue"
+        app:cardBackgroundColor="@color/nil"
         android:layout_marginLeft="-28dp"
         android:layout_marginTop="16dp">
 
@@ -28,7 +28,7 @@
             android:src="@drawable/ic_back"
             android:tint="#fff"
             android:layout_marginLeft="28dp"
-            android:onClick="onEditCloseBtnClicked"
+            android:onClick="onBackBtnClicked"
             android:background="@android:color/transparent"/>
 
     </androidx.cardview.widget.CardView>
@@ -42,7 +42,7 @@
         android:layout_gravity="bottom"
         android:layout_marginBottom="88dp"
         app:cardCornerRadius="28dp"
-        app:cardBackgroundColor="@color/colorBlackBlue">
+        app:cardBackgroundColor="@color/nil">
 
         <TextView
             android:id="@+id/botProfileTokenTV"
@@ -61,7 +61,7 @@
         app:cardCornerRadius="28dp"
         android:layout_gravity="bottom"
         android:layout_margin="16dp"
-        app:cardBackgroundColor="@color/colorBlackBlue">
+        app:cardBackgroundColor="@color/nil">
 
         <TextView
             android:id="@+id/botProfileNameTV"

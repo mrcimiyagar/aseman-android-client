@@ -5,12 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activities.ComplexInvitesActivity"
-    android:background="@color/colorBlackBlue">
+    android:background="@color/darkNil">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:theme="@style/AppTheme.AppBarOverlay"
+        android:background="@color/nil">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -25,7 +26,7 @@
                 android:background="@android:color/transparent"
                 android:tint="#fff"
                 android:src="@drawable/ic_back"
-                android:onClick="onEditCloseBtnClicked"/>
+                android:onClick="onBackBtnClicked"/>
 
             <TextView
                 android:layout_width="wrap_content"

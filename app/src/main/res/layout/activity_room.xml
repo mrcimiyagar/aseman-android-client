@@ -12,7 +12,8 @@
 
         <RelativeLayout android:id="@+id/activity_room_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@color/darkNil">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/roomBackground"
@@ -73,16 +74,23 @@
                 app:cardCornerRadius="28dp"
                 android:layout_marginLeft="-96dp"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/colorBlackBlue3">
+                app:cardBackgroundColor="@android:color/transparent">
 
-                <ImageButton
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:background="@android:color/transparent"
-                    android:src="@drawable/ic_close"
-                    android:tint="#fff"
-                    android:layout_marginLeft="28dp"
-                    android:onClick="onEditCloseBtnClicked"/>
+                <eightbitlab.com.blurview.BlurView
+                    android:id="@+id/editCloseBlur"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageButton
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_close"
+                        android:tint="#fff"
+                        android:layout_marginLeft="28dp"
+                        android:onClick="onEditCloseBtnClicked"/>
+
+                </eightbitlab.com.blurview.BlurView>
 
             </androidx.cardview.widget.CardView>
 
@@ -167,165 +175,193 @@
                 android:id="@+id/dock"
                 android:layout_width="match_parent"
                 android:layout_height="144dp"
-                app:cardBackgroundColor="#151E27"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="48dp"
                 app:cardElevation="6dp">
 
-                <FrameLayout
+                <eightbitlab.com.blurview.BlurView
+                    android:id="@+id/dockBlur"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:visibility="visible">
+                    android:layout_height="match_parent">
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="48dp"
-                        android:layout_marginLeft="24dp"
-                        android:layout_marginTop="32dp"
-                        android:orientation="horizontal"
-                        android:paddingRight="16dp">
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="visible">
 
-                        <de.hdodenhof.circleimageview.CircleImageView
-                            android:id="@+id/roomAvatar"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:layout_gravity="center_vertical"
-                            android:src="@drawable/selfie" />
-
-                        <TextView
-                            android:id="@+id/roomTitle"
+                        <LinearLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_marginLeft="8dp"
-                            android:gravity="center"
-                            android:text="Kasper Home"
-                            android:textColor="#fff"
-                            android:textSize="18sp" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="right"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginTop="20dp"
-                        android:layout_marginRight="16dp"
-                        android:layout_marginBottom="48dp"
-                        android:orientation="horizontal"
-                        android:id="@+id/dockFirstStage">
-
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="48dp"
                             android:layout_height="48dp"
-                            android:layout_marginLeft="8dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginRight="8dp"
-                            app:cardBackgroundColor="@color/colorBlackBlue5"
-                            app:cardCornerRadius="24dp"
-                            app:cardElevation="6dp">
+                            android:layout_marginLeft="24dp"
+                            android:layout_marginTop="32dp"
+                            android:orientation="horizontal"
+                            android:paddingRight="16dp">
 
-                            <ImageView
-                                android:id="@+id/roomBotsFAB"
-                                android:layout_width="match_parent"
+                            <de.hdodenhof.circleimageview.CircleImageView
+                                android:id="@+id/roomAvatar"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/selfie" />
+
+                            <TextView
+                                android:id="@+id/roomTitle"
+                                android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:onClick="onSearchBtnClicked"
-                                android:padding="12dp"
-                                android:scaleType="fitXY"
-                                android:src="@drawable/ic_search"
-                                android:tint="#fff" />
+                                android:layout_marginLeft="8dp"
+                                android:gravity="center"
+                                android:text="Kasper Home"
+                                android:textColor="#fff"
+                                android:textSize="18sp" />
 
-                        </androidx.cardview.widget.CardView>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="right"
+                            android:layout_marginLeft="16dp"
+                            android:layout_marginTop="20dp"
+                            android:layout_marginRight="16dp"
+                            android:layout_marginBottom="48dp"
+                            android:orientation="horizontal"
+                            android:id="@+id/dockFirstStage">
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginLeft="8dp"
+                                android:layout_marginTop="16dp"
+                                android:layout_marginRight="8dp"
+                                app:cardBackgroundColor="@color/colorBlue"
+                                app:cardCornerRadius="24dp"
+                                app:cardElevation="6dp">
+
+                                <ImageView
+                                    android:id="@+id/roomBotsFAB"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:onClick="onSearchBtnClicked"
+                                    android:padding="12dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_search"
+                                    android:tint="#fff" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginRight="8dp"
+                                android:layout_marginBottom="8dp"
+                                app:cardBackgroundColor="@color/colorBlue"
+                                app:cardCornerRadius="28dp"
+                                app:cardElevation="6dp">
+
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:onClick="onMenuBtnClicked"
+                                    android:padding="4dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_modules"
+                                    android:tint="#fff" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginRight="8dp"
+                                android:layout_marginTop="16dp"
+                                app:cardBackgroundColor="@color/colorBlue"
+                                app:cardCornerRadius="24dp"
+                                app:cardElevation="6dp">
+
+                                <ImageView
+                                    android:id="@+id/complexProfileFab"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:onClick="onComplexProfileBtnClicked"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/complex_empty_final" />
+
+                            </androidx.cardview.widget.CardView>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="right"
+                            android:layout_marginLeft="16dp"
+                            android:layout_marginTop="20dp"
+                            android:layout_marginRight="16dp"
+                            android:layout_marginBottom="48dp"
+                            android:orientation="horizontal"
+                            android:visibility="gone"
+                            android:alpha="0"
+                            android:id="@+id/dockSecondStage">
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginLeft="8dp"
+                                android:layout_marginTop="16dp"
+                                android:layout_marginRight="8dp"
+                                app:cardBackgroundColor="@color/colorBlue"
+                                app:cardCornerRadius="24dp"
+                                app:cardElevation="6dp">
+
+                                <ImageView
+                                    android:id="@+id/marketFAB"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:onClick="onAddBtnClicked"
+                                    android:padding="12dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_add"
+                                    android:tint="#fff" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginRight="8dp"
+                                android:layout_marginBottom="8dp"
+                                app:cardBackgroundColor="@color/colorBlue"
+                                app:cardCornerRadius="28dp"
+                                app:cardElevation="6dp">
+
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:onClick="onStoreBtnClicked"
+                                    android:padding="16dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_store"
+                                    android:tint="#fff" />
+
+                            </androidx.cardview.widget.CardView>
+
+                        </LinearLayout>
 
                         <androidx.cardview.widget.CardView
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginRight="8dp"
-                            android:layout_marginBottom="8dp"
-                            app:cardBackgroundColor="@color/colorBlackBlue5"
-                            app:cardCornerRadius="28dp"
-                            app:cardElevation="6dp">
-
-                            <ImageView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:onClick="onMenuBtnClicked"
-                                android:padding="4dp"
-                                android:scaleType="fitXY"
-                                android:src="@drawable/ic_modules"
-                                android:tint="#fff" />
+                            android:layout_width="150dp"
+                            android:layout_height="8dp"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="12dp"
+                            app:cardBackgroundColor="@color/colorBlue"
+                            app:cardCornerRadius="4dp">
 
                         </androidx.cardview.widget.CardView>
 
-                    </LinearLayout>
+                    </FrameLayout>
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="right"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginTop="20dp"
-                        android:layout_marginRight="16dp"
-                        android:layout_marginBottom="48dp"
-                        android:orientation="horizontal"
-                        android:id="@+id/dockSecondStage">
-
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:layout_marginLeft="8dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginRight="8dp"
-                            app:cardBackgroundColor="@color/colorBlackBlue5"
-                            app:cardCornerRadius="24dp"
-                            app:cardElevation="6dp">
-
-                            <ImageView
-                                android:id="@+id/marketFAB"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:onClick="onAddBtnClicked"
-                                android:padding="12dp"
-                                android:scaleType="fitXY"
-                                android:src="@drawable/ic_add"
-                                android:tint="#fff" />
-
-                        </androidx.cardview.widget.CardView>
-
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginRight="8dp"
-                            android:layout_marginBottom="8dp"
-                            app:cardBackgroundColor="@color/colorBlackBlue5"
-                            app:cardCornerRadius="28dp"
-                            app:cardElevation="6dp">
-
-                            <ImageView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:onClick="onStoreBtnClicked"
-                                android:padding="16dp"
-                                android:scaleType="fitXY"
-                                android:src="@drawable/ic_store"
-                                android:tint="#fff" />
-
-                        </androidx.cardview.widget.CardView>
-
-                    </LinearLayout>
-
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="150dp"
-                        android:layout_height="8dp"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="12dp"
-                        app:cardBackgroundColor="@color/colorBlackBlue5"
-                        app:cardCornerRadius="4dp">
-
-                    </androidx.cardview.widget.CardView>
-
-                </FrameLayout>
+                </eightbitlab.com.blurview.BlurView>
 
             </androidx.cardview.widget.CardView>
 
@@ -348,7 +384,8 @@
                         app:layout_collapseMode="pin"
                         app:contentInsetEnd="0dp"
                         app:contentInsetStart="0dp"
-                        android:clickable="false">
+                        android:clickable="false"
+                        android:background="@color/darkNil">
 
                         <com.ogaclejapan.smarttablayout.SmartTabLayout
                             android:id="@+id/homeTB"
@@ -359,7 +396,7 @@
                             app:stl_indicatorInFront="false"
                             app:stl_indicatorInterpolation="smart"
                             app:stl_indicatorGravity="center"
-                            app:stl_indicatorColor="@color/colorBlackBlue3"
+                            app:stl_indicatorColor="@color/nil"
                             app:stl_indicatorThickness="64dp"
                             app:stl_indicatorWidth="96dp"
                             app:stl_indicatorCornerRadius="32dp"
@@ -384,7 +421,7 @@
                                 android:id="@+id/homeVP"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:background="@color/colorBlackBlue"/>
+                                android:background="@color/darkNil"/>
 
                         </FrameLayout>
 
@@ -401,16 +438,23 @@
             android:layout_width="84dp"
             android:layout_height="56dp"
             app:cardCornerRadius="28dp"
-            app:cardBackgroundColor="@color/colorBlackBlue3">
+            app:cardBackgroundColor="@android:color/transparent">
 
-            <ImageButton
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_gravity="right"
-                android:background="@android:color/transparent"
-                android:src="@drawable/ic_close"
-                android:tint="#fff"
-                android:onClick="onSearchCloseBtnClicked"/>
+            <eightbitlab.com.blurview.BlurView
+                android:id="@+id/searchCloseBlur"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageButton
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="right"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_close"
+                    android:tint="#fff"
+                    android:onClick="onSearchCloseBtnClicked"/>
+
+            </eightbitlab.com.blurview.BlurView>
 
         </androidx.cardview.widget.CardView>
 
@@ -422,158 +466,45 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="16dp"
             android:alpha="0"
+            app:cardBackgroundColor="@android:color/transparent"
             android:visibility="gone"
-            app:cardCornerRadius="4dp">
+            app:cardCornerRadius="24dp">
 
-            <EditText
+            <eightbitlab.com.blurview.BlurView
+                android:id="@+id/searchBlur"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:background="@android:color/transparent"
-                android:hint="Search Aseman World"
-                android:textColorHint="#888"
-                android:textColor="#000"
-                android:textSize="17sp"
-                android:gravity="center"/>
+                android:layout_height="match_parent">
 
-            <ImageButton
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_menu"
-                android:tint="#000"
-                android:onClick="onMenuDrawerBtnClicked"
-                android:background="@android:color/transparent"/>
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:background="@android:color/transparent"
+                    android:hint="Search Aseman World"
+                    android:textColorHint="#bbb"
+                    android:textColor="#000"
+                    android:textSize="17sp"
+                    android:gravity="center"/>
 
-            <ImageButton
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_search"
-                android:tint="#000"
-                android:layout_gravity="right"
-                android:background="@android:color/transparent"/>
+                <ImageButton
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_voice"
+                    android:tint="#fff"
+                    android:background="@android:color/transparent"/>
+
+                <ImageButton
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_search"
+                    android:tint="#fff"
+                    android:layout_gravity="right"
+                    android:background="@android:color/transparent"/>
+
+            </eightbitlab.com.blurview.BlurView>
 
         </androidx.cardview.widget.CardView>
 
     </RelativeLayout>
-
-    <FrameLayout
-        android:layout_width="270dp"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
-        android:layout_gravity="start">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="bottom">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:layout_width="64dp"
-                    android:layout_height="match_parent"
-                    android:background="@color/colorBlackBlue">
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/menuComplexesRV"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_marginTop="48dp"/>
-
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:layout_marginTop="48dp">
-
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:background="@color/colorBlackBlue2"
-                        android:elevation="4dp">
-
-                        <TextView
-                            android:id="@+id/homeComplexNameTV"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:text="Test Complex"
-                            android:gravity="center_vertical"
-                            android:paddingLeft="16dp"
-                            android:paddingRight="16dp"
-                            android:textColor="#fff"
-                            android:textSize="16sp"/>
-
-                        <ImageButton
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:background="@android:color/transparent"
-                            android:layout_gravity="right"
-                            android:layout_marginTop="4dp"
-                            android:src="@drawable/ic_more"
-                            android:tint="#fff"
-                            android:onClick="onMenuMoreMenuBtnClicked"/>
-
-                    </FrameLayout>
-
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@color/colorBlackBlue2">
-
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/menuRoomsRV"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"/>
-
-                    </FrameLayout>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@color/colorBlackBlue3"
-                android:elevation="4dp">
-
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/homeMyAvatarIV"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginLeft="8dp"
-                    android:layout_centerVertical="true"
-                    android:src="@drawable/selfie"/>
-
-                <TextView
-                    android:id="@+id/homeMyTitleTV"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:textColor="#fff"
-                    android:textSize="16sp"
-                    android:layout_marginLeft="48dp"
-                    android:text="Title"/>
-
-                <ImageButton
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_settings"
-                    android:tint="#fff"
-                    android:background="@android:color/transparent"
-                    android:layout_alignParentRight="true"
-                    android:onClick="onSettingsBtnClicked"/>
-
-            </RelativeLayout>
-
-        </LinearLayout>
-
-    </FrameLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

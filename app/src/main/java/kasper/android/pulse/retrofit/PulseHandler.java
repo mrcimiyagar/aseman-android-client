@@ -12,4 +12,6 @@ public interface PulseHandler {
     Call<Packet> requestBotView(@Body Packet packet);
     @POST("pulse/click_bot_view")
     Call<Packet> clickBotView(@Body Packet packet);
+    @POST("pulse/notify_bot_view_resized")
+    Call<Packet> notifyBotViewResized(@Body Packet packet);
 }

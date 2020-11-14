@@ -4,11 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/darkNil"
     tools:context=".activities.EditRoomDesktopActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp">
+        android:layout_height="56dp"
+        android:background="@color/nil">
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
@@ -39,7 +41,7 @@
         android:layout_height="match_parent"
         android:layout_marginTop="56dp"
         android:orientation="vertical"
-        android:background="@color/colorBlackBlue">
+        android:background="@color/darkNil">
 
         <studio.carbonylgroup.textfieldboxes.TextFieldBoxes
             android:id="@+id/text_field_boxes"

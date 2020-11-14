@@ -5,12 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue"
+    android:background="@color/darkNil"
     tools:context="kasper.android.pulse.activities.MusicPlayerActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="256dp">
+        android:layout_height="256dp"
+        android:background="@color/nil">
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"

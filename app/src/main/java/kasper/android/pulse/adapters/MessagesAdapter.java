@@ -1038,7 +1038,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     .setFrameClearDrawable(windowBackground)
                     .setBlurAlgorithm(new RenderScriptBlur(activity))
                     .setBlurRadius(20)
-                    .setHasFixedTransformationMatrix(false);
+                    .setHasFixedTransformationMatrix(true);
 
         }
     }
@@ -1136,7 +1136,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     .setFrameClearDrawable(windowBackground)
                     .setBlurAlgorithm(new RenderScriptBlur(activity))
                     .setBlurRadius(20)
-                    .setHasFixedTransformationMatrix(false);
+                    .setHasFixedTransformationMatrix(true);
         }
     }
 }

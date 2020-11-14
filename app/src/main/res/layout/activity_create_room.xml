@@ -4,12 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue"
+    android:background="@color/darkNil"
     tools:context="kasper.android.pulse.activities.CreateRoomActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp">
+        android:layout_height="56dp"
+        android:background="@color/nil">
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
@@ -35,7 +36,7 @@
                     android:layout_height="56dp"
                     android:background="@android:color/transparent"
                     android:src="@drawable/ic_back"
-                    android:onClick="onEditCloseBtnClicked"/>
+                    android:onClick="onBackBtnClicked"/>
 
             </RelativeLayout>
 
@@ -54,7 +55,7 @@
             android:id="@+id/activity_create_room_avatar_image_view"
             android:layout_width="84dp"
             android:layout_height="84dp"
-            android:src="@color/colorBlackBlue3"
+            android:src="@color/nil"
             android:layout_marginTop="32dp"
             android:layout_marginLeft="32dp"
             android:onClick="onPickAvatarBtnClicked"/>

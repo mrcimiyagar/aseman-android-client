@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="184dp"
+        app:cardCornerRadius="28dp"
+        android:layout_margin="8dp"
+        app:cardBackgroundColor="#fff"
+        app:cardElevation="6dp"/>
+
+</FrameLayout>

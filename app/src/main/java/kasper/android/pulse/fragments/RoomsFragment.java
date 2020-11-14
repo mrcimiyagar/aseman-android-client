@@ -1,6 +1,7 @@
 package kasper.android.pulse.fragments;
 
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,8 +22,11 @@ import java.util.Comparator;
 import java.util.List;
 
 import kasper.android.pulse.R;
+import kasper.android.pulse.adapters.ComplexProfileAdapter;
 import kasper.android.pulse.adapters.HomeAdapter;
+import kasper.android.pulse.extras.LinearDecoration;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.models.entities.Entities;
 import kasper.android.pulse.models.extras.RoomTypes;
@@ -87,7 +91,9 @@ public class RoomsFragment extends BaseFragment {
                 }
             });
         }
-        roomsRV.setAdapter(new HomeAdapter((AppCompatActivity) getActivity(), rooms));
+        roomsRV.setAdapter(new ComplexProfileAdapter(true, (AppCompatActivity) getActivity(),
+                DatabaseHelper.getMe().getBaseUserId(), DatabaseHelper.getRooms(complexId)));
+        roomsRV.addItemDecoration(new LinearDecoration(GraphicHelper.dpToPx(32), GraphicHelper.dpToPx(16)));
         return contentView;
     }
 

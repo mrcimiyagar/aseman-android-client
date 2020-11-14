@@ -244,29 +244,98 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 
-        int viewType = getItemViewType(position);
+        try {
+            int viewType = getItemViewType(position);
 
-        if (viewType == 1 || viewType == 2 || viewType == 3) {
-            Entities.BaseRoom room = rooms.get(position);
-            RoomItem vh = (RoomItem) holder;
+            if (viewType == 1 || viewType == 2 || viewType == 3) {
+                Entities.BaseRoom room = rooms.get(position);
+                RoomItem vh = (RoomItem) holder;
 
-            if (room.getComplex().getMode() == 2) {
-                Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
-                Entities.User user = contact.getPeer();
-                vh.nameTV.setText(user.getTitle().split(" ")[0] + " : " + room.getTitle());
-                NetworkHelper.loadRoomAvatar(user.getAvatar(), vh.avatarIV);
-                DataSyncer.syncBaseUserWithServer(user.getBaseUserId(), new OnBaseUserSyncListener() {
-                    @Override
-                    public void userSynced(Entities.BaseUser baseUser) {
+                if (room.getComplex().getMode() == 2) {
+                    Entities.Contact contact = DatabaseHelper.getContactByComplexId(room.getComplexId());
+                    Entities.User user = contact.getPeer();
+                    vh.nameTV.setText(user.getTitle().split(" ")[0] + " : " + room.getTitle());
+                    NetworkHelper.loadRoomAvatar(user.getAvatar(), vh.avatarIV);
+                    DataSyncer.syncBaseUserWithServer(user.getBaseUserId(), new OnBaseUserSyncListener() {
+                        @Override
+                        public void userSynced(Entities.BaseUser baseUser) {
+                            DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                                @Override
+                                public void roomSynced(Entities.BaseRoom room) {
+                                    try {
+                                        if (!baseUser.getTitle().equals(user.getTitle())) {
+                                            user.setTitle(baseUser.getTitle());
+                                            vh.nameTV.setText(baseUser.getTitle().split(" ")[0] + " : " + room.getTitle());
+                                        }
+                                        NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
+                                    } catch (Exception ignored) {
+                                    }
+                                }
+
+                                @Override
+                                public void syncFailed() {
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void syncFailed() {
+                        }
+                    });
+                } else {
+                    if (room instanceof Entities.SingleRoom) {
+                        Entities.SingleRoom sr = (Entities.SingleRoom) room;
+                        final Entities.User peer;
+                        if (sr.getUser1().getBaseUserId() == myId) {
+                            peer = DatabaseHelper.getHumanById(sr.getUser2Id());
+                        } else if (sr.getUser2().getBaseUserId() == myId) {
+                            peer = DatabaseHelper.getHumanById(sr.getUser1Id());
+                        } else {
+                            peer = null;
+                        }
+                        if (peer != null) {
+                            vh.nameTV.setText(sr.getComplex().getTitle() + " : " + peer.getTitle().split(" ")[0]);
+                            NetworkHelper.loadRoomAvatar(peer.getAvatar(), vh.avatarIV);
+                            DataSyncer.syncBaseUserWithServer(peer.getBaseUserId(), new OnBaseUserSyncListener() {
+                                @Override
+                                public void userSynced(Entities.BaseUser baseUser) {
+                                    DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
+                                        @Override
+                                        public void roomSynced(Entities.BaseRoom room) {
+                                            try {
+                                                if (!baseUser.getTitle().equals(peer.getTitle())) {
+                                                    peer.setTitle(baseUser.getTitle());
+                                                    vh.nameTV.setText(sr.getComplex().getTitle() + " : " + peer.getTitle().split(" ")[0]);
+                                                }
+                                                NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
+                                            } catch (Exception ignored) {
+                                            }
+                                        }
+
+                                        @Override
+                                        public void syncFailed() {
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public void syncFailed() {
+                                }
+                            });
+                        }
+                    } else {
+                        NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
+                        vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
                         DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
                             @Override
-                            public void roomSynced(Entities.BaseRoom room) {
+                            public void roomSynced(Entities.BaseRoom r) {
                                 try {
-                                    if (!baseUser.getTitle().equals(user.getTitle())) {
-                                        user.setTitle(baseUser.getTitle());
-                                        vh.nameTV.setText(baseUser.getTitle().split(" ")[0] + " : " + room.getTitle());
+                                    if (!(r.getComplex().getTitle().equals(room.getComplex().getTitle())
+                                            && r.getTitle().equals(room.getTitle()))) {
+                                        room.setTitle(r.getTitle());
+                                        vh.nameTV.setText(r.getComplex().getTitle() + " : " + r.getTitle());
                                     }
-                                    NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
+                                    NetworkHelper.loadRoomAvatar(r.getAvatar(), vh.avatarIV);
                                 } catch (Exception ignored) {
                                 }
                             }
@@ -276,142 +345,77 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             }
                         });
                     }
-
-                    @Override
-                    public void syncFailed() {
-                    }
-                });
-            } else {
-                if (room instanceof Entities.SingleRoom) {
-                    Entities.SingleRoom sr = (Entities.SingleRoom) room;
-                    final Entities.User peer;
-                    if (sr.getUser1().getBaseUserId() == myId) {
-                        peer = DatabaseHelper.getHumanById(sr.getUser2Id());
-                    } else if (sr.getUser2().getBaseUserId() == myId) {
-                        peer = DatabaseHelper.getHumanById(sr.getUser1Id());
-                    } else {
-                        peer = null;
-                    }
-                    if (peer != null) {
-                        vh.nameTV.setText(sr.getComplex().getTitle() + " : " + peer.getTitle().split(" ")[0]);
-                        NetworkHelper.loadRoomAvatar(peer.getAvatar(), vh.avatarIV);
-                        DataSyncer.syncBaseUserWithServer(peer.getBaseUserId(), new OnBaseUserSyncListener() {
-                            @Override
-                            public void userSynced(Entities.BaseUser baseUser) {
-                                DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
-                                    @Override
-                                    public void roomSynced(Entities.BaseRoom room) {
-                                        try {
-                                            if (!baseUser.getTitle().equals(peer.getTitle())) {
-                                                peer.setTitle(baseUser.getTitle());
-                                                vh.nameTV.setText(sr.getComplex().getTitle() + " : " + peer.getTitle().split(" ")[0]);
-                                            }
-                                            NetworkHelper.loadRoomAvatar(baseUser.getAvatar(), vh.avatarIV);
-                                        } catch (Exception ignored) {
-                                        }
-                                    }
-
-                                    @Override
-                                    public void syncFailed() {
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void syncFailed() {
-                            }
-                        });
-                    }
-                } else {
-                    NetworkHelper.loadRoomAvatar(room.getAvatar(), vh.avatarIV);
-                    vh.nameTV.setText(room.getComplex().getTitle() + " : " + room.getTitle());
-                    DataSyncer.syncRoomWithServer(room.getComplexId(), room.getRoomId(), new OnRoomSyncListener() {
-                        @Override
-                        public void roomSynced(Entities.BaseRoom r) {
-                            try {
-                                if (!(r.getComplex().getTitle().equals(room.getComplex().getTitle())
-                                        && r.getTitle().equals(room.getTitle()))) {
-                                    room.setTitle(r.getTitle());
-                                    vh.nameTV.setText(r.getComplex().getTitle() + " : " + r.getTitle());
-                                }
-                                NetworkHelper.loadRoomAvatar(r.getAvatar(), vh.avatarIV);
-                            } catch (Exception ignored) {
-                            }
-                        }
-
-                        @Override
-                        public void syncFailed() {
-                        }
-                    });
                 }
-            }
-            Entities.Message lastAction = room.getLastAction();
-            if (lastAction != null) {
-                if (lastAction instanceof Entities.TextMessage) {
-                    if (lastAction.getAuthor() != null)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
-                                + ((Entities.TextMessage) lastAction).getText());
-                    else
-                        vh.lastActionTV.setText("");
-                } else if (lastAction instanceof Entities.PhotoMessage) {
-                    if (lastAction.getAuthor() != null)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
-                    else
-                        vh.lastActionTV.setText("");
-                } else if (lastAction instanceof Entities.AudioMessage) {
-                    if (lastAction.getAuthor() != null)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
-                    else
-                        vh.lastActionTV.setText("");
-                } else if (lastAction instanceof Entities.VideoMessage) {
-                    if (lastAction.getAuthor() != null)
-                        vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
-                    else
-                        vh.lastActionTV.setText("");
-                } else if (lastAction instanceof Entities.ServiceMessage) {
-                    vh.lastActionTV.setText("Aseman : " + ((Entities.ServiceMessage) lastAction).getText());
-                }
-
-                if (room.getComplex().getMode() == 1) {
-                    if (lastAction.getAuthorId() == myId) {
-                        ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
-                        ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
-                        ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
-                    } else {
-                        ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
-                        ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                Entities.Message lastAction = room.getLastAction();
+                if (lastAction != null) {
+                    if (lastAction instanceof Entities.TextMessage) {
+                        if (lastAction.getAuthor() != null)
+                            vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : "
+                                    + ((Entities.TextMessage) lastAction).getText());
+                        else
+                            vh.lastActionTV.setText("");
+                    } else if (lastAction instanceof Entities.PhotoMessage) {
+                        if (lastAction.getAuthor() != null)
+                            vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Photo");
+                        else
+                            vh.lastActionTV.setText("");
+                    } else if (lastAction instanceof Entities.AudioMessage) {
+                        if (lastAction.getAuthor() != null)
+                            vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Audio");
+                        else
+                            vh.lastActionTV.setText("");
+                    } else if (lastAction instanceof Entities.VideoMessage) {
+                        if (lastAction.getAuthor() != null)
+                            vh.lastActionTV.setText(lastAction.getAuthor().getTitle().split(" ")[0] + " : " + "Video");
+                        else
+                            vh.lastActionTV.setText("");
+                    } else if (lastAction instanceof Entities.ServiceMessage) {
+                        vh.lastActionTV.setText("Aseman : " + ((Entities.ServiceMessage) lastAction).getText());
                     }
-                } else {
-                    long unreadCount = DatabaseHelper.getUnreadMessagesCount(room.getRoomId());
-                    if (unreadCount == 0) {
-                        ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+
+                    if (room.getComplex().getMode() == 1) {
                         if (lastAction.getAuthorId() == myId) {
-                            if (lastAction.getSeenCount() > 0) {
-                                ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
-                                ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
-                            } else {
-                                Entities.MessageLocal messageLocal = DatabaseHelper.getMessageLocalById(lastAction.getMessageId());
-                                if (messageLocal != null && messageLocal.isSent()) {
-                                    ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_done);
-                                    ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
-                                } else {
-                                    ((RoomItem) holder).stateIV.setVisibility(View.GONE);
-                                }
-                            }
+                            ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
+                            ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                            ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
                         } else {
+                            ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
                             ((RoomItem) holder).stateIV.setVisibility(View.GONE);
                         }
                     } else {
-                        ((RoomItem) holder).unreadCount.setText(unreadCount + "");
-                        ((RoomItem) holder).unreadCount.setVisibility(View.VISIBLE);
-                        ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                        long unreadCount = DatabaseHelper.getUnreadMessagesCount(room.getRoomId());
+                        if (unreadCount == 0) {
+                            ((RoomItem) holder).unreadCount.setVisibility(View.GONE);
+                            if (lastAction.getAuthorId() == myId) {
+                                if (lastAction.getSeenCount() > 0) {
+                                    ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_seen);
+                                    ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                                } else {
+                                    Entities.MessageLocal messageLocal = DatabaseHelper.getMessageLocalById(lastAction.getMessageId());
+                                    if (messageLocal != null && messageLocal.isSent()) {
+                                        ((RoomItem) holder).stateIV.setImageResource(R.drawable.ic_done);
+                                        ((RoomItem) holder).stateIV.setVisibility(View.VISIBLE);
+                                    } else {
+                                        ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                                    }
+                                }
+                            } else {
+                                ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                            }
+                        } else {
+                            ((RoomItem) holder).unreadCount.setText(unreadCount + "");
+                            ((RoomItem) holder).unreadCount.setVisibility(View.VISIBLE);
+                            ((RoomItem) holder).stateIV.setVisibility(View.GONE);
+                        }
                     }
+                } else {
+                    vh.lastActionTV.setText("");
                 }
-            } else {
-                vh.lastActionTV.setText("");
+                vh.itemView.setOnClickListener(view ->
+                        Core.getInstance().bus().post(new RoomSelected(room)));
             }
-            vh.itemView.setOnClickListener(view ->
-                    Core.getInstance().bus().post(new RoomSelected(room)));
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 

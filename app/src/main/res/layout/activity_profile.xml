@@ -1,88 +1,201 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue"
+    android:background="@color/darkNil"
     tools:context="kasper.android.pulse.activities.ProfileActivity">
 
-    <ImageView
-        android:id="@+id/activity_profile_avatar_image_view"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/complexProfileAppBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/selfie"
-        android:scaleType="centerCrop"/>
+        android:layout_height="144dp"
+        android:background="@color/nil">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:layout_alignParentBottom="true"
-        android:background="@drawable/gradient_dark_to_light_90"/>
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:background="@drawable/gradient_dark_to_light_90"
-        android:rotation="180"/>
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                app:layout_collapseMode="pin"
+                app:contentInsetStart="0dp"
+                app:contentInsetEnd="0dp">
 
-    <TextView
-        android:id="@+id/activity_profile_title_text_view"
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageButton
+                        android:id="@+id/optionsMenuBtn"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_more"
+                        android:tint="#fff"
+                        android:layout_gravity="right"/>
+
+                    <ImageButton
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_back"
+                        android:onClick="onBackBtnClicked"
+                        android:tint="#fff"/>
+
+                </FrameLayout>
+
+            </androidx.appcompat.widget.Toolbar>
+
+            <kasper.android.pulse.components.SmoothCollapsingToolbarLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="left|center_vertical"
+                android:minHeight="?attr/actionBarSize"
+                app:sctl_avatar_id="@+id/activity_profile_avatar_image_view"
+                app:sctl_collapsed_avatarSize="40dp"
+                app:sctl_collapsed_offsetX="72dp"
+                app:sctl_collapsed_offsetY="0dp"
+                app:sctl_collapsed_subtitleTextSize="15.5sp"
+                app:sctl_collapsed_titleTextSize="17sp"
+                app:sctl_expanded_avatarSize="64dp"
+                app:sctl_expanded_offsetX="32dp"
+                app:sctl_expanded_offsetY="16dp"
+                app:sctl_expanded_subtitleTextSize="18sp"
+                app:sctl_expanded_titleTextSize="20sp"
+                app:sctl_subtitle_id="@+id/activity_profile_subtitle_text_view"
+                app:sctl_title_id="@+id/activity_profile_title_text_view">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/activity_profile_avatar_image_view"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:scaleType="centerCrop"
+                    android:src="@color/darkNil"
+                    android:layout_gravity="center_vertical"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/activity_profile_title_text_view"
+                        android:text="Title"
+                        android:textColor="#fff"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/activity_profile_subtitle_text_view"
+                        android:text="Subtitle"
+                        android:textColor="@color/colorBlue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+            </kasper.android.pulse.components.SmoothCollapsingToolbarLayout>
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:text="Keyhan Mohammadi"
-        android:textColor="#fff"
-        android:textSize="25sp"
-        android:layout_margin="24dp"
-        android:drawableLeft="@drawable/ic_user"
-        android:drawableTint="#fff"
-        android:drawablePadding="8dp"/>
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-    <LinearLayout
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentRight="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:onClick="onInviteBtnClicked"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="16dp">
+
+                <ImageButton
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_invite"
+                    android:scaleType="fitXY"
+                    android:padding="16dp"
+                    android:tint="#fff"
+                    android:background="@android:color/transparent"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:textColor="#fff"
+                    android:layout_marginLeft="8dp"
+                    android:textSize="18sp"
+                    android:text="Invite user"/>
+
+            </LinearLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#fff"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:layout_margin="8dp"
+                android:onClick="onBlockBtnClicked">
+
+                <ImageButton
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_block"
+                    android:tint="@color/A400red"
+                    android:background="@android:color/transparent"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:textColor="@color/A400red"
+                    android:textSize="18sp"
+                    android:layout_marginLeft="8dp"
+                    android:text="Block user"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_alignParentRight="true">
+        app:fabSize="normal"
+        android:onClick="onConnectBtnClicked"
+        app:backgroundTint="@color/colorBlue"
+        app:layout_anchor="@id/complexProfileAppBar"
+        app:layout_anchorGravity="bottom|right|end"
+        app:tint="#fff"
+        android:src="@drawable/ic_message"
+        android:layout_marginRight="16dp"/>
 
-        <ImageButton
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:id="@+id/connectFAB"
-            android:src="@drawable/ic_connection"
-            android:tint="#fff"
-            android:onClick="onConnectBtnClicked"
-            android:background="@android:color/transparent"
-            android:layout_margin="8dp"/>
-
-        <ImageButton
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@drawable/ic_block"
-            android:tint="#fff"
-            android:onClick="onBlockBtnClicked"
-            android:background="@android:color/transparent"
-            android:layout_margin="8dp"/>
-
-        <ImageButton
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@drawable/ic_building"
-            android:tint="#fff"
-            android:onClick="onInviteBtnClicked"
-            android:background="@android:color/transparent"
-            android:layout_margin="8dp"/>
-
-    </LinearLayout>
-
-    <ImageButton
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:background="@android:color/transparent"
-        android:layout_gravity="right"
-        android:src="@drawable/ic_back"
-        android:tint="#fff"
-        android:onClick="onEditCloseBtnClicked"/>
-
-</RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

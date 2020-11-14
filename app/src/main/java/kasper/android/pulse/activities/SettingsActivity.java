@@ -47,6 +47,10 @@ public class SettingsActivity extends BaseActivity {
 
     Entities.User me;
 
+    public void onInvitesBtnClicked(View view) {
+        startActivity(new Intent(this, InvitesActivity.class));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

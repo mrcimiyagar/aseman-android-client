@@ -1,0 +1,31 @@
+[
+{
+  "directory": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/x86_64",
+  "command": "/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=x86_64-none-linux-android21 --gcc-toolchain=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/sysroot   -I/home/keyhan/globe_libs/boost_1_70_0 -I/home/keyhan/projects/c++/EogenVirtualMachine/api -I/home/keyhan/projects/c++/EogenVirtualMachine/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security   -O2 -DNDEBUG  -fPIE   -lmpir -lgmp -std=gnu++1z -o CMakeFiles/EogenVirtualMachine.dir/EogenDriver.cpp.o -c /home/keyhan/projects/c++/EogenVirtualMachine/EogenDriver.cpp",
+  "file": "/home/keyhan/projects/c++/EogenVirtualMachine/EogenDriver.cpp"
+},
+
+{
+  "directory": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/x86_64",
+  "command": "/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=x86_64-none-linux-android21 --gcc-toolchain=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/sysroot   -I/home/keyhan/globe_libs/boost_1_70_0 -I/home/keyhan/projects/c++/EogenVirtualMachine/api -I/home/keyhan/projects/c++/EogenVirtualMachine/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security   -O2 -DNDEBUG  -fPIE   -lmpir -lgmp -std=gnu++1z -o CMakeFiles/EogenVirtualMachine.dir/EogenRuntime.cpp.o -c /home/keyhan/projects/c++/EogenVirtualMachine/EogenRuntime.cpp",
+  "file": "/home/keyhan/projects/c++/EogenVirtualMachine/EogenRuntime.cpp"
+},
+
+{
+  "directory": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/x86_64",
+  "command": "/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=x86_64-none-linux-android21 --gcc-toolchain=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/sysroot   -I/home/keyhan/globe_libs/boost_1_70_0 -I/home/keyhan/projects/c++/EogenVirtualMachine/api -I/home/keyhan/projects/c++/EogenVirtualMachine/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security   -O2 -DNDEBUG  -fPIE   -lmpir -lgmp -std=gnu++1z -o CMakeFiles/EogenVirtualMachine.dir/api/IO.cpp.o -c /home/keyhan/projects/c++/EogenVirtualMachine/api/IO.cpp",
+  "file": "/home/keyhan/projects/c++/EogenVirtualMachine/api/IO.cpp"
+},
+
+{
+  "directory": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/x86_64",
+  "command": "/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=x86_64-none-linux-android21 --gcc-toolchain=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/sysroot   -I/home/keyhan/globe_libs/boost_1_70_0 -I/home/keyhan/projects/c++/EogenVirtualMachine/api -I/home/keyhan/projects/c++/EogenVirtualMachine/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security   -O2 -DNDEBUG  -fPIE   -lmpir -lgmp -std=gnu++1z -o CMakeFiles/EogenVirtualMachine.dir/api/SysCallHandler.cpp.o -c /home/keyhan/projects/c++/EogenVirtualMachine/api/SysCallHandler.cpp",
+  "file": "/home/keyhan/projects/c++/EogenVirtualMachine/api/SysCallHandler.cpp"
+},
+
+{
+  "directory": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/release/x86_64",
+  "command": "/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=x86_64-none-linux-android21 --gcc-toolchain=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/sysroot   -I/home/keyhan/globe_libs/boost_1_70_0 -I/home/keyhan/projects/c++/EogenVirtualMachine/api -I/home/keyhan/projects/c++/EogenVirtualMachine/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security   -O2 -DNDEBUG  -fPIE   -lmpir -lgmp -std=gnu++1z -o CMakeFiles/EogenVirtualMachine.dir/api/Time.cpp.o -c /home/keyhan/projects/c++/EogenVirtualMachine/api/Time.cpp",
+  "file": "/home/keyhan/projects/c++/EogenVirtualMachine/api/Time.cpp"
+}
+]

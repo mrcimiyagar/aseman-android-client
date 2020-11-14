@@ -32,6 +32,7 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -502,6 +503,32 @@ public class UiInitiatorEngine {
             radioButton.setOnCheckedChangeListener((compoundButton, b)
                     -> optionCtrl.setChecked(radioButton.isChecked()));
             result = radioButton;
+        } else if (control instanceof Controls.SwitchCtrl) {
+            Controls.SwitchCtrl switchCtrl = (Controls.SwitchCtrl) control;
+            Switch switchButton = new Switch(context);
+            if (!FieldValidator.isFieldEmpty(switchCtrl.getCaption()))
+                switchButton.setText(switchCtrl.getCaption());
+            if (!FieldValidator.isFieldEmpty(switchCtrl.getCaptionColor()))
+                switchButton.setTextColor(Color.parseColor(switchCtrl.getCaptionColor()));
+            if (!FieldValidator.isFieldEmpty(switchCtrl.getCaptionSize()))
+                switchButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, switchCtrl.getCaptionSize());
+            if (!FieldValidator.isFieldEmpty(switchCtrl.getTintColor())) {
+                ColorStateList colorStateList = new ColorStateList(
+                        new int[][]{
+                                new int[]{-android.R.attr.state_checked}, // unchecked
+                                new int[]{android.R.attr.state_checked}, // checked
+                        },
+                        new int[]{
+                                Color.parseColor(switchCtrl.getTintColor()),
+                                Color.parseColor(switchCtrl.getTintColor()),
+                        }
+                );
+                CompoundButtonCompat.setButtonTintList(switchButton, colorStateList);
+            }
+            switchButton.setChecked(switchCtrl.isChecked());
+            switchButton.setOnCheckedChangeListener((compoundButton, b)
+                    -> switchCtrl.setChecked(switchButton.isChecked()));
+            result = switchButton;
         } else if (control instanceof Controls.CheckCtrl) {
             Controls.CheckCtrl checkCtrl = (Controls.CheckCtrl) control;
             CheckBox checkBox = new CheckBox(context);

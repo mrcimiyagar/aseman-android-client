@@ -55,6 +55,7 @@ public class Packet {
     private String ControlId;
     private Boolean SingleRoomMode;
     private Boolean FileTransferFinished;
+    private boolean BotWindowMode;
 
     public String getStatus() {
         return Status;
@@ -446,5 +447,13 @@ public class Packet {
 
     public void setFileTransferFinished(Boolean fileTransferFinished) {
         this.FileTransferFinished = fileTransferFinished;
+    }
+
+    public boolean isBotWindowMode() {
+        return BotWindowMode;
+    }
+
+    public void setBotWindowMode(boolean botWindowMode) {
+        BotWindowMode = botWindowMode;
     }
 }

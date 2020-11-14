@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".activities.CreateBotActivity"
     android:orientation="vertical"
-    android:background="@color/colorBlackBlue">
+    android:background="@color/darkNil">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,7 +15,8 @@
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp">
+            android:layout_height="56dp"
+            android:background="@color/nil">
 
             <androidx.appcompat.widget.Toolbar
                 android:layout_width="match_parent"
@@ -33,7 +34,7 @@
                         android:src="@drawable/ic_back"
                         android:tint="#fff"
                         android:backgroundTint="@android:color/transparent"
-                        android:onClick="onEditCloseBtnClicked"/>
+                        android:onClick="onBackBtnClicked"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -60,7 +61,7 @@
                 android:id="@+id/createBotAvatarIV"
                 android:layout_width="84dp"
                 android:layout_height="84dp"
-                android:src="@color/colorBlackBlue3"
+                android:src="@color/nil"
                 android:layout_marginTop="32dp"
                 android:layout_marginLeft="32dp"
                 android:onClick="onPickAvatarBtnClicked"/>
@@ -85,7 +86,7 @@
             app:cardCornerRadius="8dp"
             android:layout_marginLeft="32dp"
             android:layout_marginRight="32dp"
-            app:cardBackgroundColor="@color/colorBlackBlue3"
+            app:cardBackgroundColor="@color/nil"
             android:layout_marginTop="32dp">
 
             <EditText

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackBlue">
+    android:background="@color/darkNil">
 
     <LinearLayout
         android:orientation="vertical"
@@ -14,7 +14,8 @@
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@color/nil">
 
             <androidx.appcompat.widget.Toolbar
                 android:layout_width="match_parent"
@@ -124,7 +125,7 @@
             android:layout_height="240dp"
             android:layout_marginTop="32dp"
             android:layout_marginBottom="56dp"
-            android:background="@color/colorBlackBlue3">
+            android:background="@color/nil">
 
             <LinearLayout
                 android:layout_width="wrap_content"

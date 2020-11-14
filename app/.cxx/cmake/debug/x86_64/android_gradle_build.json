@@ -1,0 +1,75 @@
+{
+  "stringTable": {
+    "0": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64",
+    "1": "--target=x86_64-none-linux-android21 --gcc-toolchain=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/keyhan/globe_libs/boost_1_70_0 -I/home/keyhan/projects/c++/EogenVirtualMachine/api -I/home/keyhan/projects/c++/EogenVirtualMachine/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security -O0 -fno-limit-debug-info -fPIE -lmpir -lgmp -std=gnu++1z"
+  },
+  "buildFiles": [
+    "/usr/lib/android-sdk/ndk/20.0.5594570/build/cmake/platforms.cmake",
+    "/usr/lib/android-sdk/ndk/20.0.5594570/build/cmake/android.toolchain.cmake",
+    "/home/keyhan/projects/c++/EogenVirtualMachine/CMakeLists.txt"
+  ],
+  "cleanCommands": [
+    "/usr/lib/android-sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64\" clean"
+  ],
+  "buildTargetsCommand": "/usr/lib/android-sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64\" {LIST_OF_TARGETS_TO_BUILD}",
+  "libraries": {
+    "EogenVirtualMachine-Debug-x86_64": {
+      "buildCommand": "/usr/lib/android-sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64\" EogenVirtualMachine",
+      "buildType": "debug",
+      "toolchain": "1208802158",
+      "abi": "x86_64",
+      "artifactName": "EogenVirtualMachine",
+      "files": [
+        {
+          "src": "/home/keyhan/projects/c++/EogenVirtualMachine/EogenDriver.cpp",
+          "flagsOrdinal": 1,
+          "workingDirectoryOrdinal": 0
+        },
+        {
+          "src": "/home/keyhan/projects/c++/EogenVirtualMachine/EogenRuntime.cpp",
+          "flagsOrdinal": 1,
+          "workingDirectoryOrdinal": 0
+        },
+        {
+          "src": "/home/keyhan/projects/c++/EogenVirtualMachine/api/IO.cpp",
+          "flagsOrdinal": 1,
+          "workingDirectoryOrdinal": 0
+        },
+        {
+          "src": "/home/keyhan/projects/c++/EogenVirtualMachine/api/SysCallHandler.cpp",
+          "flagsOrdinal": 1,
+          "workingDirectoryOrdinal": 0
+        },
+        {
+          "src": "/home/keyhan/projects/c++/EogenVirtualMachine/api/Time.cpp",
+          "flagsOrdinal": 1,
+          "workingDirectoryOrdinal": 0
+        }
+      ],
+      "headers": [
+        {
+          "header": "/home/keyhan/projects/c++/EogenVirtualMachine/api/IO.hpp",
+          "workingDirectoryOrdinal": 0
+        },
+        {
+          "header": "/home/keyhan/projects/c++/EogenVirtualMachine/api/SysCallHandler.hpp",
+          "workingDirectoryOrdinal": 0
+        },
+        {
+          "header": "/home/keyhan/projects/c++/EogenVirtualMachine/api/Time.h",
+          "workingDirectoryOrdinal": 0
+        }
+      ],
+      "output": "/home/keyhan/projects/Android/AsemanAndroidClient/app/.cxx/cmake/debug/x86_64/EogenVirtualMachine"
+    }
+  },
+  "toolchains": {
+    "1208802158": {
+      "cppCompilerExecutable": "/usr/lib/android-sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

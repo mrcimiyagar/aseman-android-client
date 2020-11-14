@@ -46,6 +46,7 @@ import android.widget.Toast;
 
 import com.anadeainc.rxbus.Subscribe;
 import com.bumptech.glide.request.transition.DrawableCrossFadeFactory;
+import com.esotericsoftware.reflectasm.shaded.org.objectweb.asm.Handle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.ogaclejapan.smarttablayout.SmartTabLayout;
 
@@ -91,6 +92,10 @@ import kasper.android.pulse.retrofit.ComplexHandler;
 import kasper.android.pulse.retrofit.PulseHandler;
 import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.rxbus.notifications.BotPicked;
+import kasper.android.pulse.rxbus.notifications.BotViewAnimated;
+import kasper.android.pulse.rxbus.notifications.BotViewDelivered;
+import kasper.android.pulse.rxbus.notifications.BotViewRanCommands;
+import kasper.android.pulse.rxbus.notifications.BotViewUpdated;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
 import kasper.android.pulse.rxbus.notifications.MemberAccessUpdated;
@@ -115,12 +120,6 @@ public class RoomActivity extends BaseActivity {
 
     private CardView dock;
     private TextView roomTitleTV;
-
-    RecyclerView menuComplexesRV;
-    RecyclerView menuRoomsRV;
-    TextView complexNameTV;
-    CircleImageView myAvatarIV;
-    TextView myTitleTV;
 
     private CircleImageView roomAvatarIV;
     private ImageView backgroundView;
@@ -152,6 +151,8 @@ public class RoomActivity extends BaseActivity {
     private List<Entities.Workership> workerships;
     private List<Entities.Bot> bots;
     private Hashtable<Long, PulseView> pulseTable;
+    private Hashtable<Long, PulseView> previewTable;
+
 
     private Entities.MemberAccess memberAccess;
     private boolean dragMode = false;
@@ -165,6 +166,11 @@ public class RoomActivity extends BaseActivity {
     private List<Entities.Workership> addedWorkerships = new ArrayList<>();
     private List<Entities.Workership> editedWorkerships = new ArrayList<>();
     private Entities.Bot pickedBot = null, editedBot = null;
+
+    private BlurView dockBlur;
+    private BlurView searchBlur;
+    private BlurView searchCloseBlur;
+    private BlurView editCloseBlur;
 
     private class WidgetLangingLocation {
         private float x;
@@ -198,6 +204,7 @@ public class RoomActivity extends BaseActivity {
                 workerships = new ArrayList<>();
                 bots = new ArrayList<>();
                 pulseTable = new Hashtable<>();
+                previewTable = new Hashtable<>();
 
                 complexId = roomSelected.getRoom().getComplexId();
                 roomId = roomSelected.getRoom().getRoomId();
@@ -234,9 +241,6 @@ public class RoomActivity extends BaseActivity {
 
     private void initUiData() {
 
-        menuComplexesRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-        menuRoomsRV.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-
         complexes = DatabaseHelper.getComplexes();
         if (complexes.size() > 0) {
             List<BaseFragment> pages = new ArrayList<>();
@@ -247,6 +251,7 @@ public class RoomActivity extends BaseActivity {
             chosenTab = 0;
             tabs = new ArrayList<>(complexes.size());
             tabProvider = (container, position, adapter) -> {
+                Entities.Complex c = complexes.get(position);
                 LinearLayout layout = new LinearLayout(RoomActivity.this);
                 layout.setLayoutParams(new ViewGroup.LayoutParams(GraphicHelper.dpToPx(112), GraphicHelper.dpToPx(64)));
                 layout.setOrientation(LinearLayout.VERTICAL);
@@ -256,10 +261,16 @@ public class RoomActivity extends BaseActivity {
                         GraphicHelper.dpToPx(32),
                         GraphicHelper.dpToPx(32));
                 imageView.setLayoutParams(params);
-                NetworkHelper.loadComplexAvatar(complexes.get(position).getAvatar(), imageView);
                 layout.addView(imageView);
                 TextView textView = new TextView(RoomActivity.this);
-                textView.setText(complexes.get(position).getTitle());
+                if (c.getMode() == 2) {
+                    Entities.Contact contact = DatabaseHelper.getContactByComplexId(c.getComplexId());
+                    NetworkHelper.loadComplexAvatar(contact.getPeer().getAvatar(), imageView);
+                    textView.setText(contact.getPeer().getTitle());
+                } else {
+                    NetworkHelper.loadComplexAvatar(complexes.get(position).getAvatar(), imageView);
+                    textView.setText(complexes.get(position).getTitle());
+                }
                 textView.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, WRAP_CONTENT));
                 textView.setGravity(Gravity.CENTER);
                 textView.setTextColor(Color.WHITE);
@@ -291,26 +302,12 @@ public class RoomActivity extends BaseActivity {
                 drawerLayout.closeDrawer(Gravity.LEFT);
                 startActivity(new Intent(RoomActivity.this, CreateComplexActivity.class));
             });
-            menuComplexesRV.setAdapter(complexesAdapter);
             notifyComplexChosen(complexes.get(0));
-        }
-
-        Entities.User user = DatabaseHelper.getMe();
-        if (user != null) {
-            NetworkHelper.loadUserAvatar(user.getAvatar(), myAvatarIV);
-            myTitleTV.setText(user.getTitle());
         }
     }
 
     private void notifyComplexChosen(final Entities.Complex complex) {
         chosenComplexId = complex.getComplexId();
-        if (complex.getTitle() != null &&  complex.getTitle().length() > 0) {
-            complexNameTV.setText(complex.getTitle());
-        } else {
-            Entities.User user = DatabaseHelper.getHumanById(DatabaseHelper
-                    .getContactByComplexId(complex.getComplexId()).getPeerId());
-            complexNameTV.setText(user.getTitle());
-        }
         initRoomsAdapter(complex, DatabaseHelper.getRooms(complex.getComplexId()));
         DataSyncer.syncRoomsWithServer(complex.getComplexId(), new OnRoomsSyncListener() {
             @Override
@@ -372,10 +369,56 @@ public class RoomActivity extends BaseActivity {
         });
     }
 
+    @Subscribe
+    public void onBotViewDelivered(BotViewDelivered botViewDelivered) {
+        if (complexId == botViewDelivered.getComplexId() && roomId == botViewDelivered.getRoomId() && !botViewDelivered.isBotWindowMode()) {
+            PulseView pulseView = pulseTable.get(botViewDelivered.getBotId());
+            pulseView.buildUi(botViewDelivered.getData());
+        }
+    }
+
+    @Subscribe
+    public void onBotViewUpdated(BotViewUpdated botViewUpdated) {
+        if (complexId == botViewUpdated.getComplexId() && roomId == botViewUpdated.getRoomId() && !botViewUpdated.isBotWindowMode()) {
+            PulseView pulseView = pulseTable.get(botViewUpdated.getBotId());
+            if (botViewUpdated.isBatchData())
+                pulseView.updateBatchUi(botViewUpdated.getUpdateData());
+            else
+                pulseView.updateUi(botViewUpdated.getUpdateData());
+        }
+    }
+
+    @Subscribe
+    public void onBotViewAnimated(BotViewAnimated botViewAnimated) {
+        if (complexId == botViewAnimated.getComplexId() && roomId == botViewAnimated.getRoomId() && !botViewAnimated.isBotWindowMode()) {
+            PulseView pulseView = pulseTable.get(botViewAnimated.getBotId());
+            if (botViewAnimated.isBatchData())
+                pulseView.animateBatchUi(botViewAnimated.getAnimData());
+            else
+                pulseView.animateUi(botViewAnimated.getAnimData());
+        }
+    }
+
+    @Subscribe
+    public void onBotViewRanCommands(BotViewRanCommands botViewRanCommands) {
+        if (complexId == botViewRanCommands.getComplexId() && roomId == botViewRanCommands.getRoomId() && !botViewRanCommands.isBotWindowMode()) {
+            PulseView pulseView = pulseTable.get(botViewRanCommands.getBotId());
+            if (botViewRanCommands.isBatchData())
+                pulseView.runCommands(botViewRanCommands.getCommandsData());
+            else
+                pulseView.runCommand(botViewRanCommands.getCommandsData());
+        }
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
         getSliderInterface().lock();
+    }
+
+    public void onComplexProfileBtnClicked(View view) {
+        startActivity(new Intent(this, ComplexProfileActivity.class)
+                .putExtra("complex", DatabaseHelper.getComplexById(complexId)));
     }
 
     @Override
@@ -504,6 +547,8 @@ public class RoomActivity extends BaseActivity {
         }
     }
 
+    boolean isResizing = false;
+
     @SuppressLint("ClickableViewAccessibility")
     public void onMenuBtnClicked(View view) {
         if (dock.getY() == dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100)) {
@@ -575,9 +620,8 @@ public class RoomActivity extends BaseActivity {
                                 Long botId = pair.getKey();
                                 PulseView pulseView = pair.getValue();
                                 pulseView.disableChildrenTouch();
-                                pulseView.setOnLongClickListener(new View.OnLongClickListener() {
-                                    @Override
-                                    public boolean onLongClick(View v) {
+                                pulseView.setOnLongClickListener(v -> {
+                                    if (!isResizing) {
                                         Entities.Bot b = new Entities.Bot();
                                         b.setBaseUserId(botId);
                                         editedBot = b;
@@ -595,47 +639,106 @@ public class RoomActivity extends BaseActivity {
                                         );
                                         return true;
                                     }
+                                    return false;
                                 });
 
                                 scrollView.setScrollingEnabled(false);
 
-                                pulseView.setOnTouchListener(new View.OnTouchListener() {
+                                pulseView.setOnTouchListener((v, e) -> {
 
-                                    @Override
-                                    public boolean onTouch(View v, MotionEvent event) {
+                                    if (e.getPointerCount() >= 2) {
+                                        MotionEvent.PointerCoords coords1 = new MotionEvent.PointerCoords();
+                                        e.getPointerCoords(0, coords1);
+                                        MotionEvent.PointerCoords coords2 = new MotionEvent.PointerCoords();
+                                        e.getPointerCoords(1, coords2);
 
-                                        if (event.getPointerCount() == 2) {
-                                            MotionEvent.PointerCoords coords1 = new MotionEvent.PointerCoords();
-                                            event.getPointerCoords(0, coords1);
-                                            MotionEvent.PointerCoords coords2 = new MotionEvent.PointerCoords();
-                                            event.getPointerCoords(1, coords2);
+                                        double dx = Math.abs(coords1.x - coords2.x);
+                                        double dy = Math.abs(coords1.y - coords2.y);
 
-                                            double dx = Math.abs(coords1.x - coords2.x);
-                                            double dy = Math.abs(coords1.y - coords2.y);
-
-                                            if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_POINTER_DOWN) {
+                                        switch (e.getAction() & MotionEvent.ACTION_MASK) {
+                                            case MotionEvent.ACTION_POINTER_DOWN:
+                                            case MotionEvent.ACTION_DOWN: {
                                                 resizeStartDx = dx;
                                                 resizeStartDy = dy;
                                                 resizeStartWidth = v.getMeasuredWidth();
                                                 resizeStartHeight = v.getMeasuredHeight();
-                                            } else if (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_MASK) {
-                                                double sizeX = v.getMeasuredWidth() + (dx - resizeStartDx);
-                                                double sizeY = v.getMeasuredHeight() + (dy + resizeStartDy);
+                                                isResizing = true;
+                                                return true;
+                                            }
+                                            case MotionEvent.ACTION_MOVE: {
+                                                double sizeX = resizeStartWidth + (dx - resizeStartDx);
+                                                double sizeY = resizeStartHeight + (dy + resizeStartDy);
                                                 RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) v.getLayoutParams();
                                                 if (sizeX > GraphicHelper.dpToPx(56))
                                                     params.width = (int)sizeX;
                                                 if (sizeY > GraphicHelper.dpToPx(56))
                                                     params.height = (int)sizeY;
+                                                pulseView.setLayoutParams(params);
+                                                return true;
+                                            }
+                                            case MotionEvent.ACTION_POINTER_UP: {
+                                                double sizeX = resizeStartWidth + (dx - resizeStartDx);
+                                                double sizeY = resizeStartHeight + (dy + resizeStartDy);
+                                                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) v.getLayoutParams();
+                                                Entities.Workership ws = null;
+                                                for (Entities.Workership workership : editedWorkerships) {
+                                                    if (workership.getBotId() == pair.getKey()) {
+                                                        ws = workership;
+                                                        break;
+                                                    }
+                                                }
+                                                if (ws == null) {
+                                                    for (Entities.Workership workership : workerships) {
+                                                        if (workership.getBotId() == pair.getKey()) {
+                                                            ws = workership;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if (ws != null) {
+                                                        ws.setWidth((int)((resizeStartWidth + (dx - resizeStartDx)) / GraphicHelper.getDensity()));
+                                                        ws.setHeight((int)((resizeStartHeight + (dy - resizeStartDy)) / GraphicHelper.getDensity()));
+                                                        editedWorkerships.add(ws);
+                                                    }
+                                                } else {
+                                                    ws.setWidth((int)((resizeStartWidth + (dx - resizeStartDx)) / GraphicHelper.getDensity()));
+                                                    ws.setHeight((int)((resizeStartHeight + (dy - resizeStartDy)) / GraphicHelper.getDensity()));
+                                                }
+                                                if (sizeX > GraphicHelper.dpToPx(56))
+                                                    params.width = (int)sizeX;
+                                                if (sizeY > GraphicHelper.dpToPx(56))
+                                                    params.height = (int)sizeY;
+                                                pulseView.setLayoutParams(params);
+                                                isResizing = false;
 
-                                                Toast.makeText(RoomActivity.this, params.width + " " + params.height, Toast.LENGTH_SHORT).show();
-
-                                                v.setLayoutParams(params);
-                                                v.requestLayout();
+                                                Packet packet = new Packet();
+                                                Entities.Complex c = DatabaseHelper.getComplexById(complexId);
+                                                packet.setComplex(c);
+                                                Entities.BaseRoom r = DatabaseHelper.getRoomById(roomId);
+                                                packet.setBaseRoom(r);
+                                                Entities.Bot b = new Entities.Bot();
+                                                b.setBaseUserId(botId);
+                                                packet.setBot(b);
+                                                packet.setWorkership(ws);
+                                                NetworkHelper.requestServer(NetworkHelper
+                                                        .getRetrofit().create(PulseHandler.class)
+                                                        .notifyBotViewResized(packet), new ServerCallback() {
+                                                    @Override
+                                                    public void onRequestSuccess(Packet packet) { }
+                                                    @Override
+                                                    public void onServerFailure() { }
+                                                    @Override
+                                                    public void onConnectionFailure() { }
+                                                });
+                                                return true;
                                             }
                                         }
-
+                                        return false;
+                                    } else if (!isResizing) {
+                                        return super.onTouchEvent(e);
+                                    } else if (e.getAction() == MotionEvent.ACTION_UP) {
+                                        isResizing = false;
                                         return true;
-                                    }
+                                    } else return e.getAction() == MotionEvent.ACTION_DOWN;
                                 });
                             }
                         }
@@ -643,7 +746,7 @@ public class RoomActivity extends BaseActivity {
                     .setDarkTheme(true)
                     .setTitleTextColor(Color.WHITE)
                     .setContentType(BottomSheet.LIST)
-                    .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                    .setBackgroundColor(getResources().getColor(R.color.nil))
                     .setItemTextColor(Color.WHITE)
                     .show();
         }
@@ -671,16 +774,15 @@ public class RoomActivity extends BaseActivity {
         dockContainer = findViewById(R.id.dockContainer);
         shadowBox = findViewById(R.id.shadowBox);
         drawerLayout = findViewById(R.id.drawerLayout);
-        menuComplexesRV = findViewById(R.id.menuComplexesRV);
-        menuRoomsRV = findViewById(R.id.menuRoomsRV);
-        complexNameTV = findViewById(R.id.homeComplexNameTV);
-        myAvatarIV = findViewById(R.id.homeMyAvatarIV);
-        myTitleTV = findViewById(R.id.homeMyTitleTV);
         homeVP = findViewById(R.id.homeVP);
         homeTB = findViewById(R.id.homeTB);
         dockFirstStage = findViewById(R.id.dockFirstStage);
         dockSecondStage = findViewById(R.id.dockSecondStage);
         searchCloseContainer = findViewById(R.id.searchCloseContainer);
+        dockBlur = findViewById(R.id.dockBlur);
+        searchBlur = findViewById(R.id.searchBlur);
+        searchCloseBlur = findViewById(R.id.searchCloseBlur);
+        editCloseBlur = findViewById(R.id.editCloseBlur);
     }
 
     public void onStoreBtnClicked(View view) {
@@ -695,12 +797,20 @@ public class RoomActivity extends BaseActivity {
         NetworkHelper.loadRoomAvatar(room.getAvatar(), roomAvatarIV);
         DrawableCrossFadeFactory factory =
                 new DrawableCrossFadeFactory.Builder().setCrossFadeEnabled(true).build();
-        GlideApp.with(this).load(room.getBackgroundUrl()).transition(withCrossFade(factory)).centerCrop().into(backgroundView);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    GlideApp.with(RoomActivity.this).load(room.getBackgroundUrl())
+                            .transition(withCrossFade(factory)).centerCrop().into(backgroundView);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }, 750);
     }
 
     private void initRoomsAdapter(Entities.Complex complex, List<Entities.BaseRoom> rooms) {
-        if (menuRoomsRV.getAdapter() != null)
-            ((RoomsAdapter) menuRoomsRV.getAdapter()).dispose();
         @SuppressLint("RtlHardcoded")
         RoomsAdapter roomsAdapter = new RoomsAdapter(RoomActivity.this
                 , complex.getComplexId()
@@ -712,19 +822,35 @@ public class RoomActivity extends BaseActivity {
                     .putExtra("complex_id", complex.getComplexId())
                     .putExtra("room_id", room.getRoomId()));
         });
-        menuRoomsRV.setAdapter(roomsAdapter);
-    }
-
-    @SuppressLint("RtlHardcoded")
-    public void onMenuDrawerBtnClicked(View view) {
-        drawerLayout.openDrawer(Gravity.LEFT);
     }
 
     boolean draggingDock = false;
 
     private void initListeners() {
 
-        widgetContainer.setOnDragListener(dragListener);
+        View decorView = getWindow().getDecorView();
+        ViewGroup rootView = decorView.findViewById(android.R.id.content);
+        Drawable windowBackground = decorView.getBackground();
+        dockBlur.setupWith(rootView)
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(this))
+                .setBlurRadius(20)
+                .setHasFixedTransformationMatrix(false);
+        searchBlur.setupWith(rootView)
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(this))
+                .setBlurRadius(20)
+                .setHasFixedTransformationMatrix(false);
+        searchCloseBlur.setupWith(rootView)
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(this))
+                .setBlurRadius(20)
+                .setHasFixedTransformationMatrix(false);
+        editCloseBlur.setupWith(rootView)
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(this))
+                .setBlurRadius(20)
+                .setHasFixedTransformationMatrix(false);
 
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) dock.getLayoutParams();
         if (GraphicHelper.pxToDp(GraphicHelper.getScreenWidth()) < 400) {
@@ -758,15 +884,14 @@ public class RoomActivity extends BaseActivity {
 
         dock.setY(GraphicHelper.getScreenHeight());
 
-        dockContainer.post(new Runnable() {
-            @Override
-            public void run() {
-                dock.setX(dockContainer.getMeasuredWidth() / 2 - dock.getMeasuredWidth() / 2);
-                dock.setY(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100));
+        dockContainer.post(() -> {
+            dock.setX(dockContainer.getMeasuredWidth() / 2 - dock.getMeasuredWidth() / 2);
+            dock.setY(dockContainer.getMeasuredHeight() - GraphicHelper.dpToPx(100));
 
-                controlPage.setY(GraphicHelper.getScreenHeight() - GraphicHelper.dpToPx(0));
-            }
+            controlPage.setY(GraphicHelper.getScreenHeight() - GraphicHelper.dpToPx(0));
         });
+
+        widgetContainer.setOnDragListener(dragListener);
 
         CardView searchBar = findViewById(R.id.searchBar);
         searchBar.setY(GraphicHelper.getScreenHeight() / 2  + GraphicHelper.dpToPx(100));
@@ -844,25 +969,12 @@ public class RoomActivity extends BaseActivity {
         Entities.Bot bot = new Entities.Bot();
         bot.setBaseUserId(ws.getBotId());
         PulseView pulseView = new PulseView(RoomActivity.this);
+        pulseView.setClickable(true);
         pulseView.setup(RoomActivity.this, controlId -> {
-            Packet packet = new Packet();
-            Entities.Complex c = new Entities.Complex();
-            c.setComplexId(complexId);
-            packet.setComplex(c);
-            Entities.Room r = new Entities.Room();
-            r.setRoomId(roomId);
-            packet.setBaseRoom(r);
-            packet.setBot(bot);
-            packet.setControlId(controlId);
-            NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(PulseHandler.class).clickBotView(packet)
-                    , new ServerCallback() {
-                        @Override
-                        public void onRequestSuccess(Packet packet) { }
-                        @Override
-                        public void onServerFailure() { }
-                        @Override
-                        public void onConnectionFailure() { }
-                    });
+            startActivity(new Intent(RoomActivity.this, BotWindowActivity.class)
+            .putExtra("complex-id", complexId)
+            .putExtra("room-id", roomId)
+            .putExtra("bot-id", ws.getBotId()));
         });
         pulseView.setLayoutParams(new RelativeLayout.LayoutParams(ws.getWidth()
                 == 0 ? MATCH_PARENT : ws
@@ -958,7 +1070,7 @@ public class RoomActivity extends BaseActivity {
                 .setDarkTheme(true)
                 .setTitleTextColor(Color.WHITE)
                 .setContentType(BottomSheet.LIST)
-                .setBackgroundColor(getResources().getColor(R.color.colorBlackBlue3))
+                .setBackgroundColor(getResources().getColor(R.color.nil))
                 .setItemTextColor(Color.WHITE)
                 .show();
     }
@@ -1161,6 +1273,9 @@ public class RoomActivity extends BaseActivity {
                 w.setHeight(150);
                 addedWorkerships.add(w);
             }
+
+            final Entities.Bot workingBot = pickedBot == null ? editedBot : pickedBot;
+
             try {
                 ViewGroup tvParent = (ViewGroup) tvState.getParent();
                 tvParent.removeView(tvState);
@@ -1171,9 +1286,12 @@ public class RoomActivity extends BaseActivity {
                 tvState.setY(event.getY() - tvState.getMeasuredHeight() / 2);
                 ((ViewGroup) v).addView(tvState);
                 tvState.setTag("PulseView" + UUID.randomUUID().toString());
-                tvState.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
+                tvState.setOnLongClickListener(view -> {
+                    if (!isResizing) {
+                        Entities.Bot b = new Entities.Bot();
+                        b.setBaseUserId(workingBot.getBaseUserId());
+                        editedBot = b;
+                        pickedBot = null;
                         ClipData.Item item = new ClipData.Item(tvState.getTag().toString());
                         ClipData dragData = new ClipData(
                                 tvState.getTag().toString(),
@@ -1187,6 +1305,88 @@ public class RoomActivity extends BaseActivity {
                         );
                         return true;
                     }
+                    return false;
+                });
+
+                tvState.setOnTouchListener((view, e) -> {
+
+                    if (e.getPointerCount() >= 2) {
+                        MotionEvent.PointerCoords coords1 = new MotionEvent.PointerCoords();
+                        e.getPointerCoords(0, coords1);
+                        MotionEvent.PointerCoords coords2 = new MotionEvent.PointerCoords();
+                        e.getPointerCoords(1, coords2);
+
+                        double dx = Math.abs(coords1.x - coords2.x);
+                        double dy = Math.abs(coords1.y - coords2.y);
+
+                        switch (e.getAction() & MotionEvent.ACTION_MASK) {
+                            case MotionEvent.ACTION_POINTER_DOWN:
+                            case MotionEvent.ACTION_DOWN: {
+                                resizeStartDx = dx;
+                                resizeStartDy = dy;
+                                resizeStartWidth = view.getMeasuredWidth();
+                                resizeStartHeight = view.getMeasuredHeight();
+                                isResizing = true;
+                                return true;
+                            }
+                            case MotionEvent.ACTION_MOVE: {
+                                double sizeX = resizeStartWidth + (dx - resizeStartDx);
+                                double sizeY = resizeStartHeight + (dy + resizeStartDy);
+                                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) view.getLayoutParams();
+                                Entities.Workership ws = null;
+                                for (Entities.Workership workership : editedWorkerships) {
+                                    if (workership.getBotId() == workingBot.getBaseUserId()) {
+                                        ws = workership;
+                                        break;
+                                    }
+                                }
+                                if (ws == null) {
+                                    for (Entities.Workership workership : addedWorkerships) {
+                                        if (workership.getBotId() == workingBot.getBaseUserId()) {
+                                            ws = workership;
+                                            break;
+                                        }
+                                    }
+                                    if (ws == null) {
+                                        for (Entities.Workership workership : workerships) {
+                                            if (workership.getBotId() == workingBot.getBaseUserId()) {
+                                                ws = workership;
+                                                break;
+                                            }
+                                        }
+                                        if (ws != null) {
+                                            ws.setWidth((int)((resizeStartWidth + (dx - resizeStartDx)) / GraphicHelper.getDensity()));
+                                            ws.setWidth((int)((resizeStartHeight + (dy - resizeStartDy)) / GraphicHelper.getDensity()));
+                                            editedWorkerships.add(ws);
+                                        }
+                                    } else {
+                                        ws.setWidth((int)((resizeStartWidth + (dx - resizeStartDx)) / GraphicHelper.getDensity()));
+                                        ws.setWidth((int)((resizeStartHeight + (dy - resizeStartDy)) / GraphicHelper.getDensity()));
+                                    }
+                                } else {
+                                    ws.setWidth((int)((resizeStartWidth + (dx - resizeStartDx)) / GraphicHelper.getDensity()));
+                                    ws.setWidth((int)((resizeStartHeight + (dy - resizeStartDy)) / GraphicHelper.getDensity()));
+                                }
+                                if (sizeX > GraphicHelper.dpToPx(56))
+                                    params.width = (int)sizeX;
+                                if (sizeY > GraphicHelper.dpToPx(56))
+                                    params.height = (int)sizeY;
+                                tvState.setLayoutParams(params);
+                                tvState.requestLayout();
+                                return true;
+                            }
+                            case MotionEvent.ACTION_UP: {
+                                isResizing = false;
+                                return true;
+                            }
+                        }
+                        return false;
+                    } else if (!isResizing) {
+                        return super.onTouchEvent(e);
+                    } else if (e.getAction() == MotionEvent.ACTION_UP) {
+                        isResizing = false;
+                        return true;
+                    } else return e.getAction() == MotionEvent.ACTION_DOWN;
                 });
                 v.setVisibility(View.VISIBLE);
             } catch (Exception ex) {
@@ -1263,8 +1463,6 @@ public class RoomActivity extends BaseActivity {
         });
         valAnim.start();
         valAnim2.start();
-        PulseHelper.setOnPreviewMode(false);
-        PulseHelper.setPulseViewTablePreviews(pulseTable);
     }
 
     private void closeEditMode() {

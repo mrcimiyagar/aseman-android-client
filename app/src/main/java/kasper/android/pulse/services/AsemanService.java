@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,6 +37,7 @@ import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
 import com.microsoft.signalr.JsonConverterType;
+import com.microsoft.signalr.OnClosedCallback;
 
 import kasper.android.pulse.R;
 import kasper.android.pulse.activities.ComplexProfileActivity;
@@ -43,6 +45,7 @@ import kasper.android.pulse.activities.RoomActivity;
 import kasper.android.pulse.callbacks.network.ServerCallback;
 import kasper.android.pulse.core.Core;
 import kasper.android.pulse.helpers.DatabaseHelper;
+import kasper.android.pulse.helpers.GraphicHelper;
 import kasper.android.pulse.helpers.LogHelper;
 import kasper.android.pulse.helpers.NetworkHelper;
 import kasper.android.pulse.helpers.PulseHelper;
@@ -69,6 +72,10 @@ import kasper.android.pulse.retrofit.RobotHandler;
 import kasper.android.pulse.retrofit.RoomHandler;
 import kasper.android.pulse.retrofit.UserHandler;
 import kasper.android.pulse.rxbus.notifications.BotProfileUpdated;
+import kasper.android.pulse.rxbus.notifications.BotViewAnimated;
+import kasper.android.pulse.rxbus.notifications.BotViewDelivered;
+import kasper.android.pulse.rxbus.notifications.BotViewRanCommands;
+import kasper.android.pulse.rxbus.notifications.BotViewUpdated;
 import kasper.android.pulse.rxbus.notifications.ComplexCreated;
 import kasper.android.pulse.rxbus.notifications.ComplexProfileUpdated;
 import kasper.android.pulse.rxbus.notifications.ComplexRemoved;
@@ -180,7 +187,7 @@ public class AsemanService extends IntentService {
         connection.on("NotifyBotUpdatedBotView", this::onBotUpdatedBotView, Notifications.BotUpdatedBotViewNotification.class);
         connection.on("NotifyBotAnimatedBotView", this::onBotAnimatedBotView, Notifications.BotAnimatedBotViewNotification.class);
         connection.on("NotifyBotRanCommandsOnBotView", this::onBotRanCommandsOnBotView, Notifications.BotRanCommandsOnBotViewNotification.class);
-        connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAddedToRoomNotification.class);
+        connection.on("NotifyBotAddedToRoom", this::onBotAddedToRoom, Notifications.BotAdditionToRoomNotification.class);
         connection.on("NotifyBotRemovedFromRoom", this::onBotRemovedFromRoom, Notifications.BotRemovedFromRoomNotification.class);
         connection.on("NotifyMemberAccessUpdated", this::onMemberAccessUpdated, Notifications.MemberAccessUpdatedNotification.class);
         connection.on("NotifyBotPropertiesChanged", this::onBotPropertiesChanged, Notifications.BotPropertiesChangedNotification.class);
@@ -684,6 +691,12 @@ public class AsemanService extends IntentService {
             Core.getInstance().bus().post(new ConnectionStateChanged(ConnectionStateChanged.State.Connecting));
 
             new Thread(() -> {
+                connection.onClosed(new OnClosedCallback() {
+                    @Override
+                    public void invoke(Exception exception) {
+                        exception.printStackTrace();
+                    }
+                });
                 try {
                     connection.start().blockingAwait();
                     loginToHub();
@@ -1340,7 +1353,7 @@ public class AsemanService extends IntentService {
         }
     }
 
-    private void onBotAddedToRoom(Notifications.BotAddedToRoomNotification notif) {
+    private void onBotAddedToRoom(Notifications.BotAdditionToRoomNotification notif) {
         LogHelper.log("Aseman", "Received Bot Added notification");
 
         if (notif.getBot() != null)
@@ -1479,96 +1492,65 @@ public class AsemanService extends IntentService {
 
     private void onBotSentBotView(final Notifications.BotSentBotViewNotification notif) {
         LogHelper.log("Aseman", "Received BotView Init notification");
-        if (PulseHelper.isOnPreviewMode() && notif.getComplexId() == 0 && notif.getRoomId() == 0) {
-            Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                PulseView pulseView = PulseHelper.getPulseViewTablePreviews().get(notif.getBotId());
-                if (pulseView != null) {
-                    pulseView.buildUi(notif.getViewData());
-                }
-            }));
-        } else
-            Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
-                        && PulseHelper.getCurrentRoomId() == notif.getRoomId()) {
-                    PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                    if (pulseView != null) {
-                        pulseView.buildUi(notif.getViewData());
-                        new Handler().postDelayed(() -> {
-                            Packet p = new Packet();
-                            Entities.Complex c = new Entities.Complex();
-                            c.setComplexId(notif.getComplexId());
-                            p.setComplex(c);
-                            Entities.BaseRoom room = new Entities.BaseRoom();
-                            room.setRoomId(notif.getRoomId());
-                            p.setBaseRoom(room);
-                            Entities.Bot bot = new Entities.Bot();
-                            bot.setBaseUserId(notif.getBotId());
-                            p.setBot(bot);
-                            NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(RobotHandler.class).notifyBotLoaded(p),
-                                    new ServerCallback() {
-                                        @Override
-                                        public void onRequestSuccess(Packet packet) { }
-                                        @Override
-                                        public void onServerFailure() { }
-                                        @Override
-                                        public void onConnectionFailure() { }
-                                    });
-                        }, 2000);
-                    }
-                }
-            }));
+        if (notif.getComplexId() == 0 && notif.getRoomId() == 0) {
+            Core.getInstance().bus().post(new BotViewDelivered(notif.getComplexId(), notif.getRoomId(),
+                    notif.getBotId(), notif.getViewData(), notif.isBotWindowMode()));
+        } else {
+            Core.getInstance().bus().post(new BotViewDelivered(notif.getComplexId(), notif.getRoomId(),
+                    notif.getBotId(), notif.getViewData(), notif.isBotWindowMode()));
+            Packet p = new Packet();
+            Entities.Complex c = new Entities.Complex();
+            c.setComplexId(notif.getComplexId());
+            p.setComplex(c);
+            Entities.BaseRoom room = new Entities.BaseRoom();
+            room.setRoomId(notif.getRoomId());
+            p.setBaseRoom(room);
+            Entities.Bot bot = new Entities.Bot();
+            bot.setBaseUserId(notif.getBotId());
+            p.setBot(bot);
+            p.setBotWindowMode(notif.isBotWindowMode());
+            NetworkHelper.requestServer(NetworkHelper.getRetrofit().create(RobotHandler.class).notifyBotLoaded(p),
+                    new ServerCallback() {
+                        @Override
+                        public void onRequestSuccess(Packet packet) {
+                        }
+
+                        @Override
+                        public void onServerFailure() {
+                        }
+
+                        @Override
+                        public void onConnectionFailure() {
+                        }
+                    });
+        }
 
         notifyServerNotifReceived(notif.getNotificationId());
     }
 
     private void onBotUpdatedBotView(final Notifications.BotUpdatedBotViewNotification notif) {
         LogHelper.log("Aseman", "Received BotView Update notification");
-        if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
-                && PulseHelper.getCurrentRoomId() == notif.getRoomId())
-            Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                if (pulseView != null) {
-                    if (notif.isBatchData())
-                        pulseView.updateBatchUi(notif.getUpdateData());
-                    else
-                        pulseView.updateUi(notif.getUpdateData());
-                }
-            }));
-
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
+            Core.getInstance().bus().post(new BotViewUpdated(notif.getComplexId(), notif.getRoomId()
+                    , notif.getBotId(), notif.getUpdateData(), notif.isBatchData(), notif.isBotWindowMode()));
+        }));
         notifyServerNotifReceived(notif.getNotificationId());
     }
 
     private void onBotAnimatedBotView(final Notifications.BotAnimatedBotViewNotification notif) {
         LogHelper.log("Aseman", "Received BotView Animation notification");
-        if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
-                && PulseHelper.getCurrentRoomId() == notif.getRoomId())
-            Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                if (pulseView != null) {
-                    if (notif.isBatchData())
-                        pulseView.animateBatchUi(notif.getAnimData());
-                    else
-                        pulseView.animateUi(notif.getAnimData());
-                }
-            }));
-
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
+            Core.getInstance().bus().post(new BotViewAnimated(notif.getComplexId(), notif.getRoomId()
+                    , notif.getBotId(), notif.getAnimData(), notif.isBatchData(), notif.isBotWindowMode()));
+        }));
         notifyServerNotifReceived(notif.getNotificationId());
     }
 
     private void onBotRanCommandsOnBotView(final Notifications.BotRanCommandsOnBotViewNotification notif) {
-        LogHelper.log("Aseman", "Received BotView RunCommands notification");
-        if (PulseHelper.getCurrentComplexId() == notif.getComplexId()
-                && PulseHelper.getCurrentRoomId() == notif.getRoomId())
-            Core.getInstance().bus().post(new UiThreadRequested(() -> {
-                PulseView pulseView = PulseHelper.getPulseViewTable().get(notif.getBotId());
-                if (pulseView != null) {
-                    if (notif.isBatchData())
-                        pulseView.runCommands(notif.getCommandsData());
-                    else
-                        pulseView.runCommand(notif.getCommandsData());
-                }
-            }));
-
+        Core.getInstance().bus().post(new UiThreadRequested(() -> {
+            Core.getInstance().bus().post(new BotViewRanCommands(notif.getComplexId(), notif.getRoomId()
+                    , notif.getBotId(), notif.getCommandsData(), notif.isBatchData(), notif.isBotWindowMode()));
+        }));
         notifyServerNotifReceived(notif.getNotificationId());
     }
 

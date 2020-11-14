@@ -162,7 +162,8 @@ public class ComplexProfileActivity extends BaseActivity {
     }
 
     public void fillRooms(List<Entities.BaseRoom> rooms) {
-        roomsRV.setAdapter(new ComplexProfileAdapter(this, myId, rooms));
+        roomsRV.setAdapter(new ComplexProfileAdapter(false, this, myId, rooms));
+        roomsRV.addItemDecoration(new LinearDecoration(GraphicHelper.dpToPx(32), GraphicHelper.dpToPx(16)));
     }
 
     public void onOptionsMenuBtnClicked(View view) {
@@ -170,6 +171,10 @@ public class ComplexProfileActivity extends BaseActivity {
             switch (item.getItemId()) {
                 case R.id.invites:
                     startActivity(new Intent(ComplexProfileActivity.this, ComplexInvitesActivity.class)
+                            .putExtra("complex_id", complex.getComplexId()));
+                    return true;
+                case R.id.members:
+                    startActivity(new Intent(ComplexProfileActivity.this, ComplexMembersActivity.class)
                             .putExtra("complex_id", complex.getComplexId()));
                     return true;
             }
